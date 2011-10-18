@@ -1,0 +1,6 @@
+*.dat
+*.o
+*.swp
+*.bak
+deps
+
