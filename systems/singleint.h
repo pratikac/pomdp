@@ -97,21 +97,28 @@ class System
 
         double *min_states;
         double *max_states;
+        
+        double *min_goal;
+        double *max_goal;
+
         double *min_controls;
         double *max_controls;
         
         double sim_time_delta;
 
         State init_state;
+        vector<State> sampled_controls;
 
         System();
         ~System();
 
         // functions
         
-        double get_holding_time(State& s, double gamma, int num_vert)
+        double get_holding_time(State& s, State& control, double gamma, int num_vert)
         {
-            double h = gamma * pow( log(num_vert)/(num_vert), 1.0/(double)NUM_DIM);
+            State absf = control - s;
+
+            double h = max(gamma/12 * pow( log(num_vert)/(num_vert), 1.0/(double)NUM_DIM), 1e-3);
             double num = h*h;
             
             for(int i=0; i<NUM_DIM; i++)
@@ -122,7 +129,7 @@ class System
             for(int i=0; i< NUM_DIM; i++)
                 den += process_noise[i];
             
-            den += (sqnum*s.norm());
+            den += (sqnum*absf.norm());
             
             return num/(den);
         }
@@ -168,10 +175,28 @@ class System
 
             return c;
         }
+        State sample_goal()
+        {
+            State g;
+            for(int i=0; i< NUM_DIM; i++)
+            {
+                g.x[i] = min_goal[i] + RANDF*( max_goal[i] - min_goal[i]);
+            }
+            return g;
+        }
+        bool is_inside_goal(State& s)
+        {
+            for(int i=0; i< NUM_DIM; i++)
+            {
+                if( (s.x[i] > max_goal[i]) || (s.x[i] < min_goal[i]) )
+                    return false;
+            }
+            return true;
+        }
 
         void get_obs_variance(State& s, double* var);
         void get_variance(State& s, double duration, double* var);
-        State get_fdt(State& s, double duration);
+        State get_fdt(State& s, State& control, double duration);
         State integrate(State& s, double duration, bool is_clean);
         State observation(State& s, bool is_clean);
 };

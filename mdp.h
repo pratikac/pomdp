@@ -13,17 +13,17 @@ class Vertex
     public:
 
         State s;
-        
-        double holding_time;
-        
+        int index_in_vlist; 
+                
         vector<State *> state_obs;
         vector<State *> controls;
+        vector<double> holding_times;
 
         list<Edge *> edges_in;
         list<Edge *> edges_out;
         
         // stores the position of the end-marker for edges corresponding to particular control
-        // used while normalizing
+        // used while normalizing, order is same for holding times also
         vector<int>controls_iter;
 
         Vertex(State& st);
@@ -39,6 +39,8 @@ class Edge{
         // constant control for transition (from -- to)
         // applied for time = transition_time
         State *control;
+        // index of control in system array
+        int control_index;
 
         list<Edge*>::iterator from_iter;
         list<Edge*>::iterator to_iter;
@@ -65,10 +67,6 @@ class Graph{
         
         bot_lcmgl_t *lcmgl;
         
-        double delta;
-        double min_holding_time;
-        bool seeding_finished;
-
         double gamma, gamma_t;
         struct kdtree *state_tree;
         struct kdtree *obs_tree;
@@ -80,8 +78,9 @@ class Graph{
         
         vector<Vertex *> vlist;
         list<Edge *> elist;
-        
-        unsigned int num_vert;
+       
+        int num_sampled_controls;
+        int num_vert;
                 
         // graph sanity check
         list< list<State> > monte_carlo_trajectories;
@@ -133,7 +132,7 @@ class Graph{
 
         // algorithm functions
         
-        int add_sample();
+        int add_sample(bool is_goal);
         bool is_edge_free( Edge *etmp);
         
         int reconnect_edges_neighbors(Vertex* v);
@@ -177,6 +176,8 @@ class MDP{
         
         void draw_lcm_grid();
         void plot_trajectory();
+
+        void write_pomdp_file();
 };
 
 

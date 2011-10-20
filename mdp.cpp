@@ -3,11 +3,6 @@
 Vertex::Vertex(State& st)
 {
     s = st;
-
-    holding_time = -1;
-
-    edges_in.clear();
-    edges_out.clear();
 }
 
 Vertex::~Vertex()
@@ -15,8 +10,8 @@ Vertex::~Vertex()
     for(vector<State *>::iterator i= state_obs.begin(); i != state_obs.end(); i++)
         delete (*i);
 
-    for(vector<State *>::iterator i= controls.begin(); i != controls.end(); i++)
-        delete (*i);
+    //controls vector is built from pointers, which are cleared by the class system
+    controls.clear();
 
     state_obs.clear();
     controls.clear();
@@ -38,7 +33,7 @@ MDP::MDP(Graph& in_graph, bot_lcmgl_t *in_lcmgl)
     lcmgl = in_lcmgl;
     graph = &in_graph;
     obs_curr_index = 0;
-    max_obs_time = 10.0;
+    max_obs_time = 1.0;
 };
 
 MDP::~MDP()
@@ -109,11 +104,98 @@ void MDP::draw_lcm_grid()
 #endif
 };
 
+void MDP::write_pomdp_file()
+{
+    System *sys = graph->system;
+
+    ofstream pout("sarsop/singleint.pomdp");
+    
+    pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
+    pout <<"discount: 0.95" << endl;
+    pout <<"values: reward" << endl;
+    pout <<"states: "<< graph->num_vert << endl;
+    pout <<"actions: "<< graph->num_sampled_controls << endl;
+    pout <<"observations: "<< graph->num_vert << endl;
+
+    pout << endl;
+
+    pout <<"start: ";
+
+    vector<double> tmp;
+    double totprob = 0;
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        double prior = normal_val(sys->init_state.x, sys->init_var, graph->vlist[i]->s.x, NUM_DIM);
+        totprob += prior;
+        tmp.push_back(prior);
+    }
+    
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        pout<< tmp[i]/totprob<<" ";
+    }
+    pout<<endl << endl;
+    
+    pout<<"#Transition probabilities"<<endl;
+    for(int i=0; i<graph->num_vert; i++)
+    {
+        Vertex *vtmp = graph->vlist[i];
+        for(list<Edge*>::iterator j= vtmp->edges_out.begin(); j != vtmp->edges_out.end(); j++)
+        {
+            Edge *etmp = (*j);
+            pout <<"T: "<< etmp->control_index <<" : "<< etmp->from->index_in_vlist << " : "\
+                << etmp->to->index_in_vlist <<" " << etmp->transition_prob << endl;
+        }
+    }
+    pout<< endl << endl;
+
+    pout <<"#Observation probabilities" << endl;
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        Vertex *v1 = graph->vlist[i];
+        State obs_v1 = sys->observation(v1->s, true);
+        
+        totprob = 0;
+        tmp.clear();
+        for(int j=0; j < graph->num_vert; j++)
+        {
+            Vertex *v2 = graph->vlist[j];
+            State obs_v2 = sys->observation(v2->s, true);
+            double ptmp = normal_val( obs_v1.x, sys->obs_noise, obs_v2.x, NUM_DIM_OBS);
+            totprob += ptmp;
+
+            tmp.push_back(ptmp);
+        }
+        pout <<"O: * : " << i <<" ";
+        for(int j=0; j < graph->num_vert; j++)
+        {
+            pout << tmp[j]/totprob <<" ";
+        }
+        pout<<endl;
+    }
+    pout << endl;
+    
+    pout <<"#Rewards" << endl;
+    
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        Vertex *v1 = graph->vlist[i];
+        if( sys->is_inside_goal(v1->s) )
+            pout <<"R: * : * : "<< i << " : * " << 10 << endl;
+    }
+    pout << endl;
+
+    pout.close();
+}
+
+
 Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl) 
 {
     lcmgl = in_lcmgl;
 
     system = &sys;
+    
+    num_sampled_controls = system->sampled_controls.size();
 
     vlist.clear();
     num_vert = 0;
@@ -128,7 +210,8 @@ Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl)
         factor = 4/3*M_PI;
     else if(NUM_DIM == 4)
         factor = 0.5*M_PI*M_PI;
-
+    
+    factor = 1;
     gamma = 2.1*pow( (1+1/(double)NUM_DIM), 1/(double)NUM_DIM) *pow(factor, -1/(double)NUM_DIM);
 };
 
@@ -153,6 +236,7 @@ Graph::~Graph()
 
 int Graph::vertex_delete_edges(Vertex* v)
 {
+    //cout<<"delete_edges before: " << v->edges_out.size() << endl;
     for(list<Edge *>::reverse_iterator i = v->edges_out.rbegin(); i != v->edges_out.rend(); i++)
     {
         //debug
@@ -167,6 +251,8 @@ int Graph::vertex_delete_edges(Vertex* v)
         delete etmp;
     }
     v->edges_out.clear();
+    //cout<<"delete_edges after: " << v->edges_out.size() << endl;
+    
     return 0;
 }
 
@@ -206,7 +292,11 @@ void Graph::plot_graph()
             rrgout<<tstart->s.x[0]<<"\t"<<tstart->s.x[1]<<"\t"<<tend->s.x[0]<<"\t"<<tend->s.x[1]<<"\t"<<etmp->transition_prob<<"\t"<<etmp->transition_time<<endl;
         }
 #endif
-        bot_lcmgl_vertex3f(lcmgl, tstart->s.x[0], tstart->s.x[1], 0);
+        double toput[3] ={0};
+        for(int i =0; i< NUM_DIM; i++)
+            toput[i] = tstart->s.x[i];
+
+        bot_lcmgl_vertex3f(lcmgl, toput[0], toput[1], toput[2]);
     }
     bot_lcmgl_end(lcmgl);
 #endif
@@ -226,12 +316,21 @@ void MDP::plot_trajectory()
         list<State>::iterator j = i;
         j++;
 
-        bot_lcmgl_vertex3f(lcmgl, curr.x[0], curr.x[1], 0);
+        double toput1[3] ={0};
+        for(int i =0; i< NUM_DIM; i++)
+            toput1[i] = curr.x[i];
+
+        bot_lcmgl_vertex3f(lcmgl, toput1[0], toput1[1], toput1[2]);
         
         if( (j) != truth.end() )
         {
             State& next = *(j);
-            bot_lcmgl_vertex3f(lcmgl, next.x[0], next.x[1], 0);
+        
+            double toput2[3] ={0};
+            for(int i =0; i< NUM_DIM; i++)
+                toput2[i] = next.x[i];
+
+            bot_lcmgl_vertex3f(lcmgl, toput2[0], toput2[1], toput2[2]);
         }
         curr_time += graph->system->sim_time_delta;
     }
@@ -246,7 +345,12 @@ void MDP::plot_trajectory()
     for(vector<State>::iterator i= obs.begin(); i != obs.end(); i++)
     {
         State& curr = *i;
-        bot_lcmgl_vertex3f(lcmgl, curr.x[0], curr.x[1], 0);
+        
+        double toput1[3] ={0};
+        for(int i =0; i< NUM_DIM; i++)
+            toput1[i] = curr.x[i];
+
+        bot_lcmgl_vertex3f(lcmgl, toput1[0], toput1[1], toput1[2]);
         count++;
     }
     bot_lcmgl_end(lcmgl);
@@ -284,15 +388,20 @@ void Graph::normalize_edges(Vertex *from)
     for(list<Edge *>::iterator i = from->edges_out.begin(); i != from->edges_out.end(); i ++)
     {
         edges_num++;
+        totprob += (*i)->transition_prob;
+        
+        list<Edge *>::iterator i_plus_one = i;
+        i_plus_one++;
 
         if( edges_num == from->controls_iter[controls_iter_iter] )
         {
+            // cout<<"controls_iter_iter: " << from->controls_iter[controls_iter_iter] << endl;
             // normalize between last_edge_count and edge_count
             
             if(totprob > 1.0/DBL_MAX)
             {
                 for(list<Edge *>::iterator j = last_control_iter;\
-                        j != i; j++)
+                        j != i_plus_one; j++)
                 {
                     Edge *etmp = (*j);
                     etmp->transition_prob = etmp->transition_prob / totprob;
@@ -301,16 +410,21 @@ void Graph::normalize_edges(Vertex *from)
             }
             else
             {
+                for(list<Edge *>::iterator j = last_control_iter;\
+                        j != i; j++)
+                {
+                    Edge *etmp = (*j);
+                    etmp->transition_prob = 1;
+                    cout<<"setting prob to 1, maybe only one edge" << endl;
+                    //cout<<"wrote edge prob: "<< etmp->transition_prob << endl;
+                }
                 //cout<<"totprob is: "<< totprob << " [DITCH]" << endl;
             }
             
-            list<Edge *>::iterator tmp = i;
-            tmp++;
-            last_control_iter = tmp;      // edges belonging to new control start from here
+            last_control_iter = i_plus_one;      // edges belonging to new control start from here
             totprob = 0;
             controls_iter_iter++;
         }
-        totprob += (*i)->transition_prob;
     }
 
 #if 0
@@ -349,17 +463,25 @@ bool Graph::is_edge_free( Edge *etmp)
 #endif
 }
 
-int Graph::add_sample()
+int Graph::add_sample(bool is_goal)
 {
-    State stmp = system->sample_state();
+    State stmp;
+    if(is_goal == false)
+        stmp = system->sample_state();
+    else
+        stmp = system->sample_goal();
+
     Vertex *v = new Vertex(stmp);
     
     if(num_vert == 0)
     {
+        v->index_in_vlist = 0;
+
         vlist.push_back(v);
         num_vert++;
         insert_into_state_tree(v);
-
+    
+#if 0
         for(int i=0; i<50; i++)
         {
             State *sobs = new State();
@@ -367,15 +489,18 @@ int Graph::add_sample()
             v->state_obs.push_back(sobs);
             insert_into_obs_tree(sobs);
         }
+#endif
     }
     else 
     {
         if( connect_edges_approx(v) == 0 )
         {
+            v->index_in_vlist = num_vert;
+            
             vlist.push_back(v);
             num_vert++;
             insert_into_state_tree(v);
-
+#if 0
             for(int i=0; i<50; i++)
             {
                 State *sobs = new State();
@@ -383,7 +508,7 @@ int Graph::add_sample()
                 v->state_obs.push_back(sobs);
                 insert_into_obs_tree(sobs);
             }
-
+#endif
             reconnect_edges_neighbors(v);
         }
         else
@@ -418,6 +543,7 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
         {
             // remove old edges
             
+            //cout<<"reconnecting vertex: " << v1->index_in_vlist << endl;
             vertex_delete_edges(v1);
             connect_edges_approx(v1);
         }
@@ -429,9 +555,13 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
 #endif
 
 #if 0
-    Vertex* v1 = nearest_vertex(v->s);
-    vertex_delete_edges(v1);
-    connect_edges_approx(v1);
+    for(list<Edge*>::iterator i = v->edges_out.begin(); i != v->edges_out.end(); i++)
+    {
+        Vertex* v1 = (*i)->to;
+        cout<<"reconnecting vertex: " << v1->index_in_vlist << endl;
+        vertex_delete_edges(v1);
+        connect_edges_approx(v1);
+    }
 #endif
 
     return 0;
@@ -439,15 +569,15 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
 
 int Graph::connect_edges_approx(Vertex* v)
 {
+    v->controls.clear();
+    v->controls_iter.clear();
+    v->edges_out.clear();
+
     double key[NUM_DIM] ={0};
     system->get_key(v->s, key);
 
-    double bowlr = gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM);
-    //cout<<"bowlr: " << bowlr << endl;
-
-    double holding_time = system->get_holding_time(v->s, gamma, num_vert);
-    //cout<< holding_time << endl;
-    v->holding_time = holding_time;
+    double bowlr = max(gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
+    // cout<<"bowlr: " << bowlr << endl;
 
     kdres *res;
     res = kd_nearest_range(state_tree, key, bowlr );
@@ -455,24 +585,24 @@ int Graph::connect_edges_approx(Vertex* v)
     if(kd_res_size(res) == 0)
         return 1;
 
-    //cout<<"got "<<kd_res_size(res)<<" states in bowlr= "<< bowlr << endl;
+    //cout<<"got "<<kd_res_size(res)<<" states in bowlr = "<< bowlr << endl;
     //int pr = kd_res_size(res);
 
     double *sys_var = new double[NUM_DIM];
-    system->get_variance(v->s, holding_time, sys_var);
-    State stmp = system->get_fdt(v->s, holding_time);
     
     int num_edges = 0;
-    for(int i = 0; i<3; i++)
+    for(int i = 0; i< num_sampled_controls; i++)
     {
-        State *control_tmp = new State();
-        *control_tmp = system->sample_control();
-        v->controls.push_back(control_tmp);
+        State *curr_control = &(system->sampled_controls[i]);
+        v->controls.push_back( curr_control );
 
-        for(int dim=0; dim<NUM_DIM; dim++)
-            control_tmp->x[dim] = control_tmp->x[dim] + stmp[dim];
+        double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
+        v->holding_times.push_back(holding_time);
+        //cout<<"ht: "<< holding_time << endl;
 
-        double sum_prob = 0;
+        State stmp = system->get_fdt(v->s, *curr_control, holding_time);
+        system->get_variance(v->s, holding_time, sys_var);
+
         double pos[NUM_DIM] = {0};
         while( !kd_res_end(res) )
         {
@@ -480,13 +610,12 @@ int Graph::connect_edges_approx(Vertex* v)
 
             if(v1 != v)
             {
-                double prob_tmp = normal_val(control_tmp->x, sys_var, v1->s.x, NUM_DIM);
+                double prob_tmp = normal_val(stmp.x, sys_var, v1->s.x, NUM_DIM);
                 if(prob_tmp > 0)
                 {
                     Edge *e1 = new Edge(v, v1, prob_tmp, holding_time);
-                    e1->control = control_tmp;
-
-                    sum_prob += prob_tmp;
+                    e1->control = curr_control;
+                    e1->control_index = i;
 
                     num_edges++;
                     elist.push_back(e1);
@@ -527,7 +656,8 @@ void Graph::print_rrg()
         cout << "ei: " << endl;
         for(list<Edge *>::iterator j = v->edges_in.begin(); j != v->edges_in.end(); j++)
         {
-            cout<<"\t "<< counte++ << " " << (*j)->transition_prob << endl;
+            cout<<"\t "<< (*j)->from->index_in_vlist <<"-"<< (*j)->to->index_in_vlist << \
+                " control: " << (*j)->control_index << " " << (*j)->transition_prob << endl;
         }
 
         counte = 0;
@@ -535,7 +665,8 @@ void Graph::print_rrg()
         cout<<"eo: " << endl;
         for(list<Edge *>::iterator j = v->edges_out.begin(); j != v->edges_out.end(); j++)
         {
-            cout<<"\t "<< counte++ << " " << (*j)->transition_prob << endl;
+            cout<<"\t "<< (*j)->from->index_in_vlist <<"-"<< (*j)->to->index_in_vlist << \
+                " contol: " << (*j)->control_index << " " << (*j)->transition_prob << endl;
             totprob += (*j)->transition_prob;
         }
         cout<<"totprob: "<< totprob << endl;
@@ -549,7 +680,7 @@ void Graph::put_init_samples(int howmany)
 {
     for(int i=0; i < howmany; i++)
     {
-        add_sample();
+        add_sample(false);
     }
 }
 
@@ -707,7 +838,8 @@ void Graph::plot_monte_carlo_trajectories()
 void Graph::plot_monte_carlo_density(char* filename)
 {
     bot_lcmgl_point_size(lcmgl, 10.0);
-    
+    bot_lcmgl_color4f(lcmgl, 1, 0, 0.5, 0.5);
+
     bot_lcmgl_begin(lcmgl, GL_POINTS);
 
     int count = 0;
@@ -733,8 +865,11 @@ void Graph::plot_monte_carlo_density(char* filename)
         
         if(curr_prob > 1e-2)
         {
-            bot_lcmgl_color4f(lcmgl, 1, 0, 0.5, 0.5);
-            bot_lcmgl_vertex3f(lcmgl, curr_state.x[0], curr_state.x[1], 0);
+            double toput[3] ={0};
+            for(int i =0; i< NUM_DIM; i++)
+                toput[i] = curr_state.x[i];
+
+            bot_lcmgl_vertex3f(lcmgl, toput[0], toput[1], toput[2]);
         }
         prob_iter++;
         count++;

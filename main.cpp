@@ -41,27 +41,18 @@ int main()
     mdp.propagate_system();
     
     tic();
-    for(int i=0; i < 100; i++)
+    mdp.graph->add_sample(true);
+    cout<<"Start sampling" << endl;
+    for(int i=0; i < 9; i++)
     {
-        mdp.graph->add_sample();
-        
-        //mdp.graph->print_rrg();
-        //cout<<"getchar: "<< endl; getchar();
+        mdp.graph->add_sample(false);
+                
+        // mdp.graph->print_rrg();
+        // cout<<"getchar: "<< endl; getchar();
     }
     toc();
     
-
-
-#if 0
-    for(int i=0; i< 100; i++)
-    {
-        mdp.simulate_trajectory();
-    }
-
-    mdp.plot_trajectory();
-    mdp.graph->plot_graph();
-    mdp.graph->plot_monte_carlo_density("tmp");
-#endif
+    mdp.write_pomdp_file();
     bot_lcmgl_switch_buffer(lcmgl);
     
     cout<<"Finished" << endl;
