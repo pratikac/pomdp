@@ -43,16 +43,26 @@ int main()
     tic();
     mdp.graph->add_sample(true);
     cout<<"Start sampling" << endl;
-    for(int i=0; i < 9; i++)
+    for(int i=0; i < 99; i++)
     {
         mdp.graph->add_sample(false);
-                
+        if(i % 100 == 0)
+        {
+            cout<<i<<" ";
+            toc();
+        }
         // mdp.graph->print_rrg();
         // cout<<"getchar: "<< endl; getchar();
     }
+    mdp.graph->make_holding_time_constant_all();
     toc();
     
+#if 1
     mdp.write_pomdp_file();
+#endif
+
+    mdp.plot_trajectory();
+    mdp.graph->plot_graph();
     bot_lcmgl_switch_buffer(lcmgl);
     
     cout<<"Finished" << endl;

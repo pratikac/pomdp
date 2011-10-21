@@ -59,15 +59,16 @@ void MDP::propagate_system()
     State zero_control;
 
     truth.push_back( sys->init_state);
-    control.push_back(zero_control);
-
+    control.push_back(sys->get_controller(sys->init_state));
+    
+    State scurr = sys->init_state;
     while(curr_time < max_time)
     {
-        State snext = sys->integrate( truth.back(), sys->sim_time_delta, false);
-        truth.push_back( snext);
-        control.push_back(zero_control);
+        control.push_back(sys->get_controller(scurr));
+        scurr = sys->integrate( truth.back(), sys->sim_time_delta, false);
+        truth.push_back( scurr);
         
-        State next_obs = sys->observation( snext, false);
+        State next_obs = sys->observation( scurr, false);
         obs.push_back(next_obs);
         obs_times.push_back(curr_time);
         curr_time += sys->sim_time_delta;
@@ -120,9 +121,9 @@ void MDP::write_pomdp_file()
     pout << endl;
 
     pout <<"start: ";
-
     vector<double> tmp;
     double totprob = 0;
+#if 0
     for(int i=0; i< graph->num_vert; i++)
     {
         double prior = normal_val(sys->init_state.x, sys->init_var, graph->vlist[i]->s.x, NUM_DIM);
@@ -134,6 +135,9 @@ void MDP::write_pomdp_file()
     {
         pout<< tmp[i]/totprob<<" ";
     }
+#else
+    pout <<" uniform" << endl;
+#endif
     pout<<endl << endl;
     
     pout<<"#Transition probabilities"<<endl;
@@ -169,19 +173,29 @@ void MDP::write_pomdp_file()
         pout <<"O: * : " << i <<" ";
         for(int j=0; j < graph->num_vert; j++)
         {
+#if 0
+            if( j != i)
+                pout << 0 << " ";
+            else
+                pout << 1 << " ";
+#else
             pout << tmp[j]/totprob <<" ";
+#endif
         }
         pout<<endl;
     }
     pout << endl;
     
     pout <<"#Rewards" << endl;
-    
-    for(int i=0; i< graph->num_vert; i++)
+
+    for(int i =0; i< graph->num_sampled_controls; i++)
     {
-        Vertex *v1 = graph->vlist[i];
-        if( sys->is_inside_goal(v1->s) )
-            pout <<"R: * : * : "<< i << " : * " << 10 << endl;
+        for(int j=0; j< graph->num_vert; j++)
+        {
+            Vertex *v1 = graph->vlist[j];
+            pout <<"R: " << i <<" : * : "<< j << " : * " << -(v1->s).norm2() -(sys->sampled_controls[i]).norm2()  << endl;
+        }
+
     }
     pout << endl;
 
@@ -194,7 +208,7 @@ Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl)
     lcmgl = in_lcmgl;
 
     system = &sys;
-    
+   
     num_sampled_controls = system->sampled_controls.size();
 
     vlist.clear();
@@ -376,6 +390,78 @@ Vertex* Graph::nearest_vertex(State s)
     kd_res_free(res);
 
     return v;
+}
+
+int Graph::make_holding_time_constant_all()
+{
+    State min_state, max_control;
+    for(int i=0; i<NUM_DIM; i++)
+    {
+        min_state.x[i] = system->min_states[i];
+        max_control.x[i] = system->max_controls[i];
+    }
+
+    constant_holding_time = system->get_holding_time(min_state, max_control, gamma, num_vert+1);
+    cout<<"delta: " << constant_holding_time << endl;
+    for(int i=0; i< num_vert; i++)
+    {
+        make_holding_time_constant(vlist[i]);
+    }
+    return 0;
+}
+int Graph::make_holding_time_constant(Vertex* from)
+{
+    list<Edge *>::iterator last_control_iter = from->edges_out.begin();
+    int controls_iter_iter = 0;
+    int edges_num = 0;
+
+    for(list<Edge *>::iterator i = from->edges_out.begin(); i != from->edges_out.end(); i ++)
+    {
+        edges_num++;
+        
+        list<Edge *>::iterator i_plus_one = i;
+        i_plus_one++;
+
+        if( edges_num == from->controls_iter[controls_iter_iter] )
+        {
+            // cout<<"controls_iter_iter: " << from->controls_iter[controls_iter_iter] << endl;
+            // normalize between last_edge_count and edge_count
+            
+            // add new edge
+            double pself = 1 - constant_holding_time/from->holding_times[controls_iter_iter];
+            if( (pself > 1) || (pself < 0) )
+            {
+                cout<<"pself greater: " << from->holding_times[controls_iter_iter] << endl;
+            }
+            from->holding_times[controls_iter_iter] = constant_holding_time;
+            
+            Edge* eself = new Edge(from, from, pself, constant_holding_time);
+            
+            eself->control = &(system->sampled_controls[controls_iter_iter]);
+            eself->control_index = controls_iter_iter;
+
+            elist.push_back(eself);
+            from->edges_out.push_back(eself);
+            from->edges_in.push_back(eself);
+
+            eself->elist_iter = elist.end();            eself->elist_iter--;
+            eself->from_iter = from->edges_out.end();   eself->from_iter--;
+            eself->to_iter = from->edges_in.end();      eself->to_iter--;
+
+            for(list<Edge *>::iterator j = last_control_iter;\
+                    j != i_plus_one; j++)
+            {
+                Edge *etmp = (*j);
+                etmp->transition_prob = etmp->transition_prob *(1 - pself);
+                etmp->transition_time = constant_holding_time;
+                //cout<<"wrote edge prob: "<< etmp->transition_prob << endl;
+            }
+                        
+            last_control_iter = i_plus_one;      // edges belonging to new control start from here
+            controls_iter_iter++;
+        }
+    }
+    return 0;
 }
 
 void Graph::normalize_edges(Vertex *from)
@@ -710,7 +796,7 @@ bool Graph::is_everything_normalized()
 // returns 
 int Graph::simulate_trajectory(double duration)
 {
-#if 0
+#if 1
     list<State> seq;
     list<double> seq_times;
 

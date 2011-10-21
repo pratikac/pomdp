@@ -78,7 +78,8 @@ class Graph{
         
         vector<Vertex *> vlist;
         list<Edge *> elist;
-       
+        
+        double constant_holding_time;
         int num_sampled_controls;
         int num_vert;
                 
@@ -135,6 +136,8 @@ class Graph{
         int add_sample(bool is_goal);
         bool is_edge_free( Edge *etmp);
         
+        int make_holding_time_constant_all();
+        int make_holding_time_constant(Vertex* v);
         int reconnect_edges_neighbors(Vertex* v);
         int connect_edges(Vertex *v);
         int connect_edges_approx(Vertex *v);

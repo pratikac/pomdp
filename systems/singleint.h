@@ -85,6 +85,13 @@ class State
             else
                 return *this;
         }
+        void print()
+        {
+            for(int i=0; i< NUM_DIM; i++)
+                cout<< x[i] << " ";
+
+            cout<< endl;
+        }
 };
 
 class System
@@ -118,7 +125,7 @@ class System
         {
             State absf = control - s;
 
-            double h = max(gamma/12 * pow( log(num_vert)/(num_vert), 1.0/(double)NUM_DIM), 1e-3);
+            double h = max(gamma * pow( log(num_vert+1.0)/(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
             double num = h*h;
             
             for(int i=0; i<NUM_DIM; i++)
@@ -131,6 +138,12 @@ class System
             
             den += (sqnum*absf.norm());
             
+            double tmp = num/den;
+            if(tmp < 1e-3)
+            {
+                cout<<"holding time too less " << num << " " << den << endl;
+                getchar();
+            }
             return num/(den);
         }
         
@@ -197,6 +210,7 @@ class System
         void get_obs_variance(State& s, double* var);
         void get_variance(State& s, double duration, double* var);
         State get_fdt(State& s, State& control, double duration);
+        State get_controller(State& s);
         State integrate(State& s, double duration, bool is_clean);
         State observation(State& s, bool is_clean);
 };

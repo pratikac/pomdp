@@ -20,10 +20,10 @@ System::System()
         min_states[i] = -0.1;
         max_states[i] = 0.5;
         
-        min_goal[i] = 0.0;
+        min_goal[i] = -0.05;
         max_goal[i] = 0.05;
         
-        init_state.x[i] = 0.4;
+        init_state.x[i] = 0.2;
 
         min_controls[i] = -1;
         max_controls[i] = 1;
@@ -31,14 +31,14 @@ System::System()
     
     for(int i=0; i< NUM_DIM; i++)
     {
-        process_noise[i] = 1e-3;
-        obs_noise[i] = 1e-3;
-        init_var[i] = 1e-1;
+        process_noise[i] = 1e-2;
+        obs_noise[i] = 1e-2;
+        init_var[i] = 1e-3;
     }
     sim_time_delta = 1e-3;
     
     // sample controls, add zero control to make any region as goal region
-    for(int i=0; i< 4; i++)
+    for(int i=0; i< 8; i++)
     {
         State ctmp = sample_control();
         sampled_controls.push_back(ctmp);
@@ -88,6 +88,16 @@ State System::get_fdt(State& s, State& control, double duration)
     }
     return t;
 }
+
+State System::get_controller(State& s)
+{
+    State t;
+    for(int i=0; i< NUM_DIM; i++)
+        t.x[i] = -5*s.x[i];
+
+    return t;
+}
+
 State System::integrate(State& s, double duration, bool is_clean)
 {
     State t;
