@@ -25,23 +25,25 @@ System::System()
         
         init_state.x[i] = 0.2;
 
-        min_controls[i] = -1;
-        max_controls[i] = 1;
+        min_controls[i] = -0.1;
+        max_controls[i] = 0.1;
     }
     
     for(int i=0; i< NUM_DIM; i++)
     {
-        process_noise[i] = 1e-2;
-        obs_noise[i] = 1e-2;
+        process_noise[i] = 1e-3;
+        obs_noise[i] = 1e-3;
         init_var[i] = 1e-3;
     }
     sim_time_delta = 1e-3;
     
+    controls_tree = kd_create(NUM_DIM);
     // sample controls, add zero control to make any region as goal region
-    for(int i=0; i< 8; i++)
+    for(int i=0; i< 10; i++)
     {
         State ctmp = sample_control();
         sampled_controls.push_back(ctmp);
+        kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
     }
 
     State ctmp;
@@ -49,6 +51,7 @@ System::System()
         ctmp.x[i] = 0;
 
     sampled_controls.push_back(ctmp);
+    kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
 }
 
 System::~System()
@@ -65,6 +68,8 @@ System::~System()
     delete[] obs_noise;
     delete[] process_noise;
     delete[] init_var;
+
+    kd_free(controls_tree);
 }
 
 State System::get_fdt(State& s, State& control, double duration)
@@ -74,7 +79,7 @@ State System::get_fdt(State& s, State& control, double duration)
     {
         for(int i=0; i< NUM_DIM; i++)
         {
-            t.x[i] = (-s.x[i] + control.x[i])*duration;
+            t.x[i] = (control.x[i])*duration;
             //cout << t.x[i] << endl;
         }
     }
@@ -136,7 +141,7 @@ void System::get_variance(State& s, double duration, double* var)
 {
     for(int i=0; i<NUM_DIM; i++)
     {   
-        var[i] = process_noise[i]*( exp(duration) -1);
+        var[i] = process_noise[i]*duration;
     } 
 }
 void System::get_obs_variance(State& s, double* var)

@@ -109,8 +109,16 @@ void MDP::write_pomdp_file()
 {
     System *sys = graph->system;
 
+    ofstream sindex("sarsop/state_index.dat");
+
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        sindex<<i<<"\t";
+        graph->vlist[i]->s.print(sindex);
+    }
+    sindex.close();
+
     ofstream pout("sarsop/singleint.pomdp");
-    
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
     pout <<"discount: 0.95" << endl;
     pout <<"values: reward" << endl;
@@ -123,7 +131,7 @@ void MDP::write_pomdp_file()
     pout <<"start: ";
     vector<double> tmp;
     double totprob = 0;
-#if 0
+#if 1
     for(int i=0; i< graph->num_vert; i++)
     {
         double prior = normal_val(sys->init_state.x, sys->init_var, graph->vlist[i]->s.x, NUM_DIM);

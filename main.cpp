@@ -43,7 +43,7 @@ int main()
     tic();
     mdp.graph->add_sample(true);
     cout<<"Start sampling" << endl;
-    for(int i=0; i < 99; i++)
+    for(int i=0; i < 50; i++)
     {
         mdp.graph->add_sample(false);
         if(i % 100 == 0)

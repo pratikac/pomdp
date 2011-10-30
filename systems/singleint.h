@@ -85,12 +85,12 @@ class State
             else
                 return *this;
         }
-        void print()
+        void print(ofstream &which_stream)
         {
             for(int i=0; i< NUM_DIM; i++)
-                cout<< x[i] << " ";
+                which_stream<< x[i] << "\t";
 
-            cout<< endl;
+            which_stream<< endl;
         }
 };
 
@@ -110,11 +110,12 @@ class System
 
         double *min_controls;
         double *max_controls;
-        
+         
         double sim_time_delta;
 
         State init_state;
         vector<State> sampled_controls;
+        kdtree* controls_tree; 
 
         System();
         ~System();
@@ -123,7 +124,7 @@ class System
         
         double get_holding_time(State& s, State& control, double gamma, int num_vert)
         {
-            State absf = control - s;
+            State absf = control;
 
             double h = max(gamma * pow( log(num_vert+1.0)/(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
             double num = h*h;
