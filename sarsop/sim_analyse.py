@@ -37,6 +37,10 @@ def read_state_index():
     NUM_STATES = len(state_array[:,0])
     print "num_states: ", NUM_STATES
 
+    fig = figure(1)
+    ax = fig.add_subplot(111, aspect='equal')
+    scatter( state_array[:,0], state_array[:,1], c='y', marker='o', s=30, alpha=0.8)
+
 def read_traj():
 
     fp = open("singleint_sim.dat", 'r')
@@ -78,18 +82,28 @@ def read_traj():
     fig = figure(1)
     traj_xy = np.array(traj_xy)
     traj_std = np.array(traj_std)
-    ax = fig.add_subplot(111)
-    """
+    ax = fig.add_subplot(111, aspect='equal')
+
+    circle = Circle( (traj_xy[0,0], traj_xy[0,1]), 0.01, fc='red', alpha = 0.4)
+    ax.add_patch(circle)
+    circle = Circle( (traj_xy[num_traj-1,0], traj_xy[num_traj-1,1]), 0.01, fc='green', alpha = 0.4)
+    ax.add_patch(circle)
+
+    plot(traj_xy[:,0], traj_xy[:,1], 'b-')
     for i in range(num_traj):
-        ellipse = patches.Ellipse( (traj_xy[i,0], traj_xy[i,1]), 2*traj_std[i,0], 2*traj_std[i,1], fc='blue', alpha = 0.2)
-        ax.add_patch(ellipse)
-    """
-    plot(traj_xy[:,0], traj_xy[:,1], 'bo-')
-    grid()
-    show()
-    fig.savefig(save_name)
+        circle = Circle( (traj_xy[i,0], traj_xy[i,1]), traj_std[i,0]/4, fc='blue', alpha = 0.05)
+        ax.add_patch(circle)
+        
 
 if __name__ == "__main__":
     
     read_state_index()
     read_traj()
+    
+    fig = figure(1)
+    grid()
+    
+    if save_name != "none":
+        fig.savefig(save_name)
+    else:
+        show()

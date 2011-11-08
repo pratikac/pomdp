@@ -120,7 +120,7 @@ void MDP::write_pomdp_file()
 
     ofstream pout("sarsop/singleint.pomdp");
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
-    pout <<"discount: 0.95" << endl;
+    pout <<"discount: 0.99" << endl;
     pout <<"values: reward" << endl;
     pout <<"states: "<< graph->num_vert << endl;
     pout <<"actions: "<< graph->num_sampled_controls << endl;
@@ -144,7 +144,7 @@ void MDP::write_pomdp_file()
         pout<< tmp[i]/totprob<<" ";
     }
 #else
-    pout <<" uniform" << endl;
+    pout <<"uniform" << endl;
 #endif
     pout<<endl << endl;
     
@@ -173,7 +173,9 @@ void MDP::write_pomdp_file()
         {
             Vertex *v2 = graph->vlist[j];
             State obs_v2 = sys->observation(v2->s, true);
-            double ptmp = normal_val( obs_v1.x, sys->obs_noise, obs_v2.x, NUM_DIM_OBS);
+            double local_obs_variance[NUM_DIM_OBS] = {0};
+            sys->get_obs_variance(v1->s, local_obs_variance);
+            double ptmp = normal_val( obs_v1.x, local_obs_variance, obs_v2.x, NUM_DIM_OBS);
             totprob += ptmp;
 
             tmp.push_back(ptmp);
@@ -201,7 +203,20 @@ void MDP::write_pomdp_file()
         for(int j=0; j< graph->num_vert; j++)
         {
             Vertex *v1 = graph->vlist[j];
-            pout <<"R: " << i <<" : * : "<< j << " : * " << -(v1->s).norm2() -(sys->sampled_controls[i]).norm2()  << endl;
+#if 1
+            if(! sys->is_inside_goal(v1->s))
+            {
+                pout <<"R: " << i <<" : * : "<< j << " : * " <<  -0*(v1->s).norm2()\
+                    -0*(sys->sampled_controls[i]).norm2()  << endl;
+            }
+            else
+            {
+                pout <<"R: " << i <<" : * : "<< j << " : * " << 1000  << endl;
+            }
+#else
+            pout <<"R: " << i <<" : * : "<< j << " : * " << -(v1->s).norm2() + \
+                    -(sys->sampled_controls[i]).norm2()  << endl;
+#endif
         }
 
     }
@@ -402,14 +417,14 @@ Vertex* Graph::nearest_vertex(State s)
 
 int Graph::make_holding_time_constant_all()
 {
-    State min_state, max_control;
+    State holding_state, holding_control;
     for(int i=0; i<NUM_DIM; i++)
     {
-        min_state.x[i] = system->min_states[i];
-        max_control.x[i] = system->max_controls[i];
+        holding_state.x[i] = system->min_states[i];
+        holding_control.x[i] = system->max_controls[i];
     }
 
-    constant_holding_time = system->get_holding_time(min_state, max_control, gamma, num_vert+1);
+    constant_holding_time = system->get_holding_time(holding_state, holding_control, gamma, num_vert+1);
     cout<<"delta: " << constant_holding_time << endl;
     for(int i=0; i< num_vert; i++)
     {
@@ -439,7 +454,7 @@ int Graph::make_holding_time_constant(Vertex* from)
             double pself = 1 - constant_holding_time/from->holding_times[controls_iter_iter];
             if( (pself > 1) || (pself < 0) )
             {
-                cout<<"pself greater: " << from->holding_times[controls_iter_iter] << endl;
+                cout<<"pself greater: " << pself<<" holding_time: " << constant_holding_time << endl;
             }
             from->holding_times[controls_iter_iter] = constant_holding_time;
             
@@ -557,13 +572,15 @@ bool Graph::is_edge_free( Edge *etmp)
 #endif
 }
 
-int Graph::add_sample(bool is_goal)
+int Graph::add_sample(bool is_init, bool is_goal)
 {
     State stmp;
-    if(is_goal == false)
-        stmp = system->sample_state();
-    else
+    if(is_goal == true)
         stmp = system->sample_goal();
+    else if (is_init == true)
+        stmp = system->sample_init_state();
+    else
+        stmp = system->sample_state();
 
     Vertex *v = new Vertex(stmp);
     

@@ -27,8 +27,14 @@ int main()
 
 #include "mdp.h"
 
-int main()
+int main(int argc, char** argv)
 {
+    srand(0);
+    int tot_vert = 50;
+    if (argc > 1)
+        tot_vert = atoi(argv[1]);
+
+
     lcm_t *lcm = bot_lcm_get_global(NULL);
     bot_lcmgl_t *lcmgl = bot_lcmgl_init(lcm, "plotter");
     bot_lcmgl_line_width(lcmgl, 2.0);
@@ -41,12 +47,14 @@ int main()
     mdp.propagate_system();
     
     tic();
-    mdp.graph->add_sample(true);
+    mdp.graph->add_sample(true, false);
+    mdp.graph->add_sample(true, false);
+    mdp.graph->add_sample(true, false);
     cout<<"Start sampling" << endl;
-    for(int i=0; i < 50; i++)
+    for(int i=0; i < tot_vert; i++)
     {
-        mdp.graph->add_sample(false);
-        if(i % 100 == 0)
+        mdp.graph->add_sample();
+        if( (i % 100 == 0) && (i!= 0))
         {
             cout<<i<<" ";
             toc();

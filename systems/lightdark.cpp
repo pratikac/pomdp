@@ -1,4 +1,4 @@
-#include "singleint.h"
+#include "lightdark.h"
 
 System::System()
 {
@@ -7,6 +7,11 @@ System::System()
     
     min_goal = new double[NUM_DIM];
     max_goal = new double[NUM_DIM];
+    
+    min_left_beacon = new double[NUM_DIM];
+    max_left_beacon = new double[NUM_DIM];
+    min_right_beacon = new double[NUM_DIM];
+    max_right_beacon = new double[NUM_DIM];
 
     max_controls = new double [NUM_DIM];
     min_controls = new double[NUM_DIM];
@@ -20,19 +25,30 @@ System::System()
         min_states[i] = 0;
         max_states[i] = 0.5;
         
-        min_goal[i] = 0;
-        max_goal[i] = 0.05;
+        min_goal[i] = 0.1;
+        max_goal[i] = 0.15;
         
-        init_state.x[i] = 0.4;
-
         min_controls[i] = -0.1;
         max_controls[i] = 0.1;
     }
+    init_state.x[0] = 0.1;
+    init_state.x[1] = 0.45;
+   
+    // unused
+    min_left_beacon[0] = min_states[0];
+    min_left_beacon[1] = min_states[1] + (max_states[1] - min_states[1])*(4/5);
+    max_left_beacon[0] = min_states[0] + (max_states[0] - min_states[0])*1/5;
+    max_left_beacon[1] = max_states[1];
     
+    min_right_beacon[0] = 0.4;
+    max_right_beacon[0] = 0.5; 
+    min_right_beacon[1] = 0.0;
+    max_right_beacon[1] = 0.5;
+
     for(int i=0; i< NUM_DIM; i++)
     {
-        process_noise[i] = 1e-2;
-        obs_noise[i] = 1e-2;
+        process_noise[i] = 10;
+        obs_noise[i] = 10;
         init_var[i] = 1e-2;
     }
     sim_time_delta = 1e-3;
@@ -61,6 +77,11 @@ System::~System()
 
     delete[] min_goal;
     delete[] max_goal;
+    
+    delete[] min_left_beacon;
+    delete[] max_left_beacon;
+    delete[] min_right_beacon;
+    delete[] max_right_beacon;
 
     delete[] min_controls;
     delete[] max_controls;
@@ -124,7 +145,32 @@ State System::integrate(State& s, double duration, bool is_clean)
     return t;
 }
 
+State System::observation(State& s, bool is_clean)
+{
+    State t;
 
+    double *tmp = new double[NUM_DIM_OBS];
+    double *mean = new double[NUM_DIM_OBS];
+
+    if( !is_clean)  
+        multivar_normal( mean, obs_noise, tmp, NUM_DIM_OBS);
+    else
+    {
+        for(int i=0; i<NUM_DIM_OBS; i++)
+            tmp[i] = 0;
+    }
+
+    //double range = s.norm();
+    //double theta = atan2(s.x[1], s.x[0]);
+
+    t.x[0] = s.x[0] + tmp[0];
+    t.x[1] = s.x[1] + tmp[1];
+    
+    delete[] mean;
+    delete[] tmp;
+
+    return t;
+}
 
 void System::get_variance(State& s, double duration, double* var)
 {
@@ -135,33 +181,23 @@ void System::get_variance(State& s, double duration, double* var)
 }
 void System::get_obs_variance(State& s, double* var)
 {
-    for(int i=0; i<NUM_DIM_OBS; i++)
-    {   
-        var[i] = obs_noise[i];
+    if( (s.x[0] >= min_right_beacon[0]) && (s.x[0] <= max_right_beacon[0]) && \
+            (s.x[1] >= min_right_beacon[1]) && (s.x[1] <= max_right_beacon[1]) )
+    {
+        for(int i=0; i<NUM_DIM_OBS; i++)
+            var[i] = obs_noise[i]/1000;
+    }
+    else if( (s.x[0] >= min_left_beacon[0]) && (s.x[0] <= max_left_beacon[0]) && \
+            (s.x[1] >= min_left_beacon[1]) && (s.x[1] <= max_left_beacon[1]) )
+    {
+        for(int i=0; i<NUM_DIM_OBS; i++)
+            var[i] = obs_noise[i];
+    }
+    else
+    {
+        for(int i=0; i<NUM_DIM_OBS; i++)
+            var[i] = obs_noise[i];
     } 
 }
 
-State System::observation(State& s, bool is_clean)
-{
-    State t;
-
-    double *tmp = new double[NUM_DIM];
-    double *mean = new double[NUM_DIM];
-
-    if( !is_clean)  
-        multivar_normal( mean, obs_noise, tmp, NUM_DIM);
-    else
-    {
-        for(int i=0; i<NUM_DIM; i++)
-            tmp[i] = 0;
-    }
-
-    for(int i=0; i<NUM_DIM; i++)
-        t.x[i] = s.x[i] + tmp[i-1];
-
-    delete[] mean;
-    delete[] tmp;
-
-    return t;
-}
 

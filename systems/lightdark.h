@@ -1,7 +1,7 @@
-#ifndef __singleint_h__
-#define __singleint_h__
+#ifndef __lightdark_h__
+#define __lightdark_h__
 
-#define NAME    SINGLEINT
+#define NAME    LIGHTDARK
 
 #include "../utils/common.h"
 #define NUM_DIM         (2)
@@ -110,6 +110,11 @@ class System
         double *min_goal;
         double *max_goal;
 
+        double *min_left_beacon;
+        double *max_left_beacon;
+        double *min_right_beacon;
+        double *max_right_beacon;
+
         double *min_controls;
         double *max_controls;
          
@@ -142,7 +147,7 @@ class System
             den += (sqnum*absf.norm());
             
             double tmp = num/den;
-            if(tmp < 1e-3)
+            if(tmp < 1e-5)
             {
                 cout<<"holding time too less " << num << " " << den << endl;
                 getchar();
@@ -162,14 +167,23 @@ class System
         };
         bool is_free(State &s)
         {
-            return 1;
+            for(int i=0; i< NUM_DIM; i++)
+            {
+                if( (s.x[i] > max_states[i]) || (s.x[i] < min_states[i]))
+                    return false;
+            }
+            return true;
         };
         
         State sample_init_state()
         {
             State s;
-            multivar_normal(init_state.x, init_var, s.x, NUM_DIM);
-
+            while(1)
+            {
+                multivar_normal(init_state.x, init_var, s.x, NUM_DIM);
+                if(is_free(s))
+                    break;
+            }
             return s;
         }
 
@@ -180,6 +194,18 @@ class System
             double *min_p;
             double prob = RANDF;
             if(prob < 0.1)
+            {
+                max_p = max_right_beacon;
+                min_p = min_right_beacon;
+                //cout<<"got right beacon" << endl;
+            }
+            else if(prob < -0.2)
+            {
+                max_p = max_left_beacon;
+                min_p = min_left_beacon;
+                //cout<<"got left beacon" << endl;
+            }
+            else if(prob < 0.12)
             {
                 max_p = max_goal;
                 min_p = min_goal;

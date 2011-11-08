@@ -2,7 +2,7 @@
 #define __mdp_h__
 
 #include "utils/common.h"
-#include "systems/singleint.h"
+#include "systems/lightdark.h"
 
 class Edge;
 class Vertex;
@@ -133,7 +133,7 @@ class Graph{
 
         // algorithm functions
         
-        int add_sample(bool is_goal);
+        int add_sample(bool is_init=false, bool is_goal=false);
         bool is_edge_free( Edge *etmp);
         
         int make_holding_time_constant_all();
