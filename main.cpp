@@ -47,9 +47,9 @@ int main(int argc, char** argv)
     mdp.propagate_system();
     
     tic();
-    mdp.graph->add_sample(true, false);
-    mdp.graph->add_sample(true, false);
-    mdp.graph->add_sample(true, false);
+    mdp.graph->add_sample(true);
+    mdp.graph->add_sample(true);
+    mdp.graph->add_sample(true);
     cout<<"Start sampling" << endl;
     for(int i=0; i < tot_vert; i++)
     {

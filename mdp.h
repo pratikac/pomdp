@@ -133,7 +133,7 @@ class Graph{
 
         // algorithm functions
         
-        int add_sample(bool is_init=false, bool is_goal=false);
+        int add_sample(bool is_init=false);
         bool is_edge_free( Edge *etmp);
         
         int make_holding_time_constant_all();

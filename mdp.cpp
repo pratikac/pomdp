@@ -152,11 +152,19 @@ void MDP::write_pomdp_file()
     for(int i=0; i<graph->num_vert; i++)
     {
         Vertex *vtmp = graph->vlist[i];
-        for(list<Edge*>::iterator j= vtmp->edges_out.begin(); j != vtmp->edges_out.end(); j++)
+        if(!sys->is_inside_goal(vtmp->s))
         {
-            Edge *etmp = (*j);
-            pout <<"T: "<< etmp->control_index <<" : "<< etmp->from->index_in_vlist << " : "\
-                << etmp->to->index_in_vlist <<" " << etmp->transition_prob << endl;
+            for(list<Edge*>::iterator j= vtmp->edges_out.begin(); j != vtmp->edges_out.end(); j++)
+            {
+                Edge *etmp = (*j);
+                pout <<"T: "<< etmp->control_index <<" : "<< etmp->from->index_in_vlist << " : "\
+                    << etmp->to->index_in_vlist <<" " << etmp->transition_prob << endl;
+            }
+        }
+        else
+        {
+            pout <<"T: *" <<" : "<< vtmp->index_in_vlist << " : "\
+                << vtmp->index_in_vlist <<" " << 1 << endl;
         }
     }
     pout<< endl << endl;
@@ -206,12 +214,12 @@ void MDP::write_pomdp_file()
 #if 1
             if(! sys->is_inside_goal(v1->s))
             {
-                pout <<"R: " << i <<" : * : "<< j << " : * " <<  -0*(v1->s).norm2()\
+                pout <<"R: " << i <<" : * : "<< j << " : * " <<  -1 -0*(v1->s).norm2()\
                     -0*(sys->sampled_controls[i]).norm2()  << endl;
             }
             else
             {
-                pout <<"R: " << i <<" : * : "<< j << " : * " << 1000  << endl;
+                pout <<"R: " << i <<" : * : "<< j << " : * " << 100  << endl;
             }
 #else
             pout <<"R: " << i <<" : * : "<< j << " : * " << -(v1->s).norm2() + \
@@ -313,29 +321,39 @@ void Graph::plot_graph()
     bot_lcmgl_color4f(lcmgl, 0, 1, 0, 0.5);
     bot_lcmgl_point_size(lcmgl, 4.0);
     
-    bot_lcmgl_begin(lcmgl, GL_POINTS);
     
     //cout<<"rrg size: "<< vlist.size() << endl;
     for(vector<Vertex*>::iterator i = vlist.begin(); i != vlist.end(); i++)
     {
         Vertex *tstart = (*i);
-#if 0
+#if 1
         for(list<Edge*>::iterator eo = tstart->edges_out.begin(); eo != tstart->edges_out.end(); eo++)
         {
             Vertex *tend = (*eo)->to;
-            Edge *etmp = (*eo);
 
             //draw the edge
-            rrgout<<tstart->s.x[0]<<"\t"<<tstart->s.x[1]<<"\t"<<tend->s.x[0]<<"\t"<<tend->s.x[1]<<"\t"<<etmp->transition_prob<<"\t"<<etmp->transition_time<<endl;
+            
+            bot_lcmgl_begin(lcmgl, GL_LINES);
+            double toput1[3] ={0};
+            for(int i =0; i< NUM_DIM; i++)
+                toput1[i] = tstart->s.x[i];
+            bot_lcmgl_vertex3f(lcmgl, toput1[0], toput1[1], toput1[2]);
+            
+            for(int i =0; i< NUM_DIM; i++)
+                toput1[i] = tend->s.x[i];
+            bot_lcmgl_vertex3f(lcmgl, toput1[0], toput1[1], toput1[2]);
+            bot_lcmgl_end(lcmgl);
+
         }
 #endif
+        bot_lcmgl_begin(lcmgl, GL_POINTS);
         double toput[3] ={0};
         for(int i =0; i< NUM_DIM; i++)
             toput[i] = tstart->s.x[i];
 
         bot_lcmgl_vertex3f(lcmgl, toput[0], toput[1], toput[2]);
+        bot_lcmgl_end(lcmgl);
     }
-    bot_lcmgl_end(lcmgl);
 #endif
 }
 
@@ -572,12 +590,10 @@ bool Graph::is_edge_free( Edge *etmp)
 #endif
 }
 
-int Graph::add_sample(bool is_init, bool is_goal)
+int Graph::add_sample(bool is_init)
 {
     State stmp;
-    if(is_goal == true)
-        stmp = system->sample_goal();
-    else if (is_init == true)
+    if (is_init == true)
         stmp = system->sample_init_state();
     else
         stmp = system->sample_state();
@@ -602,12 +618,12 @@ int Graph::add_sample(bool is_init, bool is_goal)
         }
 #endif
     }
-    else 
+    else
     {
         if( connect_edges_approx(v) == 0 )
         {
             v->index_in_vlist = num_vert;
-            
+
             vlist.push_back(v);
             num_vert++;
             insert_into_state_tree(v);
@@ -680,6 +696,10 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
 
 int Graph::connect_edges_approx(Vertex* v)
 {
+    // don't draw outgoing edges to goal
+    if( system->is_inside_goal(v->s) )
+        return 0;
+
     v->controls.clear();
     v->controls_iter.clear();
     v->edges_out.clear();

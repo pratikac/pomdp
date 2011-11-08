@@ -25,14 +25,14 @@ System::System()
         min_states[i] = 0;
         max_states[i] = 0.5;
         
-        min_goal[i] = 0.1;
-        max_goal[i] = 0.15;
+        min_goal[i] = 0.0;
+        max_goal[i] = 0.05;
         
-        min_controls[i] = -0.1;
-        max_controls[i] = 0.1;
+        min_controls[i] = -0.3;
+        max_controls[i] = 0.3;
     }
-    init_state.x[0] = 0.1;
-    init_state.x[1] = 0.45;
+    init_state.x[0] = 0.3;
+    init_state.x[1] = 0.25;
    
     // unused
     min_left_beacon[0] = min_states[0];
@@ -40,15 +40,15 @@ System::System()
     max_left_beacon[0] = min_states[0] + (max_states[0] - min_states[0])*1/5;
     max_left_beacon[1] = max_states[1];
     
-    min_right_beacon[0] = 0.4;
+    min_right_beacon[0] = 0.3;
     max_right_beacon[0] = 0.5; 
     min_right_beacon[1] = 0.0;
-    max_right_beacon[1] = 0.5;
+    max_right_beacon[1] = 0.2;
 
     for(int i=0; i< NUM_DIM; i++)
     {
         process_noise[i] = 10;
-        obs_noise[i] = 10;
+        obs_noise[i] = 100;
         init_var[i] = 1e-2;
     }
     sim_time_delta = 1e-3;

@@ -8,7 +8,7 @@ then
     ../../appl-0.95/src/pomdpsol -p 1e-4 -o singleint.policy singleint.pomdpx
 elif [ "$1" = "sim" ]
 then
-    ../../appl-0.95/src/pomdpsim --simLen=100 --simNum=100 --policy-file singleint.policy singleint.pomdpx
+    ../../appl-0.95/src/pomdpsim --simLen=100 --simNum=1 --policy-file singleint.policy singleint.pomdpx
 elif [ "$1" = "eval" ]
 then
     ../../appl-0.95/src/pomdpeval --simLen=100 --simNum=100 --policy-file singleint.policy singleint.pomdpx
