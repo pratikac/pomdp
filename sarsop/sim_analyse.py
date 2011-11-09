@@ -1,8 +1,11 @@
 #!/usr/bin/python
 
+import time
 from sys import *
 from pylab import *
 from matplotlib import patches
+import matplotlib.colors as mcolor
+import matplotlib.cm as cm
 import numpy as np
 
 state_array = []
@@ -17,6 +20,84 @@ else:
 def wstd(x,w):
     t = w.sum()
     return (((w*x**2).sum()*t-(w*x).sum()**2)/(t**2-(w**2).sum()))**.5
+
+def read_state_trajectories():
+    global state_array, NUM_DIM, NUM_STATES
+    
+    state_trajs = []
+    to_put = []
+
+    trajs = open("state_trajectories.dat", 'r')
+    if trajs:
+        lines = trajs.readlines()
+        for l in lines:
+            s = l.split(' ')
+            
+            num_steps = len(s) -1
+            if( len(s) > 3):
+                to_put = [int(s[x]) for x in range(num_steps)]
+                state_trajs.append(to_put)
+
+    trajs.close()
+
+    state_trajs = np.array(state_trajs)
+    
+    """
+    fig = figure(3)
+    fig.add_subplot(111, aspect='equal')
+    # create a hexbin map now for each trajectory
+    for i in range(len(state_trajs)):
+        curr_traj = np.array([ [state_array[x,0], state_array[x,1]] for x in state_trajs[i] ] )
+        clf()
+        scatter( curr_traj[:,0], curr_traj[:,1], marker='o', c='y', s= 25, alpha=0.7)
+        #hexbin(curr_traj[:,0], curr_traj[:,1], gridsize=10, cmap=cm.get_cmap('Jet'), alpha=0.9, mincnt=1)
+        fig.savefig("movie/"+str(i)+".png")
+    """
+    
+    fig = figure(1)
+    ax = fig.add_subplot(111, aspect='equal')
+    for i in range(len(state_trajs)):
+        curr_traj = np.array([ [state_array[x,0], state_array[x,1]] for x in state_trajs[i] ] )
+        plot(curr_traj[:,0], curr_traj[:,1], 'b-', lw=0.5, alpha=0.2)
+        
+        len_traj = len(curr_traj)
+        circle = Circle( (curr_traj[0,0], curr_traj[0,1]), 0.01, fc='red', alpha = 0.4)
+        ax.add_patch(circle)
+        circle = Circle( (curr_traj[len_traj-1,0], curr_traj[len_traj-1,1]), 0.01, fc='green', alpha = 0.4)
+        ax.add_patch(circle)
+    
+    fig = figure(2)
+    state_traj_x = []
+    state_traj_y = []
+    for i in range(len(state_trajs)):
+        tmp_traj = []
+        for x in state_trajs[i]:
+            #if x not in tmp_traj:
+            tmp_traj.append(x)
+
+        curr_traj = np.array([ [state_array[x,0], state_array[x,1]] for x in tmp_traj ] )
+        tmp = np.array( [state_array[x,0] for x in tmp_traj])
+        state_traj_x.append(tmp)
+        tmp = np.array( [state_array[x,1] for x in tmp_traj])
+        state_traj_y.append(tmp)
+
+        #subplot(211)
+        #plot(curr_traj[:,0], 'bo-', lw=0.5, alpha=0.05)
+        #subplot(212)
+        #plot(curr_traj[:,1], 'bo-', lw=0.5, alpha=0.05)
+    
+    state_traj_x = np.array(state_traj_x)
+    state_traj_y = np.array(state_traj_y)
+    
+    subplot(211)
+    errorbar( np.linspace(0,100,num=101), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), marker='o', mfc='red', ecolor='red')
+    subplot(212)
+    errorbar(  np.linspace(0,100,num=101), np.average(state_traj_y, axis=0), yerr=np.std(state_traj_y, axis=0), marker='o', mfc='red', ecolor='red')
+
+    subplot(211)
+    grid()
+    subplot(212)
+    grid()
 
 def read_state_index():
     global state_array, NUM_DIM, NUM_STATES
@@ -40,6 +121,14 @@ def read_state_index():
     fig = figure(1)
     ax = fig.add_subplot(111, aspect='equal')
     scatter( state_array[:,0], state_array[:,1], c='y', marker='o', s=30, alpha=0.8)
+
+def draw_goal():
+    
+    fig = figure(1)
+    ax = fig.add_subplot(111, aspect='equal')
+
+    rect = Rectangle( (0.3, 0), 0.2, 0.2, fc='green', alpha = 0.4)
+    ax.add_patch(rect)
 
 def read_traj():
 
@@ -98,8 +187,13 @@ def read_traj():
 if __name__ == "__main__":
     
     read_state_index()
-    read_traj()
+    read_state_trajectories()
+    #draw_goal()
     
+    """
+    read_traj()
+    """
+
     fig = figure(1)
     grid()
     
@@ -107,3 +201,4 @@ if __name__ == "__main__":
         fig.savefig(save_name)
     else:
         show()
+

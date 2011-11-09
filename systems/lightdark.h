@@ -199,7 +199,7 @@ class System
                 min_p = min_right_beacon;
                 //cout<<"got right beacon" << endl;
             }
-            else if(prob < 0.15)
+            else if(prob < 0.12)
             {
                 //cout<<"sampled goal" << endl;
                 max_p = max_goal;

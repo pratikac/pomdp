@@ -120,7 +120,7 @@ void MDP::write_pomdp_file()
 
     ofstream pout("sarsop/singleint.pomdp");
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
-    pout <<"discount: 0.99" << endl;
+    pout <<"discount: 0.95" << endl;
     pout <<"values: reward" << endl;
     pout <<"states: "<< graph->num_vert << endl;
     pout <<"actions: "<< graph->num_sampled_controls << endl;
@@ -214,7 +214,7 @@ void MDP::write_pomdp_file()
 #if 1
             if(! sys->is_inside_goal(v1->s))
             {
-                pout <<"R: " << i <<" : * : "<< j << " : * " <<  -1 -0*(v1->s).norm2()\
+                pout <<"R: " << i <<" : * : "<< j << " : * " <<   -0*(v1->s).norm2()\
                     -0*(sys->sampled_controls[i]).norm2()  << endl;
             }
             else
@@ -442,7 +442,18 @@ int Graph::make_holding_time_constant_all()
         holding_control.x[i] = system->max_controls[i];
     }
 
-    constant_holding_time = system->get_holding_time(holding_state, holding_control, gamma, num_vert+1);
+    constant_holding_time = 1000;
+    for(int i=0; i< num_vert; i++)
+    {
+        Vertex* vtmp = vlist[i];
+        for(unsigned int j=0; j < vtmp->holding_times.size(); j++)
+        {
+            if(vtmp->holding_times[j] < constant_holding_time)
+                constant_holding_time = vtmp->holding_times[j];
+        }
+    }
+    constant_holding_time = constant_holding_time/10;
+
     cout<<"delta: " << constant_holding_time << endl;
     for(int i=0; i< num_vert; i++)
     {
@@ -472,7 +483,7 @@ int Graph::make_holding_time_constant(Vertex* from)
             double pself = 1 - constant_holding_time/from->holding_times[controls_iter_iter];
             if( (pself > 1) || (pself < 0) )
             {
-                cout<<"pself greater: " << pself<<" holding_time: " << constant_holding_time << endl;
+                cout<<"pself greater: " << pself<<" constant holding_time: " << constant_holding_time << endl;
             }
             from->holding_times[controls_iter_iter] = constant_holding_time;
             

@@ -25,14 +25,14 @@ System::System()
         min_states[i] = 0;
         max_states[i] = 0.5;
         
-        min_goal[i] = 0.0;
-        max_goal[i] = 0.05;
+        min_goal[i] = 0.1;
+        max_goal[i] = 0.15;
         
         min_controls[i] = -0.3;
         max_controls[i] = 0.3;
     }
-    init_state.x[0] = 0.3;
-    init_state.x[1] = 0.25;
+    init_state.x[0] = 0.4;
+    init_state.x[1] = 0.4;
    
     // unused
     min_left_beacon[0] = min_states[0];
@@ -47,9 +47,9 @@ System::System()
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        process_noise[i] = 10;
-        obs_noise[i] = 100;
-        init_var[i] = 1e-2;
+        process_noise[i] = 1;
+        obs_noise[i] = 1;
+        init_var[i] = 1e-3;
     }
     sim_time_delta = 1e-3;
     
@@ -160,8 +160,8 @@ State System::observation(State& s, bool is_clean)
             tmp[i] = 0;
     }
 
-    //double range = s.norm();
-    //double theta = atan2(s.x[1], s.x[0]);
+    double range = s.norm();
+    double theta = atan2(s.x[1], s.x[0]);
 
     t.x[0] = s.x[0] + tmp[0];
     t.x[1] = s.x[1] + tmp[1];

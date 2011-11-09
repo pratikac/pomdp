@@ -2,7 +2,7 @@
 #define __mdp_h__
 
 #include "utils/common.h"
-#include "systems/lightdark.h"
+#include "systems/singleint.h"
 
 class Edge;
 class Vertex;
