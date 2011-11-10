@@ -9,7 +9,7 @@ C_OBJS = $(C_SRCS:.c=.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 OBJS = $(C_OBJS) $(CPP_OBJS)
 
-INCS = -I./ -I systems/ -I utils/
+INCS = -I./ -I systems/ -I utils/ -I /home/pratik/apps/eigen
 LIBS = 
 
 CFLAGS = -Wall -g -pg -O0 `pkg-config --cflags bot2-core`

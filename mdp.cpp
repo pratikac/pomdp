@@ -44,37 +44,6 @@ MDP::~MDP()
     obs_times.clear();
 }
 
-void MDP::propagate_system()
-{
-    control.clear();
-    truth.clear();
-    obs.clear();
-    obs_times.clear();
-
-    System *sys = graph->system;
-
-    double curr_time = 0;
-    double max_time = max_obs_time;
-
-    State zero_control;
-
-    truth.push_back( sys->init_state);
-    control.push_back(sys->get_controller(sys->init_state));
-    
-    State scurr = sys->init_state;
-    while(curr_time < max_time)
-    {
-        control.push_back(sys->get_controller(scurr));
-        scurr = sys->integrate( truth.back(), sys->sim_time_delta, false);
-        truth.push_back( scurr);
-        
-        State next_obs = sys->observation( scurr, false);
-        obs.push_back(next_obs);
-        obs_times.push_back(curr_time);
-        curr_time += sys->sim_time_delta;
-    }
-}
-
 void MDP::draw_lcm_grid()
 {
     bot_lcmgl_color4f(lcmgl, 0, 0, 0, 0.5);
@@ -118,7 +87,7 @@ void MDP::write_pomdp_file()
     }
     sindex.close();
 
-    ofstream pout("sarsop/singleint.pomdp");
+    ofstream pout("sarsop/problem.pomdp");
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
     pout <<"discount: 0.95" << endl;
     pout <<"values: reward" << endl;
@@ -365,10 +334,10 @@ void MDP::plot_trajectory()
     bot_lcmgl_point_size(lcmgl, 4.0);
     
     bot_lcmgl_begin(lcmgl, GL_LINES);
-    for(list<State>::iterator i= truth.begin(); i != truth.end(); i++)
+    for(vector<State>::iterator i= truth.begin(); i != truth.end(); i++)
     {
         State& curr = *i;
-        list<State>::iterator j = i;
+        vector<State>::iterator j = i;
         j++;
 
         double toput1[3] ={0};

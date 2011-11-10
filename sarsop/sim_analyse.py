@@ -69,7 +69,7 @@ def read_state_trajectories():
     fig = figure(2)
     state_traj_x = []
     state_traj_y = []
-    for i in range(len(state_trajs)):
+    for i in range(len(state_trajs)/10):
         tmp_traj = []
         for x in state_trajs[i]:
             #if x not in tmp_traj:
@@ -81,10 +81,10 @@ def read_state_trajectories():
         tmp = np.array( [state_array[x,1] for x in tmp_traj])
         state_traj_y.append(tmp)
 
-        #subplot(211)
-        #plot(curr_traj[:,0], 'bo-', lw=0.5, alpha=0.05)
-        #subplot(212)
-        #plot(curr_traj[:,1], 'bo-', lw=0.5, alpha=0.05)
+        subplot(211)
+        plot(curr_traj[:,0], 'b-', lw=0.5, alpha=0.10)
+        subplot(212)
+        plot(curr_traj[:,1], 'b-', lw=0.5, alpha=0.10)
     
     state_traj_x = np.array(state_traj_x)
     state_traj_y = np.array(state_traj_y)
@@ -130,7 +130,7 @@ def draw_goal():
     rect = Rectangle( (0.3, 0), 0.2, 0.2, fc='green', alpha = 0.4)
     ax.add_patch(rect)
 
-def read_traj():
+def read_belief_traj():
 
     fp = open("singleint_sim.dat", 'r')
     if fp:
@@ -191,7 +191,7 @@ if __name__ == "__main__":
     #draw_goal()
     
     """
-    read_traj()
+    read_belief_traj()
     """
 
     fig = figure(1)

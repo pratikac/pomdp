@@ -236,8 +236,12 @@ class System
         void get_variance(State& s, double duration, double* var);
         State get_fdt(State& s, State& control, double duration);
         State get_controller(State& s);
-        State integrate(State& s, double duration, bool is_clean);
+        State integrate(State& s, State& control, double duration, bool is_clean);
+        State integrate_alpha(double alpha, State& s, State& control, double duration, bool is_clean);
         State observation(State& s, bool is_clean);
+        
+        int get_lgq_path(double dT, vector<State>& lgq_path, vector<State>& lqg_covar, \
+        vector<State>& lqg_control, double& total_cost);
 };
 
 

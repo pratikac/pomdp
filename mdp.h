@@ -162,7 +162,7 @@ class MDP{
         double max_obs_time;
         
         vector<State> control;
-        list<State> truth;
+        vector<State> truth;
         int obs_curr_index;
         vector<double> obs_times;
         vector<State> obs;
@@ -175,7 +175,22 @@ class MDP{
             graph->simulate_trajectory(max_obs_time);
             return 0;
         }
-        void propagate_system();
+        
+        int run_lqg()
+        {
+            if(graph->constant_holding_time < 1e-10)
+            {
+                cout<<"ERR: constant holding time = " << graph->constant_holding_time<<endl;
+                return 0;
+            }
+            vector<State> lqg_path, lqg_covar, lqg_control;
+            double total_cost = 0;
+            graph->system->get_lgq_path(graph->constant_holding_time, lqg_path, lqg_covar, lqg_control, total_cost);
+            
+            cout<<"LQG cost: "<< total_cost << endl;
+            
+            return 0;
+        }
         
         void draw_lcm_grid();
         void plot_trajectory();

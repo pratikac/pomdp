@@ -21,6 +21,9 @@
 #include <bot_vis/gl_util.h>
 #include "kdtree.h"
 
+#include <Eigen/Dense>
+using namespace Eigen;
+
 using namespace std;
 
 #define RANDF       (rand()/(RAND_MAX+1.0))
