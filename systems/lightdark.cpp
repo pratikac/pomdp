@@ -98,7 +98,7 @@ State System::get_fdt(State& s, State& control, double duration)
     State t;
     for(int i=0; i< NUM_DIM; i++)
     {
-        t.x[i] = (control.x[i])*duration;
+        t.x[i] = (-s.x[i] + control.x[i])*duration;
         //cout << t.x[i] << endl;
     }
     return t;
@@ -160,8 +160,8 @@ State System::observation(State& s, bool is_clean)
             tmp[i] = 0;
     }
 
-    double range = s.norm();
-    double theta = atan2(s.x[1], s.x[0]);
+    //double range = s.norm();
+    //double theta = atan2(s.x[1], s.x[0]);
 
     t.x[0] = s.x[0] + tmp[0];
     t.x[1] = s.x[1] + tmp[1];
@@ -200,4 +200,9 @@ void System::get_obs_variance(State& s, double* var)
     } 
 }
 
+int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_covar, \
+        vector<State>& lqg_control, double& total_cost)
+{
+    return 0;
+}
 

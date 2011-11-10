@@ -89,7 +89,7 @@ void MDP::write_pomdp_file()
 
     ofstream pout("sarsop/problem.pomdp");
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
-    pout <<"discount: 0.95" << endl;
+    pout <<"discount: 0.99" << endl;
     pout <<"values: reward" << endl;
     pout <<"states: "<< graph->num_vert << endl;
     pout <<"actions: "<< graph->num_sampled_controls << endl;
@@ -180,7 +180,7 @@ void MDP::write_pomdp_file()
         for(int j=0; j< graph->num_vert; j++)
         {
             Vertex *v1 = graph->vlist[j];
-#if 0
+#if 1
             if(! sys->is_inside_goal(v1->s))
             {
                 pout <<"R: " << i <<" : * : "<< j << " : * " <<   -0*(v1->s).norm2()\

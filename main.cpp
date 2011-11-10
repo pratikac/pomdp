@@ -42,7 +42,7 @@ int main(int argc, char** argv)
     mdp.graph->plot_graph();
     bot_lcmgl_switch_buffer(lcmgl);
 
-    mdp.run_lqg();
+    //mdp.run_lqg();
     cout<<"Finished" << endl;
 
     return 0;

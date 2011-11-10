@@ -23,7 +23,7 @@ policy_file=args.ifile+'.policy'
 if args.convert:
     os.system("src/pomdpconvert "+prob_file)
 if args.solve:
-    os.system("src/pomdpsol -p 1e-3 -o "+policy_file+" "+prob_file)
+    os.system("src/pomdpsol -p 1e-4 -o "+policy_file+" "+prob_file)
 if args.sim:
     os.system("src/pomdpsim --simLen="+args.simlen+" --simNum="+args.simnum+" --policy-file "+policy_file+" "+pomdp_file)
 

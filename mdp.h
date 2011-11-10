@@ -2,7 +2,7 @@
 #define __mdp_h__
 
 #include "utils/common.h"
-#include "systems/singleint.h"
+#include "systems/lightdark.h"
 
 class Edge;
 class Vertex;
@@ -178,17 +178,36 @@ class MDP{
         
         int run_lqg()
         {
+            ofstream lqg_traj("sarsop/lqg_trajectories.dat");
             if(graph->constant_holding_time < 1e-10)
             {
                 cout<<"ERR: constant holding time = " << graph->constant_holding_time<<endl;
                 return 0;
             }
+            
             vector<State> lqg_path, lqg_covar, lqg_control;
             double total_cost = 0;
-            graph->system->get_lgq_path(graph->constant_holding_time, lqg_path, lqg_covar, lqg_control, total_cost);
-            
-            cout<<"LQG cost: "<< total_cost << endl;
-            
+            for(int num_iter=0; num_iter<1000; num_iter++)
+            {
+                lqg_path.clear();
+                lqg_covar.clear();
+                lqg_control.clear();
+                total_cost = 0;
+                graph->system->get_lgq_path(graph->constant_holding_time, lqg_path, lqg_covar, lqg_control, total_cost);
+                
+                lqg_traj << "s:\t" << num_iter<<"\t"<< total_cost << endl;
+                for(unsigned int i=0; i< lqg_path.size(); i++)
+                {
+                    for(int j=0; j< NUM_DIM; j++)
+                        lqg_traj << lqg_path[i].x[j]<<"\t";
+                    
+                    for(int j=0; j< NUM_DIM; j++)
+                        lqg_traj << lqg_control[i].x[j]<<"\t";
+                    
+                    lqg_traj<<endl;
+                }
+            }
+            lqg_traj.close();
             return 0;
         }
         

@@ -25,15 +25,15 @@ System::System()
         
         init_state.x[i] = 0.4;
 
-        min_controls[i] = -0.1;
-        max_controls[i] = 0.1;
+        min_controls[i] = 0;
+        max_controls[i] = 0.5;
     }
     
     for(int i=0; i< NUM_DIM; i++)
     {
         process_noise[i] = 1e-2;
         obs_noise[i] = 1e-2;
-        init_var[i] = 1e-1;
+        init_var[i] = 1e-3;
     }
     sim_time_delta = 1e-3;
     
@@ -77,7 +77,7 @@ State System::get_fdt(State& s, State& control, double duration)
     State t;
     for(int i=0; i< NUM_DIM; i++)
     {
-        t.x[i] = (control.x[i])*duration;
+        t.x[i] = (-s.x[i] + control.x[i])*duration;
         //cout << t.x[i] << endl;
     }
     return t;
@@ -100,17 +100,25 @@ State System::integrate(State& s, State& control, double duration, bool is_clean
     double *mean = new double[NUM_DIM];
     double *tmp = new double[NUM_DIM];
 
+    double delta_t = 1e-2;
     for(int i=0; i<NUM_DIM; i++)
     {   
-        var[i] = process_noise[i]*( exp(duration) -1);
+        var[i] = process_noise[i]*delta_t;
         tmp[i] = 0;
         mean[i] = 0;
     }
-    if( !is_clean)  
-        multivar_normal( mean, var, tmp, NUM_DIM);
+    
+    double curr_time = 0;
+    while(curr_time < duration)
+    {
+        if( !is_clean)  
+            multivar_normal( mean, var, tmp, NUM_DIM);
 
-    for(int i=0; i<NUM_DIM; i++)
-        t.x[i] = exp(-duration)*control.x[i] + tmp[i];
+        for(int i=0; i<NUM_DIM; i++)
+            t.x[i] = ( -t.x[i] + control.x[i])*delta_t + tmp[i];
+
+        curr_time += delta_t;
+    }
 
     delete[] mean;
     delete[] tmp;
@@ -136,13 +144,13 @@ State System::integrate_alpha(double alpha, State& s, State& control, double dur
     }
 
     double curr_time = 0;
-    while(curr_time <= duration)
+    while(curr_time < duration)
     {
         if( !is_clean)  
             multivar_normal( mean, var, tmp, NUM_DIM);
 
         for(int i=0; i<NUM_DIM; i++)
-            t.x[i] = (alpha*t.x[i] + control.x[i])*delta_t + tmp[i];
+            t.x[i] = ( (alpha - 1)*t.x[i] + control.x[i])*delta_t  + t.x[i] + tmp[i];
 
         curr_time += delta_t;
     }
@@ -199,21 +207,22 @@ int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_
     lqg_covar.clear();
     lqg_control.clear();
 
-    double discount = 0.95;
-    double alpha = (discount-1)/2;
+    int traj_len = 100;
+    double discount = 0.99;
+    double alpha = (1-discount)/2/dT;
 
     lqg_path.push_back(init_state);
     
     State curr_state;
     multivar_normal(init_state.x, init_var, curr_state.x, NUM_DIM);
    
-    double K[100] = {0};
+    double *K = new double[traj_len];
     double P = 0;
     // solve for controller K offline, finite time discrete LQR
-    for(int i=99; i >= 0; i--)
+    for(int i=traj_len-1; i >= 0; i--)
     {   
-        K[i] = 1/(1 + P)*P*alpha;
-        P = 1 + K[i]*K[i] + (alpha - K[i])*(alpha-K[i])*P;
+        K[i] = 1/(1 + P)*P*(1+dT*(1+alpha));
+        P = 1 + K[i]*K[i] + (1+dT*(1+alpha) - K[i])*(1+dT*(1+alpha) -K[i])*P;
     }
     
     // initialize Kalman filter
@@ -223,7 +232,7 @@ int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_
         Q.x[j] = init_var[j];
 
     total_cost = 0;
-    for(unsigned int i=0; i< 100; i++)
+    for(int i=0; i< traj_len; i++)
     {
         State curr_control;
         for(int j=0; j<NUM_DIM;j++)
@@ -237,7 +246,7 @@ int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_
 
         for(int j=0; j < NUM_DIM; j++)
         {
-            Q.x[j] = Q.x[j]*pow((alpha-K[i])*dT,2) + process_noise[j]*dT;
+            Q.x[j] = Q.x[j]*pow( (alpha-1-K[i])*dT + 1, 2) + process_noise[j]*dT;
             double S = next_obs.x[j] - clean_obs.x[j];
             double L = Q.x[j]/(Q.x[j] + obs_noise[j]);
 
@@ -246,7 +255,7 @@ int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_
             Q.x[j] = (1 -L)*Q.x[j];
         }
 
-        total_cost += (pow(discount, i)*(next_state.norm2() + curr_control.norm2()));
+        total_cost += (0.5*exp(2*alpha*i*dT)*(next_state.norm2() + curr_control.norm2()));
         curr_xhat = next_xhat;
         curr_state = next_state;
 
@@ -256,5 +265,7 @@ int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_
         lqg_control.push_back(curr_control);
     }
     
+    delete [] K;
+
     return 0;
 }

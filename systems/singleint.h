@@ -126,7 +126,7 @@ class System
         
         double get_holding_time(State& s, State& control, double gamma, int num_vert)
         {
-            State absf = control;
+            State absf = control - s;
 
             double h = max(gamma * pow( log(num_vert+1.0)/(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
             double num = h*h;
