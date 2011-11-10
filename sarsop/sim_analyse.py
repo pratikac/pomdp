@@ -12,10 +12,14 @@ state_array = []
 NUM_DIM = 2
 NUM_STATES = 0
 
-if len(argv) > 1:
-    save_name = argv[1]
-else:
-    save_name = "none"
+nf1, nf2 = "none", "none"
+if len(argv) == 1:
+    nf1 = "none"
+    nf2 = "none"
+elif len(argv) <= 2:
+    nf1 = argv[1]
+elif len(argv) <= 3:
+    nf2 = argv[2]
 
 def wstd(x,w):
     t = w.sum()
@@ -31,7 +35,7 @@ def read_state_trajectories():
     if trajs:
         lines = trajs.readlines()
         for l in lines:
-            s = l.split(' ')
+            s = l.split('\t')
             
             num_steps = len(s) -1
             if( len(s) > 3):
@@ -41,7 +45,10 @@ def read_state_trajectories():
     trajs.close()
 
     state_trajs = np.array(state_trajs)
-    
+    num_traj = len(state_trajs)
+    traj_len = len(state_trajs[0])
+    print "num_traj: ", num_traj, " traj_len: ", traj_len
+
     """
     fig = figure(3)
     fig.add_subplot(111, aspect='equal')
@@ -60,16 +67,16 @@ def read_state_trajectories():
         curr_traj = np.array([ [state_array[x,0], state_array[x,1]] for x in state_trajs[i] ] )
         plot(curr_traj[:,0], curr_traj[:,1], 'b-', lw=0.5, alpha=0.2)
         
-        len_traj = len(curr_traj)
         circle = Circle( (curr_traj[0,0], curr_traj[0,1]), 0.01, fc='red', alpha = 0.4)
         ax.add_patch(circle)
-        circle = Circle( (curr_traj[len_traj-1,0], curr_traj[len_traj-1,1]), 0.01, fc='green', alpha = 0.4)
+        circle = Circle( (curr_traj[traj_len-1,0], curr_traj[traj_len-1,1]), 0.01, fc='green', alpha = 0.4)
         ax.add_patch(circle)
     
     fig = figure(2)
     state_traj_x = []
     state_traj_y = []
-    for i in range(len(state_trajs)/10):
+
+    for i in range(num_traj):
         tmp_traj = []
         for x in state_trajs[i]:
             #if x not in tmp_traj:
@@ -81,18 +88,18 @@ def read_state_trajectories():
         tmp = np.array( [state_array[x,1] for x in tmp_traj])
         state_traj_y.append(tmp)
 
-        subplot(211)
-        plot(curr_traj[:,0], 'b-', lw=0.5, alpha=0.10)
-        subplot(212)
-        plot(curr_traj[:,1], 'b-', lw=0.5, alpha=0.10)
+        #subplot(211)
+        #plot(curr_traj[:,0], 'b-', lw=0.5, alpha=0.10)
+        #subplot(212)
+        #plot(curr_traj[:,1], 'b-', lw=0.5, alpha=0.10)
     
     state_traj_x = np.array(state_traj_x)
     state_traj_y = np.array(state_traj_y)
     
     subplot(211)
-    errorbar( np.linspace(0,100,num=101), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), marker='o', mfc='red', ecolor='red')
+    errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='r-', ecolor='red')
     subplot(212)
-    errorbar(  np.linspace(0,100,num=101), np.average(state_traj_y, axis=0), yerr=np.std(state_traj_y, axis=0), marker='o', mfc='red', ecolor='red')
+    errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_y, axis=0), yerr=np.std(state_traj_y, axis=0), fmt='r-', ecolor='red')
 
     subplot(211)
     grid()
@@ -190,15 +197,14 @@ if __name__ == "__main__":
     read_state_trajectories()
     #draw_goal()
     
-    """
-    read_belief_traj()
-    """
-
     fig = figure(1)
     grid()
+    if(nf1 != "none"):
+        fig.savefig(nf1)
     
-    if save_name != "none":
-        fig.savefig(save_name)
-    else:
-        show()
+    fig = figure(2)
+    if(nf2 != "none"):
+        fig.savefig(nf2)
 
+    if( (nf1 == "none") or (nf2 =="none")):
+        show()

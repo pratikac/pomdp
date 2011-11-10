@@ -180,7 +180,7 @@ void MDP::write_pomdp_file()
         for(int j=0; j< graph->num_vert; j++)
         {
             Vertex *v1 = graph->vlist[j];
-#if 1
+#if 0
             if(! sys->is_inside_goal(v1->s))
             {
                 pout <<"R: " << i <<" : * : "<< j << " : * " <<   -0*(v1->s).norm2()\
