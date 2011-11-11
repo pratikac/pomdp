@@ -183,7 +183,7 @@ void MDP::write_pomdp_file()
 #if 1
             if(! sys->is_inside_goal(v1->s))
             {
-                pout <<"R: " << i <<" : * : "<< j << " : * " << -1 << endl;
+                pout <<"R: " << i <<" : * : "<< j << " : * " << 0 << endl;
             }
             else
             {
