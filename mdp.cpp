@@ -183,8 +183,7 @@ void MDP::write_pomdp_file()
 #if 1
             if(! sys->is_inside_goal(v1->s))
             {
-                pout <<"R: " << i <<" : * : "<< j << " : * " <<   -0*(v1->s).norm2()\
-                    -0*(sys->sampled_controls[i]).norm2()  << endl;
+                pout <<"R: " << i <<" : * : "<< j << " : * " << -1 << endl;
             }
             else
             {
@@ -295,7 +294,7 @@ void Graph::plot_graph()
     for(vector<Vertex*>::iterator i = vlist.begin(); i != vlist.end(); i++)
     {
         Vertex *tstart = (*i);
-#if 1
+#if 0
         for(list<Edge*>::iterator eo = tstart->edges_out.begin(); eo != tstart->edges_out.end(); eo++)
         {
             Vertex *tend = (*eo)->to;
@@ -688,7 +687,7 @@ int Graph::connect_edges_approx(Vertex* v)
     system->get_key(v->s, key);
 
     double bowlr = max(gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
-    // cout<<"bowlr: " << bowlr << endl;
+    //cout<<"bowlr: " << bowlr << endl;
 
     kdres *res;
     res = kd_nearest_range(state_tree, key, bowlr );

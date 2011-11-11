@@ -233,6 +233,9 @@ int main(int argc, char **argv)
             {
             	traj_out << tmp[t2] << "\t";
             }
+            for(unsigned int t2 = tmp.size(); t2 < 3; t2++)
+            	traj_out << 0 << "\t";
+
             traj_out << endl;
         }
         traj_out.close();

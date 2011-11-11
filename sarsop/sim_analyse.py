@@ -9,7 +9,7 @@ import matplotlib.cm as cm
 import numpy as np
 
 state_array = []
-NUM_DIM = 2
+NUM_DIM = 1
 NUM_STATES = 0
 
 nf1, nf2 = "none", "none"
@@ -50,16 +50,23 @@ def read_lqg_trajectories():
     num_lqg = len(lqg_trajs)
     lqg_len = len(lqg_trajs[0])
     print "num_lqg: ", num_lqg, " lqg_len: ", lqg_len, "cost: ", np.average(costs)
-     
-    lqg_traj_x = np.array(lqg_trajs[:,:,0])
-    lqg_traj_y = np.array(lqg_trajs[:,:,1])
     
-    figure(2)
-    subplot(111)
-    errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), yerr=np.std(lqg_traj_x, axis=0), fmt='r-', ecolor='red')
+    if NUM_DIM == 2:
+        lqg_traj_x = np.array(lqg_trajs[:,:,0])
+        lqg_traj_y = np.array(lqg_trajs[:,:,1])
+    
+        figure(2)
+        subplot(111)
+        errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), yerr=np.std(lqg_traj_x, axis=0), fmt='r-', ecolor='red')
 
-    #subplot(212)
-    #errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_y, axis=0), yerr=np.std(lqg_traj_y, axis=0), fmt='r-', ecolor='red')
+        #subplot(212)
+        #errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_y, axis=0), yerr=np.std(lqg_traj_y, axis=0), fmt='r-', ecolor='red')
+    elif NUM_DIM==1:
+        lqg_traj_x = np.array(lqg_trajs[:,:,0])
+    
+        figure(2)
+        subplot(111)
+        errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), yerr=np.std(lqg_traj_x, axis=0), fmt='r-', ecolor='red')
 
 def read_state_trajectories():
     global state_array, NUM_DIM, NUM_STATES
@@ -99,49 +106,53 @@ def read_state_trajectories():
         #hexbin(curr_traj[:,0], curr_traj[:,1], gridsize=10, cmap=cm.get_cmap('Jet'), alpha=0.9, mincnt=1)
         fig.savefig("movie/"+str(i)+".png")
     """
-    
+    """ 
     fig = figure(1)
     ax = fig.add_subplot(111, aspect='equal')
     for i in range(len(state_trajs)):
-        curr_traj = np.array([ [state_array[x,0], state_array[x,1]] for x in state_trajs[i] ] )
+        curr_traj = np.array([ [state_array[x,i] for i in range(NUM_DIM)] for x in state_trajs[i] ] )
+        
         plot(curr_traj[:,0], curr_traj[:,1], 'b-', lw=0.5, alpha=0.2)
         
         circle = Circle( (curr_traj[0,0], curr_traj[0,1]), 0.01, fc='red', alpha = 0.4)
         ax.add_patch(circle)
         circle = Circle( (curr_traj[traj_len-1,0], curr_traj[traj_len-1,1]), 0.01, fc='green', alpha = 0.4)
         ax.add_patch(circle)
-    
+    """
+
+    fig = figure(2)
     state_traj_x = []
     state_traj_y = []
 
     for i in range(num_traj):
-        tmp_traj = []
-        for x in state_trajs[i]:
-            #if x not in tmp_traj:
-            tmp_traj.append(x)
-
-        curr_traj = np.array([ [state_array[x,0], state_array[x,1]] for x in tmp_traj ] )
-        tmp = np.array( [state_array[x,0] for x in tmp_traj])
+        curr_traj = np.array([ [state_array[x,i] for i in range(NUM_DIM)] for x in state_trajs[i] ] )
+        
+        tmp = np.array( [state_array[x,0] for x in state_trajs[i]])
         state_traj_x.append(tmp)
-        tmp = np.array( [state_array[x,1] for x in tmp_traj])
-        state_traj_y.append(tmp)
+        
+        if NUM_DIM == 2:
+            tmp = np.array( [state_array[x,1] for x in state_trajs[i]])
+            state_traj_y.append(tmp)
 
         #subplot(211)
-        #plot(curr_traj[:,0], 'b-', lw=0.5, alpha=0.10)
+        plot(curr_traj[:,0], 'ro-', lw=0.5, alpha=0.05)
         #subplot(212)
         #plot(curr_traj[:,1], 'b-', lw=0.5, alpha=0.10)
     
     state_traj_x = np.array(state_traj_x)
     state_traj_y = np.array(state_traj_y)
     
-    fig = figure(2)
-    subplot(111)
-    errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
-    grid()
+    if NUM_DIM == 2:
+        subplot(211)
+        errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
+        grid()
     
-    #subplot(212)
-    #errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_y, axis=0), yerr=np.std(state_traj_y, axis=0), fmt='b-', ecolor='blue')
-    
+        subplot(212)
+        errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_y, axis=0), yerr=np.std(state_traj_y, axis=0), fmt='b-', ecolor='blue')
+        grid()
+    elif NUM_DIM==1:
+        errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='bo-', ecolor='blue')
+        grid()
 
 def read_state_index():
     global state_array, NUM_DIM, NUM_STATES
@@ -161,17 +172,20 @@ def read_state_index():
     state_array = state_array[:,1:]     # remove index
     NUM_STATES = len(state_array[:,0])
     print "num_states: ", NUM_STATES
-
+    
+    """
     fig = figure(1)
     ax = fig.add_subplot(111, aspect='equal')
     scatter( state_array[:,0], state_array[:,1], c='y', marker='o', s=30, alpha=0.8)
+    """
 
 def draw_goal():
     
-    fig = figure(1)
-    ax = fig.add_subplot(111, aspect='equal')
-
-    rect = Rectangle( (0.3, 0), 0.2, 0.2, fc='green', alpha = 0.4)
+    fig = figure(2)
+    ax = fig.add_subplot(111)
+    rect = Rectangle( (0, 0.8), 101, 0.2, fc='green', alpha = 0.4)
+    ax.add_patch(rect)
+    rect = Rectangle( (0, -1), 101, 0.2, fc='red', alpha = 0.4)
     ax.add_patch(rect)
 
 def read_belief_traj():
@@ -232,17 +246,25 @@ if __name__ == "__main__":
     
     read_state_index()
     read_state_trajectories()
-    read_lqg_trajectories()
-    #draw_goal()
+    #read_lqg_trajectories()
+    draw_goal()
     
+    """
     fig = figure(1)
     grid()
     if(nf1 != "none"):
         fig.savefig(nf1)
-    
+    """
+
     fig = figure(2)
-    xlim(0, 101)
-    
+    if NUM_DIM == 2:
+        subplot(211)
+        xlim(0, 101)
+        subplot(212)
+        xlim(0, 101)
+    elif NUM_DIM == 1:
+        xlim(0, 101)
+
     if(nf2 != "none"):
         fig.savefig(nf2)
 

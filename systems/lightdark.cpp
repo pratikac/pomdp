@@ -22,33 +22,26 @@ System::System()
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        min_states[i] = 0;
-        max_states[i] = 0.5;
+        min_states[i] = -1;
+        max_states[i] = 1;
         
-        min_goal[i] = 0.1;
-        max_goal[i] = 0.15;
+        min_goal[i] = -1;
+        max_goal[i] = -0.8;
         
-        min_controls[i] = -0.3;
-        max_controls[i] = 0.3;
-    }
-    init_state.x[0] = 0.4;
-    init_state.x[1] = 0.4;
-   
-    // unused
-    min_left_beacon[0] = min_states[0];
-    min_left_beacon[1] = min_states[1] + (max_states[1] - min_states[1])*(4/5);
-    max_left_beacon[0] = min_states[0] + (max_states[0] - min_states[0])*1/5;
-    max_left_beacon[1] = max_states[1];
+        min_controls[i] = -0.5;
+        max_controls[i] = 0.5;
     
-    min_right_beacon[0] = 0.3;
-    max_right_beacon[0] = 0.5; 
-    min_right_beacon[1] = 0.0;
-    max_right_beacon[1] = 0.2;
+        init_state.x[i] = 0;
+    
+        min_right_beacon[0] = -1.0;
+        max_right_beacon[0] = 1.0; 
+    }
+   
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        process_noise[i] = 1;
-        obs_noise[i] = 1;
+        process_noise[i] = 1e-4;
+        obs_noise[i] = 1e-3;
         init_var[i] = 1e-3;
     }
     sim_time_delta = 1e-3;
@@ -98,7 +91,7 @@ State System::get_fdt(State& s, State& control, double duration)
     State t;
     for(int i=0; i< NUM_DIM; i++)
     {
-        t.x[i] = (-s.x[i] + control.x[i])*duration;
+        t.x[i] = (control.x[i])*duration;
         //cout << t.x[i] << endl;
     }
     return t;
@@ -162,9 +155,9 @@ State System::observation(State& s, bool is_clean)
 
     //double range = s.norm();
     //double theta = atan2(s.x[1], s.x[0]);
-
-    t.x[0] = s.x[0] + tmp[0];
-    t.x[1] = s.x[1] + tmp[1];
+    
+    for(int i=0; i<NUM_DIM_OBS; i++)
+        t.x[i] = s.x[i] + tmp[i];
     
     delete[] mean;
     delete[] tmp;
@@ -181,23 +174,23 @@ void System::get_variance(State& s, double duration, double* var)
 }
 void System::get_obs_variance(State& s, double* var)
 {
-    if( (s.x[0] >= min_right_beacon[0]) && (s.x[0] <= max_right_beacon[0]) && \
-            (s.x[1] >= min_right_beacon[1]) && (s.x[1] <= max_right_beacon[1]) )
+    for(int i=0; i<NUM_DIM_OBS; i++)
+    {
+        var[i] = max(1*pow((0.9 - s.x[i]), 2), obs_noise[i]) + 1e-4;
+    }
+
+    /*
+    if( (s.x[0] >= min_right_beacon[0]) && (s.x[0] <= max_right_beacon[0]))
     {
         for(int i=0; i<NUM_DIM_OBS; i++)
             var[i] = obs_noise[i]/1000;
-    }
-    else if( (s.x[0] >= min_left_beacon[0]) && (s.x[0] <= max_left_beacon[0]) && \
-            (s.x[1] >= min_left_beacon[1]) && (s.x[1] <= max_left_beacon[1]) )
-    {
-        for(int i=0; i<NUM_DIM_OBS; i++)
-            var[i] = obs_noise[i];
     }
     else
     {
         for(int i=0; i<NUM_DIM_OBS; i++)
             var[i] = obs_noise[i];
-    } 
+    }
+    */
 }
 
 int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_covar, \

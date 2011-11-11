@@ -4,8 +4,8 @@
 #define NAME    LIGHTDARK
 
 #include "../utils/common.h"
-#define NUM_DIM         (2)
-#define NUM_DIM_OBS     (2)
+#define NUM_DIM         (1)
+#define NUM_DIM_OBS     (1)
 // no time in this algorithm
 
 class State
@@ -131,7 +131,7 @@ class System
         
         double get_holding_time(State& s, State& control, double gamma, int num_vert)
         {
-            State absf = control -s;
+            State absf = control;
 
             double h = max(gamma * pow( log(num_vert+1.0)/(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
             double num = h*h;
@@ -199,7 +199,7 @@ class System
                 min_p = min_right_beacon;
                 //cout<<"got right beacon" << endl;
             }
-            else if(prob < 0.12)
+            else if(prob < 0.2)
             {
                 //cout<<"sampled goal" << endl;
                 max_p = max_goal;
