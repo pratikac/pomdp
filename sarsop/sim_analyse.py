@@ -85,16 +85,8 @@ def read_state_trajectories():
             num_steps = len(s) -1
             if( len(s) > 3):
                 to_put = [int(s[x]) for x in range(num_steps)]
-                """
-                if( NUM_STATES < 0):
-                    print "NUM_STATES < 0"
-                else:
-                    if NUM_STATES in to_put:
-                        to_put.remove(NUM_STATES)
-                    if (NUM_STATES+1) in to_put:
-                        to_put.remove(NUM_STATES+1)
-                """
                 state_trajs.append(to_put)
+                
                 if len(to_put) > TRAJ_LEN:
                     TRAJ_LEN = len(to_put)
             else:
@@ -102,14 +94,15 @@ def read_state_trajectories():
 
     trajs.close()
     
-    num_traj = len(state_trajs)
-    
+    """
     for ct in range(num_traj):
         last = state_trajs[ct][-1]
         curr_len = len(state_trajs[ct])
         for ti in np.linspace(curr_len, TRAJ_LEN-1, TRAJ_LEN-curr_len):
             state_trajs[ct].append(last)
+    """
 
+    num_traj = len(state_trajs)
     state_trajs = np.array(state_trajs)
     traj_len = len(state_trajs[0])
     print "num_traj: ", num_traj , " traj_len: ", traj_len, " reward: ", np.average(rewards)
@@ -144,7 +137,7 @@ def read_state_trajectories():
     state_traj_y = []
 
     for i in range(num_traj):
-        curr_traj = np.array([ [state_array[x,i] for i in range(NUM_DIM)] for x in state_trajs[i] ] )
+        curr_traj = np.array([ [state_array[x,j] for j in range(NUM_DIM)] for x in state_trajs[i] ] )
         
         tmp = np.array([state_array[x,0] for x in state_trajs[i]])
         state_traj_x.append(tmp)
@@ -153,8 +146,8 @@ def read_state_trajectories():
             tmp = np.array([state_array[x,1] for x in state_trajs[i]])
             state_traj_y.append(tmp)
 
-        #subplot(211)
-        plot(curr_traj[:,0], 'ro', lw=0.5, alpha=0.05)
+        subplot(111)
+        plot(curr_traj[:,0], 'b-', lw=0.5, alpha=0.10)
         #subplot(212)
         #plot(curr_traj[:,1], 'ro', lw=0.5, alpha=0.05)
     
@@ -163,7 +156,7 @@ def read_state_trajectories():
     
     print state_traj_x.shape, state_traj_y.shape
     #print np.std(state_traj_x, axis=0)
-
+    
     if NUM_DIM == 2:
         subplot(211)
         errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
@@ -174,6 +167,7 @@ def read_state_trajectories():
         grid()
 
     elif NUM_DIM==1:
+        subplot(111)
         errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
         grid()
 
@@ -278,7 +272,7 @@ if __name__ == "__main__":
     if(nf1 != "none"):
         fig.savefig(nf1)
     """
-
+    """
     fig = figure(2)
     if NUM_DIM == 2:
         subplot(211)
@@ -289,7 +283,7 @@ if __name__ == "__main__":
         xlim(0, TRAJ_LEN)
         xlabel('time [No. of steps]')
         ylabel('x(t)')
-
+    """
     if(nf2 != "none"):
         fig.savefig(nf2)
 
