@@ -26,23 +26,23 @@ System::System()
         max_states[i] = 1;
         
         min_goal[i] = -1;
-        max_goal[i] = -0.8;
+        max_goal[i] = -0.9;
         
         min_controls[i] = -0.5;
         max_controls[i] = 0.5;
     
         init_state.x[i] = 0;
     
-        min_right_beacon[0] = -1.0;
+        min_right_beacon[0] = 0.8;
         max_right_beacon[0] = 1.0; 
     }
    
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        process_noise[i] = 1e-4;
-        obs_noise[i] = 0.01;
-        init_var[i] = 1e-3;
+        process_noise[i] = 2*1e-2;
+        obs_noise[i] = 1;
+        init_var[i] = 1e-2;
     }
     sim_time_delta = 1e-3;
     
@@ -174,12 +174,12 @@ void System::get_variance(State& s, double duration, double* var)
 }
 void System::get_obs_variance(State& s, double* var)
 {
+#if 0
     for(int i=0; i<NUM_DIM_OBS; i++)
     {
-        var[i] = max(1*pow((0.9 - s.x[i]), 2), obs_noise[i]) + 1e-4;
+        var[i] = obs_noise[i]*pow((0.9 - s.x[i]), 2) + 1e-4;
     }
-
-    /*
+#else    
     if( (s.x[0] >= min_right_beacon[0]) && (s.x[0] <= max_right_beacon[0]))
     {
         for(int i=0; i<NUM_DIM_OBS; i++)
@@ -190,7 +190,7 @@ void System::get_obs_variance(State& s, double* var)
         for(int i=0; i<NUM_DIM_OBS; i++)
             var[i] = obs_noise[i];
     }
-    */
+#endif
 }
 
 int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_covar, \

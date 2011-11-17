@@ -190,26 +190,27 @@ class System
         State sample_state()
         {
             State s;
-            double *max_p;
-            double *min_p;
+            double *max_p = max_states;
+            double *min_p = min_states;
+#if 1
             double prob = RANDF;
             if(prob < 0.1)
-            {
-                max_p = max_right_beacon;
-                min_p = min_right_beacon;
-                //cout<<"got right beacon" << endl;
-            }
-            else if(prob < 0.2)
             {
                 //cout<<"sampled goal" << endl;
                 max_p = max_goal;
                 min_p = min_goal;
+            }
+            else if(prob < 0.15)
+            {
+                max_p = max_right_beacon;
+                min_p = min_right_beacon;
             }
             else
             {
                 max_p = max_states;
                 min_p = min_states;
             }
+#endif
             while(1)
             {
                 for(int i=0; i< NUM_DIM; i++)

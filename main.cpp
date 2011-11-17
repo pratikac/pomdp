@@ -20,9 +20,8 @@ int main(int argc, char** argv)
     tic();
     mdp.graph->add_sample(true);
     mdp.graph->add_sample(true);
-    mdp.graph->add_sample(true);
     cout<<"Start sampling" << endl;
-    for(int i=0; i < tot_vert; i++)
+    for(int i=0; i < tot_vert-2; i++)
     {
         mdp.graph->add_sample();
         if( (i % 100 == 0) && (i!= 0))

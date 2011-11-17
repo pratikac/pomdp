@@ -57,7 +57,7 @@ endif
 
 CC            = gcc
 
-CFLAGS        = -w -O3 $(INCDIR) -msse2 -mfpmath=sse $(CYGWIN_CFLAGS) -march=native #-DDEBUG_TRACE_ON 
+CFLAGS        = -w -pg -O3 $(INCDIR) -msse2 -mfpmath=sse $(CYGWIN_CFLAGS) -march=native #-DDEBUG_TRACE_ON 
 
 CXX           = g++
 
@@ -72,7 +72,7 @@ INCDIR	      = -I./MathLib -I./Algorithms -I./Algorithms/HSVI -I./Algorithms/SAR
 
 LINKER	      = g++
 
-LDFLAGS	      = -L.
+LDFLAGS	      = -L. -pg
 
 LIBS	      = -lappl
 

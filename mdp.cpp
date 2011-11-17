@@ -91,11 +91,15 @@ void MDP::write_pomdp_file()
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
     pout <<"discount: 0.99" << endl;
     pout <<"values: reward" << endl;
-    pout <<"states: "<< graph->num_vert << endl;
-    pout <<"actions: "<< graph->num_sampled_controls << endl;
-    pout <<"observations: "<< graph->num_vert << endl;
-
+    pout <<"states: "<< graph->num_vert + 2<< endl;                         // other_state and goal_state
+    pout <<"actions: "<< graph->num_sampled_controls + 1 << endl;           // stopping action
+    pout <<"observations: "<< graph->num_vert + 2<< endl;
     pout << endl;
+
+    int goal_state_index = graph->num_vert;
+    int non_goal_state_index = graph->num_vert+1;
+    int stopping_action_index = graph->num_sampled_controls;
+    //cout<<"goal_state_index: " << goal_state_index<<" stopping_action: " << stopping_action_index << endl;
 
     pout <<"start: ";
     vector<double> tmp;
@@ -112,29 +116,46 @@ void MDP::write_pomdp_file()
     {
         pout<< tmp[i]/totprob<<" ";
     }
+    pout<<0<<" "<<0 << " ";                 // last two states
 #else
     pout <<"uniform" << endl;
 #endif
     pout<<endl << endl;
     
     pout<<"#Transition probabilities"<<endl;
+    // kushner
     for(int i=0; i<graph->num_vert; i++)
     {
         Vertex *vtmp = graph->vlist[i];
-        if(!sys->is_inside_goal(vtmp->s))
+        for(list<Edge*>::iterator j= vtmp->edges_out.begin(); j != vtmp->edges_out.end(); j++)
         {
-            for(list<Edge*>::iterator j= vtmp->edges_out.begin(); j != vtmp->edges_out.end(); j++)
-            {
-                Edge *etmp = (*j);
-                pout <<"T: "<< etmp->control_index <<" : "<< etmp->from->index_in_vlist << " : "\
-                    << etmp->to->index_in_vlist <<" " << etmp->transition_prob << endl;
-            }
+            Edge *etmp = (*j);
+            pout <<"T: "<< etmp->control_index <<" : "<< etmp->from->index_in_vlist << " : "\
+                << etmp->to->index_in_vlist <<" " << etmp->transition_prob << endl;
         }
-        else
+    }
+    // states -> goal + non_goal states
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        Vertex *vtmp = graph->vlist[i];
+        if( sys->is_inside_goal(vtmp->s) )
         {
-            pout <<"T: *" <<" : "<< vtmp->index_in_vlist << " : "\
-                << vtmp->index_in_vlist <<" " << 1 << endl;
+            pout <<"T: "<< stopping_action_index <<" : "<< vtmp->index_in_vlist << " : "\
+                << goal_state_index <<" " << 1 << endl;
         }
+        else{
+            pout <<"T: "<< stopping_action_index <<" : "<< vtmp->index_in_vlist << " : "\
+                << non_goal_state_index <<" " << 1 << endl;
+        }
+    }
+    // make goal + non_goal states stopping states for all controls
+    for(int i=0; i< graph->num_sampled_controls+1; i++)
+    {
+        pout <<"T: "<< i <<" : "<< goal_state_index << " : "\
+            << goal_state_index <<" " << 1 << endl;
+        pout <<"T: "<< i <<" : "<< non_goal_state_index << " : "\
+            << non_goal_state_index <<" " << 1 << endl;
+
     }
     pout<< endl << endl;
 
@@ -169,33 +190,47 @@ void MDP::write_pomdp_file()
             pout << tmp[j]/totprob <<" ";
 #endif
         }
+        pout << 0 <<" "<< 0;                // probability of being in the last two states is zero always
         pout<<endl;
     }
+
+    // add goal + non_goal state observations
+    pout <<"O: * : " << goal_state_index <<" : " << goal_state_index << " " << 1 << endl;
+    pout <<"O: * : " << non_goal_state_index <<" : " << non_goal_state_index << " " << 1 << endl;
+
+
     pout << endl;
     
     pout <<"#Rewards" << endl;
 
+#if 1
+    // lightdark
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        Vertex *v1 = graph->vlist[i];
+        if(sys->is_inside_goal(v1->s))
+            pout <<"R: " << stopping_action_index <<" : " << i <<" : * : * " << 1000 << endl;
+        else
+            pout <<"R: " << stopping_action_index <<" : " << i <<" : * : * " << -1000 << endl;
+
+        for(int j=0; j< graph->num_sampled_controls; j++)
+        {
+            //pout <<"R: " << j <<" : " << i <<" : * : * " << -1 << endl;
+        }
+    }
+#else
+    // single-integrator
     for(int i =0; i< graph->num_sampled_controls; i++)
     {
         for(int j=0; j< graph->num_vert; j++)
         {
             Vertex *v1 = graph->vlist[j];
-#if 1
-            if(! sys->is_inside_goal(v1->s))
-            {
-                pout <<"R: " << i <<" : * : "<< j << " : * " << 0 << endl;
-            }
-            else
-            {
-                pout <<"R: " << i <<" : * : "<< j << " : * " << 100  << endl;
-            }
-#else
             pout <<"R: " << i <<" : * : "<< j << " : * " << -(v1->s).norm2() + \
                     -(sys->sampled_controls[i]).norm2()  << endl;
-#endif
         }
 
     }
+#endif
     pout << endl;
 
     pout.close();
@@ -420,7 +455,7 @@ int Graph::make_holding_time_constant_all()
                 constant_holding_time = vtmp->holding_times[j];
         }
     }
-    constant_holding_time = constant_holding_time/10;
+    constant_holding_time = constant_holding_time;
 
     cout<<"delta: " << constant_holding_time << endl;
     for(int i=0; i< num_vert; i++)
@@ -429,6 +464,7 @@ int Graph::make_holding_time_constant_all()
     }
     return 0;
 }
+
 int Graph::make_holding_time_constant(Vertex* from)
 {
     list<Edge *>::iterator last_control_iter = from->edges_out.begin();
@@ -574,6 +610,8 @@ int Graph::add_sample(bool is_init)
     State stmp;
     if (is_init == true)
         stmp = system->sample_init_state();
+    else if(num_vert == 1)
+        stmp = system->sample_goal();
     else
         stmp = system->sample_state();
 
@@ -675,10 +713,6 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
 
 int Graph::connect_edges_approx(Vertex* v)
 {
-    // don't draw outgoing edges to goal
-    if( system->is_inside_goal(v->s) )
-        return 0;
-
     v->controls.clear();
     v->controls_iter.clear();
     v->edges_out.clear();

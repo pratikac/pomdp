@@ -10,7 +10,8 @@ import numpy as np
 
 state_array = []
 NUM_DIM = 1
-NUM_STATES = 0
+NUM_STATES = -1
+TRAJ_LEN = 10
 
 nf1, nf2 = "none", "none"
 if len(argv) == 1:
@@ -69,7 +70,7 @@ def read_lqg_trajectories():
         errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), yerr=np.std(lqg_traj_x, axis=0), fmt='r-', ecolor='red')
 
 def read_state_trajectories():
-    global state_array, NUM_DIM, NUM_STATES
+    global state_array, NUM_DIM, NUM_STATES, TRAJ_LEN
     
     state_trajs = []
     to_put = []
@@ -84,17 +85,33 @@ def read_state_trajectories():
             num_steps = len(s) -1
             if( len(s) > 3):
                 to_put = [int(s[x]) for x in range(num_steps)]
+                if( NUM_STATES < 0):
+                    print "NUM_STATES < 0"
+                else:
+                    if NUM_STATES in to_put:
+                        to_put.remove(NUM_STATES)
+                    if (NUM_STATES+1) in to_put:
+                        to_put.remove(NUM_STATES+1)
+                
                 state_trajs.append(to_put)
+                if len(to_put) > TRAJ_LEN:
+                    TRAJ_LEN = len(to_put)
             else:
                 rewards.append(float(s[1]))
 
     trajs.close()
+    
+    num_traj = len(state_trajs)
+    for ct in range(num_traj):
+        last = state_trajs[ct][-1]
+        curr_len = len(state_trajs[ct])
+        for ti in np.linspace(curr_len, TRAJ_LEN-1, TRAJ_LEN-curr_len):
+            state_trajs[ct].append(last)
 
     state_trajs = np.array(state_trajs)
-    num_traj = len(state_trajs)
     traj_len = len(state_trajs[0])
-    print "num_traj: ", num_traj, " traj_len: ", traj_len, " reward: ", np.average(rewards)
-
+    print "num_traj: ", num_traj , " traj_len: ", traj_len, " reward: ", np.average(rewards)
+    
     """
     fig = figure(3)
     fig.add_subplot(111, aspect='equal')
@@ -127,31 +144,34 @@ def read_state_trajectories():
     for i in range(num_traj):
         curr_traj = np.array([ [state_array[x,i] for i in range(NUM_DIM)] for x in state_trajs[i] ] )
         
-        tmp = np.array( [state_array[x,0] for x in state_trajs[i]])
+        tmp = np.array([state_array[x,0] for x in state_trajs[i]])
         state_traj_x.append(tmp)
         
         if NUM_DIM == 2:
-            tmp = np.array( [state_array[x,1] for x in state_trajs[i]])
+            tmp = np.array([state_array[x,1] for x in state_trajs[i]])
             state_traj_y.append(tmp)
 
         #subplot(211)
-        plot(curr_traj[:,0], 'ro-', lw=0.5, alpha=0.05)
+        #plot(curr_traj[:,0], 'ro', lw=0.5, alpha=0.05)
         #subplot(212)
-        #plot(curr_traj[:,1], 'b-', lw=0.5, alpha=0.10)
+        #plot(curr_traj[:,1], 'ro', lw=0.5, alpha=0.05)
     
     state_traj_x = np.array(state_traj_x)
     state_traj_y = np.array(state_traj_y)
     
+    print state_traj_x.shape, state_traj_y.shape
+
     if NUM_DIM == 2:
         subplot(211)
-        errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
+        errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
         grid()
     
         subplot(212)
-        errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_y, axis=0), yerr=np.std(state_traj_y, axis=0), fmt='b-', ecolor='blue')
+        errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_y, axis=0), yerr=np.std(state_traj_y, axis=0), fmt='b-', ecolor='blue')
         grid()
+
     elif NUM_DIM==1:
-        errorbar( np.linspace(0,traj_len,num=traj_len), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='bo-', ecolor='blue')
+        errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
         grid()
 
 def read_state_index():
@@ -259,11 +279,13 @@ if __name__ == "__main__":
     fig = figure(2)
     if NUM_DIM == 2:
         subplot(211)
-        xlim(0, 101)
+        xlim(0, TRAJ_LEN)
         subplot(212)
-        xlim(0, 101)
+        xlim(0, TRAJ_LEN)
     elif NUM_DIM == 1:
-        xlim(0, 101)
+        xlim(0, TRAJ_LEN)
+        xlabel('time [No. of steps]')
+        ylabel('x(t)')
 
     if(nf2 != "none"):
         fig.savefig(nf2)

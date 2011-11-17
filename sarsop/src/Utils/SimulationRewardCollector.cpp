@@ -29,7 +29,7 @@ void SimulationRewardCollector::addEntry(int currSim, double reward, double expR
 
 void SimulationRewardCollector::printReward(int currSim)
 {
-	int simDisplayInc = 1;
+	int simDisplayInc = 10;
 	if(simDisplayInc == 0)
 	{
 		simDisplayInc = 1;
