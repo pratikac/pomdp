@@ -28,17 +28,17 @@ System::System()
         init_state.x[i] = 0.4;
 
         min_controls[i] = 0;
-        max_controls[i] = 0.3;
+        max_controls[i] = 0.5;
     }
     
     for(int i=0; i< NUM_DIM; i++)
     {
         process_noise[i] = 1e-2;
         obs_noise[i] = 1e-2;
-        init_var[i] = 1e-2;
+        init_var[i] = 1e-3;
     }
     sim_time_delta = 1e-3;
-    discount = 0.95;
+    discount = 0.99;
 
     controls_tree = kd_create(NUM_DIM);
     // sample controls, add zero control to make any region as goal region
