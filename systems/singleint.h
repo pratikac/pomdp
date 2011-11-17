@@ -1,8 +1,6 @@
 #ifndef __singleint_h__
 #define __singleint_h__
 
-#define NAME    SINGLEINT
-
 #include "../utils/common.h"
 #define NUM_DIM         (2)
 #define NUM_DIM_OBS     (2)
@@ -99,6 +97,8 @@ class State
 class System
 {
     public:
+        
+        string name;
 
         double *obs_noise;
         double *process_noise;
@@ -114,6 +114,7 @@ class System
         double *max_controls;
          
         double sim_time_delta;
+        double discount;
 
         State init_state;
         vector<State> sampled_controls;

@@ -57,7 +57,7 @@ def read_lqg_trajectories():
         lqg_traj_y = np.array(lqg_trajs[:,:,1])
     
         figure(2)
-        subplot(111)
+        subplot(211)
         errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), yerr=np.std(lqg_traj_x, axis=0), fmt='r-', ecolor='red')
 
         #subplot(212)
@@ -85,6 +85,7 @@ def read_state_trajectories():
             num_steps = len(s) -1
             if( len(s) > 3):
                 to_put = [int(s[x]) for x in range(num_steps)]
+                """
                 if( NUM_STATES < 0):
                     print "NUM_STATES < 0"
                 else:
@@ -92,7 +93,7 @@ def read_state_trajectories():
                         to_put.remove(NUM_STATES)
                     if (NUM_STATES+1) in to_put:
                         to_put.remove(NUM_STATES+1)
-                
+                """
                 state_trajs.append(to_put)
                 if len(to_put) > TRAJ_LEN:
                     TRAJ_LEN = len(to_put)
@@ -102,6 +103,7 @@ def read_state_trajectories():
     trajs.close()
     
     num_traj = len(state_trajs)
+    
     for ct in range(num_traj):
         last = state_trajs[ct][-1]
         curr_len = len(state_trajs[ct])
@@ -152,7 +154,7 @@ def read_state_trajectories():
             state_traj_y.append(tmp)
 
         #subplot(211)
-        #plot(curr_traj[:,0], 'ro', lw=0.5, alpha=0.05)
+        plot(curr_traj[:,0], 'ro', lw=0.5, alpha=0.05)
         #subplot(212)
         #plot(curr_traj[:,1], 'ro', lw=0.5, alpha=0.05)
     
@@ -160,6 +162,7 @@ def read_state_trajectories():
     state_traj_y = np.array(state_traj_y)
     
     print state_traj_x.shape, state_traj_y.shape
+    #print np.std(state_traj_x, axis=0)
 
     if NUM_DIM == 2:
         subplot(211)
@@ -266,8 +269,8 @@ if __name__ == "__main__":
     
     read_state_index()
     read_state_trajectories()
-    #read_lqg_trajectories()
-    draw_goal()
+    read_lqg_trajectories()
+    #draw_goal()
     
     """
     fig = figure(1)

@@ -2,6 +2,8 @@
 
 System::System()
 {
+    name = "singleint";
+
     min_states = new double[NUM_DIM];
     max_states = new double[NUM_DIM];
     
@@ -26,17 +28,18 @@ System::System()
         init_state.x[i] = 0.4;
 
         min_controls[i] = 0;
-        max_controls[i] = 0.5;
+        max_controls[i] = 0.3;
     }
     
     for(int i=0; i< NUM_DIM; i++)
     {
         process_noise[i] = 1e-2;
         obs_noise[i] = 1e-2;
-        init_var[i] = 1e-3;
+        init_var[i] = 1e-2;
     }
     sim_time_delta = 1e-3;
-    
+    discount = 0.95;
+
     controls_tree = kd_create(NUM_DIM);
     // sample controls, add zero control to make any region as goal region
     for(int i=0; i< 10; i++)
@@ -168,6 +171,7 @@ void System::get_variance(State& s, double duration, double* var)
         var[i] = process_noise[i]*duration;
     } 
 }
+
 void System::get_obs_variance(State& s, double* var)
 {
     for(int i=0; i<NUM_DIM_OBS; i++)
@@ -208,7 +212,6 @@ int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_
     lqg_control.clear();
 
     int traj_len = 100;
-    double discount = 0.99;
     double alpha = (1-discount)/2/dT;
 
     lqg_path.push_back(init_state);

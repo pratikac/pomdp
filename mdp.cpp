@@ -74,7 +74,7 @@ void MDP::draw_lcm_grid()
 #endif
 };
 
-void MDP::write_pomdp_file()
+void MDP::write_pomdp_file_singleint()
 {
     System *sys = graph->system;
 
@@ -90,6 +90,122 @@ void MDP::write_pomdp_file()
     ofstream pout("sarsop/problem.pomdp");
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
     pout <<"discount: 0.99" << endl;
+    pout <<"values: reward" << endl;
+    pout <<"states: "<< graph->num_vert<< endl;
+    pout <<"actions: "<< graph->num_sampled_controls<< endl;
+    pout <<"observations: "<< graph->num_vert<< endl;
+    pout << endl;
+
+    pout <<"start: ";
+    vector<double> tmp;
+    double totprob = 0;
+#if 1
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        double prior = normal_val(sys->init_state.x, sys->init_var, graph->vlist[i]->s.x, NUM_DIM);
+        totprob += prior;
+        tmp.push_back(prior);
+    }
+    
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        pout<< tmp[i]/totprob<<" ";
+    }
+#else
+    pout <<"uniform" << endl;
+#endif
+    pout<<endl << endl;
+    
+    pout<<"#Transition probabilities"<<endl;
+    for(int i=0; i<graph->num_vert; i++)
+    {
+        Vertex *vtmp = graph->vlist[i];
+        if(!sys->is_inside_goal(vtmp->s))
+        {
+            for(list<Edge*>::iterator j= vtmp->edges_out.begin(); j != vtmp->edges_out.end(); j++)
+            {
+                Edge *etmp = (*j);
+                pout <<"T: "<< etmp->control_index <<" : "<< etmp->from->index_in_vlist << " : "\
+                    << etmp->to->index_in_vlist <<" " << etmp->transition_prob << endl;
+            }
+        }
+        else
+        {
+            pout <<"T: * : "<< vtmp->index_in_vlist << " : "\
+                    << vtmp->index_in_vlist <<" " << 1 << endl;
+        }
+    }
+    pout<< endl << endl;
+
+    pout <<"#Observation probabilities" << endl;
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        Vertex *v1 = graph->vlist[i];
+        State obs_v1 = sys->observation(v1->s, true);
+        
+        totprob = 0;
+        tmp.clear();
+        for(int j=0; j < graph->num_vert; j++)
+        {
+            Vertex *v2 = graph->vlist[j];
+            State obs_v2 = sys->observation(v2->s, true);
+            double local_obs_variance[NUM_DIM_OBS] = {0};
+            sys->get_obs_variance(v1->s, local_obs_variance);
+            double ptmp = normal_val( obs_v1.x, local_obs_variance, obs_v2.x, NUM_DIM_OBS);
+            totprob += ptmp;
+
+            tmp.push_back(ptmp);
+        }
+        pout <<"O: * : " << i <<" ";
+        for(int j=0; j < graph->num_vert; j++)
+        {
+#if 0
+            if( j != i)
+                pout << 0 << " ";
+            else
+                pout << 1 << " ";
+#else
+            pout << tmp[j]/totprob <<" ";
+#endif
+        }
+        pout<<endl;
+    }
+
+    pout << endl;
+
+    pout <<"#Rewards" << endl;
+
+    for(int i =0; i< graph->num_sampled_controls; i++)
+    {
+        for(int j=0; j< graph->num_vert; j++)
+        {
+            Vertex *v1 = graph->vlist[j];
+            pout <<"R: " << i <<" : * : "<< j << " : * " << -(v1->s).norm2() + \
+                    -(sys->sampled_controls[i]).norm2()  << endl;
+        }
+
+    }
+    pout << endl;
+
+    pout.close();
+}
+
+void MDP::write_pomdp_file_lightdark()
+{
+    System *sys = graph->system;
+
+    ofstream sindex("sarsop/state_index.dat");
+
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        sindex<<i<<"\t";
+        graph->vlist[i]->s.print(sindex);
+    }
+    sindex.close();
+
+    ofstream pout("sarsop/problem.pomdp");
+    pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
+    pout <<"discount: " << sys->discount << endl;
     pout <<"values: reward" << endl;
     pout <<"states: "<< graph->num_vert + 2<< endl;                         // other_state and goal_state
     pout <<"actions: "<< graph->num_sampled_controls + 1 << endl;           // stopping action
@@ -203,8 +319,6 @@ void MDP::write_pomdp_file()
     
     pout <<"#Rewards" << endl;
 
-#if 1
-    // lightdark
     for(int i=0; i< graph->num_vert; i++)
     {
         Vertex *v1 = graph->vlist[i];
@@ -218,19 +332,6 @@ void MDP::write_pomdp_file()
             //pout <<"R: " << j <<" : " << i <<" : * : * " << -1 << endl;
         }
     }
-#else
-    // single-integrator
-    for(int i =0; i< graph->num_sampled_controls; i++)
-    {
-        for(int j=0; j< graph->num_vert; j++)
-        {
-            Vertex *v1 = graph->vlist[j];
-            pout <<"R: " << i <<" : * : "<< j << " : * " << -(v1->s).norm2() + \
-                    -(sys->sampled_controls[i]).norm2()  << endl;
-        }
-
-    }
-#endif
     pout << endl;
 
     pout.close();
@@ -455,7 +556,7 @@ int Graph::make_holding_time_constant_all()
                 constant_holding_time = vtmp->holding_times[j];
         }
     }
-    constant_holding_time = constant_holding_time;
+    constant_holding_time = constant_holding_time/5;
 
     cout<<"delta: " << constant_holding_time << endl;
     for(int i=0; i< num_vert; i++)
@@ -608,10 +709,12 @@ bool Graph::is_edge_free( Edge *etmp)
 int Graph::add_sample(bool is_init)
 {
     State stmp;
-    if (is_init == true)
+    if (num_vert < 2)
         stmp = system->sample_init_state();
-    else if(num_vert == 1)
+    else if(num_vert < 4)
+    {
         stmp = system->sample_goal();
+    }
     else
         stmp = system->sample_state();
 
@@ -713,6 +816,12 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
 
 int Graph::connect_edges_approx(Vertex* v)
 {
+    if(system->name == "singleint")
+    {
+        if(system->is_inside_goal(v->s))
+            return 0;
+    }
+
     v->controls.clear();
     v->controls_iter.clear();
     v->edges_out.clear();

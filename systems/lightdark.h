@@ -1,12 +1,10 @@
 #ifndef __lightdark_h__
 #define __lightdark_h__
 
-#define NAME    LIGHTDARK
 
 #include "../utils/common.h"
 #define NUM_DIM         (1)
 #define NUM_DIM_OBS     (1)
-// no time in this algorithm
 
 class State
 {
@@ -99,6 +97,8 @@ class State
 class System
 {
     public:
+        
+        string name;
 
         double *obs_noise;
         double *process_noise;

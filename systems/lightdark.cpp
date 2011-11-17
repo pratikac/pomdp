@@ -2,6 +2,8 @@
 
 System::System()
 {
+    name = "lightdark";
+
     min_states = new double[NUM_DIM];
     max_states = new double[NUM_DIM];
     

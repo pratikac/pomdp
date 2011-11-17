@@ -2,7 +2,7 @@
 #define __mdp_h__
 
 #include "utils/common.h"
-#include "systems/lightdark.h"
+#include "systems/singleint.h"
 
 class Edge;
 class Vertex;
@@ -214,7 +214,8 @@ class MDP{
         void draw_lcm_grid();
         void plot_trajectory();
 
-        void write_pomdp_file();
+        void write_pomdp_file_lightdark();
+        void write_pomdp_file_singleint();
 };
 
 

@@ -18,10 +18,8 @@ int main(int argc, char** argv)
     mdp.draw_lcm_grid();
    
     tic();
-    mdp.graph->add_sample(true);
-    mdp.graph->add_sample(true);
     cout<<"Start sampling" << endl;
-    for(int i=0; i < tot_vert-2; i++)
+    for(int i=0; i < tot_vert; i++)
     {
         mdp.graph->add_sample();
         if( (i % 100 == 0) && (i!= 0))
@@ -35,13 +33,16 @@ int main(int argc, char** argv)
     mdp.graph->make_holding_time_constant_all();
     toc();
     
-    mdp.write_pomdp_file();
+    if(sys.name == "lightdark")
+        mdp.write_pomdp_file_lightdark();
+    else if(sys.name == "singleint")
+        mdp.write_pomdp_file_singleint();
 
     mdp.plot_trajectory();
     mdp.graph->plot_graph();
     bot_lcmgl_switch_buffer(lcmgl);
 
-    //mdp.run_lqg();
+    mdp.run_lqg();
     cout<<"Finished" << endl;
 
     return 0;
