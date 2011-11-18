@@ -47,7 +47,8 @@ System::System()
         init_var[i] = 1e-2;
     }
     sim_time_delta = 1e-3;
-    
+    discount = 0.95;
+
     controls_tree = kd_create(NUM_DIM);
     // sample controls, add zero control to make any region as goal region
     for(int i=0; i< 10; i++)

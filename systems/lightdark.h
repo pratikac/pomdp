@@ -119,6 +119,7 @@ class System
         double *max_controls;
          
         double sim_time_delta;
+        double discount;
 
         State init_state;
         vector<State> sampled_controls;

@@ -211,7 +211,7 @@ int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_
     lqg_covar.clear();
     lqg_control.clear();
 
-    int traj_len = 100;
+    int traj_len = 200;
     double alpha = (1-discount)/2/dT;
 
     lqg_path.push_back(init_state);

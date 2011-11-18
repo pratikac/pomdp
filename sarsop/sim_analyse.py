@@ -7,6 +7,7 @@ from matplotlib import patches
 import matplotlib.colors as mcolor
 import matplotlib.cm as cm
 import numpy as np
+import matplotlib.mlab as mlab
 
 state_array = []
 NUM_DIM = 1
@@ -51,7 +52,7 @@ def read_lqg_trajectories():
     num_lqg = len(lqg_trajs)
     lqg_len = len(lqg_trajs[0])
     print "num_lqg: ", num_lqg, " lqg_len: ", lqg_len, "cost: ", np.average(costs)
-    
+     
     if NUM_DIM == 2:
         lqg_traj_x = np.array(lqg_trajs[:,:,0])
         lqg_traj_y = np.array(lqg_trajs[:,:,1])
@@ -67,7 +68,12 @@ def read_lqg_trajectories():
     
         figure(2)
         subplot(111)
-        errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), yerr=np.std(lqg_traj_x, axis=0), fmt='r-', ecolor='red')
+        tmp1 = np.average(lqg_traj_x, axis=0) + np.std(lqg_traj_x, axis=0)
+        tmp2 = np.average(lqg_traj_x, axis=0) - np.std(lqg_traj_x, axis=0)
+        plot(np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), 'r-', label="LQG_mean")
+        plot(np.linspace(0,lqg_len,num=lqg_len), tmp1, 'r--', label="LQG variance")
+        plot(np.linspace(0,lqg_len,num=lqg_len), tmp2, 'r--')
+        legend()
 
 def read_state_trajectories():
     global state_array, NUM_DIM, NUM_STATES, TRAJ_LEN
@@ -94,15 +100,13 @@ def read_state_trajectories():
 
     trajs.close()
     
-    """
+    num_traj = len(state_trajs)
     for ct in range(num_traj):
         last = state_trajs[ct][-1]
         curr_len = len(state_trajs[ct])
         for ti in np.linspace(curr_len, TRAJ_LEN-1, TRAJ_LEN-curr_len):
             state_trajs[ct].append(last)
-    """
 
-    num_traj = len(state_trajs)
     state_trajs = np.array(state_trajs)
     traj_len = len(state_trajs[0])
     print "num_traj: ", num_traj , " traj_len: ", traj_len, " reward: ", np.average(rewards)
@@ -146,8 +150,8 @@ def read_state_trajectories():
             tmp = np.array([state_array[x,1] for x in state_trajs[i]])
             state_traj_y.append(tmp)
 
-        subplot(111)
-        plot(curr_traj[:,0], 'b-', lw=0.5, alpha=0.10)
+        #subplot(111)
+        #plot(curr_traj[:,0], 'b-', lw=0.5, alpha=0.10)
         #subplot(212)
         #plot(curr_traj[:,1], 'ro', lw=0.5, alpha=0.05)
     
@@ -155,8 +159,20 @@ def read_state_trajectories():
     state_traj_y = np.array(state_traj_y)
     
     print state_traj_x.shape, state_traj_y.shape
-    #print np.std(state_traj_x, axis=0)
     
+    state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=10) for i in range(TRAJ_LEN)])
+    state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=90) for i in range(TRAJ_LEN)])
+    state_traj_x_percentile = np.array([state_traj_x_percentile_10, state_traj_x_percentile_90])
+    #print state_traj_x_percentile_10
+    #print state_traj_x_percentile_90
+
+    subplot(111)
+    plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
+    plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/90 percentile')
+    plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
+    legend()
+    grid()
+    """
     if NUM_DIM == 2:
         subplot(211)
         errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
@@ -168,8 +184,9 @@ def read_state_trajectories():
 
     elif NUM_DIM==1:
         subplot(111)
-        errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
+        errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=state_traj_x_percentile, fmt='b-', ecolor='blue')
         grid()
+    """
 
 def read_state_index():
     global state_array, NUM_DIM, NUM_STATES
@@ -264,15 +281,13 @@ if __name__ == "__main__":
     read_state_index()
     read_state_trajectories()
     read_lqg_trajectories()
-    #draw_goal()
+    draw_goal()
     
-    """
     fig = figure(1)
     grid()
     if(nf1 != "none"):
         fig.savefig(nf1)
-    """
-    """
+    
     fig = figure(2)
     if NUM_DIM == 2:
         subplot(211)
@@ -283,7 +298,7 @@ if __name__ == "__main__":
         xlim(0, TRAJ_LEN)
         xlabel('time [No. of steps]')
         ylabel('x(t)')
-    """
+
     if(nf2 != "none"):
         fig.savefig(nf2)
 
