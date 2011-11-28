@@ -8,6 +8,7 @@ import matplotlib.colors as mcolor
 import matplotlib.cm as cm
 import numpy as np
 import matplotlib.mlab as mlab
+import os
 
 state_array = []
 NUM_DIM = 1
@@ -48,32 +49,33 @@ def read_lqg_trajectories():
 
     trajs.close()
     
-    lqg_trajs = np.array(lqg_trajs)
-    num_lqg = len(lqg_trajs)
-    lqg_len = len(lqg_trajs[0])
-    print "num_lqg: ", num_lqg, " lqg_len: ", lqg_len, "cost: ", np.average(costs)
-     
-    if NUM_DIM == 2:
-        lqg_traj_x = np.array(lqg_trajs[:,:,0])
-        lqg_traj_y = np.array(lqg_trajs[:,:,1])
-    
-        figure(2)
-        subplot(211)
-        errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), yerr=np.std(lqg_traj_x, axis=0), fmt='r-', ecolor='red')
+    if len(lqg_trajs):
+        lqg_trajs = np.array(lqg_trajs)
+        num_lqg = len(lqg_trajs)
+        lqg_len = len(lqg_trajs[0])
+        print "num_lqg: ", num_lqg, " lqg_len: ", lqg_len, "cost: ", np.average(costs)
 
-        #subplot(212)
-        #errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_y, axis=0), yerr=np.std(lqg_traj_y, axis=0), fmt='r-', ecolor='red')
-    elif NUM_DIM==1:
-        lqg_traj_x = np.array(lqg_trajs[:,:,0])
-    
-        figure(2)
-        subplot(111)
-        tmp1 = np.average(lqg_traj_x, axis=0) + np.std(lqg_traj_x, axis=0)
-        tmp2 = np.average(lqg_traj_x, axis=0) - np.std(lqg_traj_x, axis=0)
-        plot(np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), 'r-', label="LQG_mean")
-        plot(np.linspace(0,lqg_len,num=lqg_len), tmp1, 'r--', label="LQG variance")
-        plot(np.linspace(0,lqg_len,num=lqg_len), tmp2, 'r--')
-        legend()
+        if NUM_DIM == 2:
+            lqg_traj_x = np.array(lqg_trajs[:,:,0])
+            lqg_traj_y = np.array(lqg_trajs[:,:,1])
+
+            figure(2)
+            subplot(211)
+            errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), yerr=np.std(lqg_traj_x, axis=0), fmt='r-', ecolor='red')
+
+            #subplot(212)
+            #errorbar( np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_y, axis=0), yerr=np.std(lqg_traj_y, axis=0), fmt='r-', ecolor='red')
+        elif NUM_DIM==1:
+            lqg_traj_x = np.array(lqg_trajs[:,:,0])
+
+            figure(2)
+            subplot(111)
+            tmp1 = np.average(lqg_traj_x, axis=0) + np.std(lqg_traj_x, axis=0)
+            tmp2 = np.average(lqg_traj_x, axis=0) - np.std(lqg_traj_x, axis=0)
+            plot(np.linspace(0,lqg_len,num=lqg_len), np.average(lqg_traj_x, axis=0), 'r-', label="LQG_mean")
+            plot(np.linspace(0,lqg_len,num=lqg_len), tmp1, 'r--', label="LQG variance")
+            plot(np.linspace(0,lqg_len,num=lqg_len), tmp2, 'r--')
+            legend()
 
 def read_state_trajectories():
     global state_array, NUM_DIM, NUM_STATES, TRAJ_LEN
@@ -122,18 +124,20 @@ def read_state_trajectories():
         #hexbin(curr_traj[:,0], curr_traj[:,1], gridsize=10, cmap=cm.get_cmap('Jet'), alpha=0.9, mincnt=1)
         fig.savefig("movie/"+str(i)+".png")
     """
-    """ 
-    fig = figure(1)
-    ax = fig.add_subplot(111, aspect='equal')
-    for i in range(len(state_trajs)):
-        curr_traj = np.array([ [state_array[x,i] for i in range(NUM_DIM)] for x in state_trajs[i] ] )
-        
-        plot(curr_traj[:,0], curr_traj[:,1], 'b-', lw=0.5, alpha=0.2)
-        
-        circle = Circle( (curr_traj[0,0], curr_traj[0,1]), 0.01, fc='red', alpha = 0.4)
-        ax.add_patch(circle)
-        circle = Circle( (curr_traj[traj_len-1,0], curr_traj[traj_len-1,1]), 0.01, fc='green', alpha = 0.4)
-        ax.add_patch(circle)
+    
+    """
+    if NUM_DIM==2:
+        fig = figure(1)
+        ax = fig.add_subplot(111, aspect='equal')
+        for i in range(len(state_trajs)):
+            curr_traj = np.array([ [state_array[x,i] for i in range(NUM_DIM)] for x in state_trajs[i] ] )
+
+            plot(curr_traj[:,0], curr_traj[:,1], 'b-', lw=0.5, alpha=0.2)
+
+            circle = Circle( (curr_traj[0,0], curr_traj[0,1]), 0.01, fc='red', alpha = 0.4)
+            ax.add_patch(circle)
+            circle = Circle( (curr_traj[traj_len-1,0], curr_traj[traj_len-1,1]), 0.01, fc='green', alpha = 0.4)
+            ax.add_patch(circle)
     """
 
     fig = figure(2)
@@ -163,30 +167,34 @@ def read_state_trajectories():
     state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=10) for i in range(TRAJ_LEN)])
     state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=90) for i in range(TRAJ_LEN)])
     state_traj_x_percentile = np.array([state_traj_x_percentile_10, state_traj_x_percentile_90])
-    #print state_traj_x_percentile_10
-    #print state_traj_x_percentile_90
 
-    subplot(111)
-    plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
-    plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/90 percentile')
-    plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
-    legend()
-    grid()
-    """
     if NUM_DIM == 2:
+        state_traj_y_percentile_10 = np.array([mlab.prctile(state_traj_y[:,i],p=10) for i in range(TRAJ_LEN)])
+        state_traj_y_percentile_90 = np.array([mlab.prctile(state_traj_y[:,i],p=90) for i in range(TRAJ_LEN)])
+        state_traj_y_percentile = np.array([state_traj_y_percentile_10, state_traj_y_percentile_90])
+        
         subplot(211)
-        errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=np.std(state_traj_x, axis=0), fmt='b-', ecolor='blue')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/90 percentile')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
+        legend()
         grid()
     
         subplot(212)
-        errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_y, axis=0), yerr=np.std(state_traj_y, axis=0), fmt='b-', ecolor='blue')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_y, axis=0), 'b-', label='mean')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_y_percentile_10, 'b--', label='10/90 percentile')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_y_percentile_90, 'b--')
+        legend()
         grid()
 
     elif NUM_DIM==1:
         subplot(111)
-        errorbar( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), yerr=state_traj_x_percentile, fmt='b-', ecolor='blue')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/90 percentile')
+        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
+        legend()
         grid()
-    """
+
 
 def read_state_index():
     global state_array, NUM_DIM, NUM_STATES
@@ -216,15 +224,31 @@ def read_state_index():
 def draw_goal():
     
     fig = figure(2)
-    ax = fig.add_subplot(111)
-    rect = Rectangle( (0, 0.8), 101, 0.2, fc='green', alpha = 0.4)
-    ax.add_patch(rect)
-    rect = Rectangle( (0, -1), 101, 0.2, fc='red', alpha = 0.4)
-    ax.add_patch(rect)
+
+    if NUM_DIM == 1:
+        ax = subplot(111)
+        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
+        ax.add_patch(rect)
+        rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
+        ax.add_patch(rect)
+    
+    if NUM_DIM == 2:
+        ax = subplot(211)
+        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
+        ax.add_patch(rect)
+        rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
+        ax.add_patch(rect)
+
+        ax = subplot(212)
+        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
+        ax.add_patch(rect)
+        rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
+        ax.add_patch(rect)
+
 
 def read_belief_traj():
 
-    fp = open("singleint_sim.dat", 'r')
+    fp = open("belief_trajectory.dat", 'r')
     if fp:
         tmp = fp.readline()
         lines = fp.readlines()
@@ -242,6 +266,7 @@ def read_belief_traj():
                 #print a, float(s[1])
                 to_put[a] = float(s[1])
     
+        belief_traj.append(to_put)
     fp.close()
 
     #print belief_traj
@@ -251,38 +276,56 @@ def read_belief_traj():
     traj_std = []
     num_traj = len(belief_traj[:,0])
     for i in range(num_traj):
-        
+        #print belief_traj[i,:] 
         mx = np.average(state_array[:,0], weights=belief_traj[i,:])
-        my = np.average(state_array[:,1], weights=belief_traj[i,:])
-        traj_xy.append([mx, my])
+        traj_xy.append([mx])
         
         stdx = wstd(state_array[:,0], belief_traj[i,:])
-        stdy = wstd(state_array[:,1], belief_traj[i,:])
-        traj_std.append([stdx, stdy])
+        traj_std.append([stdx])
 
-    fig = figure(1)
     traj_xy = np.array(traj_xy)
     traj_std = np.array(traj_std)
-    ax = fig.add_subplot(111, aspect='equal')
-
-    circle = Circle( (traj_xy[0,0], traj_xy[0,1]), 0.01, fc='red', alpha = 0.4)
-    ax.add_patch(circle)
-    circle = Circle( (traj_xy[num_traj-1,0], traj_xy[num_traj-1,1]), 0.01, fc='green', alpha = 0.4)
-    ax.add_patch(circle)
-
-    plot(traj_xy[:,0], traj_xy[:,1], 'b-')
-    for i in range(num_traj):
-        circle = Circle( (traj_xy[i,0], traj_xy[i,1]), traj_std[i,0]/4, fc='blue', alpha = 0.05)
-        ax.add_patch(circle)
+    
+    print traj_std.shape, traj_xy.shape
+    
+    os.system('rm -rf movie/fig* movie/animation.avi')
+    
+    xarr = np.linspace(-1,1,1000)
+    for x in range(max(1,len(traj_xy))):
+        fig = figure(1)
+        ax = fig.add_subplot(111, aspect='equal')
         
+        yarr = 0*xarr;
+        for i in range(len(xarr)):
+            yarr[i] = 1/sqrt(2*3.1415)/traj_std[x]*exp(-0.5*(xarr[i] - traj_xy[x])**2)
+        plot(xarr, yarr, 'b-')
+        fill_between(xarr, yarr, 0*yarr, facecolor='blue', alpha=0.3)
+        
+        rect = Rectangle( (0.8, 4), 0.2, 0.2, fc='green', alpha = 0.4)
+        ax.add_patch(rect)
+        rect = Rectangle( (-1, 4), 0.2, 0.2, fc='red', alpha = 0.4)
+        ax.add_patch(rect)
+        rect = Rectangle( (-0.8, 4), 1.6, 0.2, fc='grey', alpha = 0.4)
+        ax.add_patch(rect)
+        ylim(0,4.2)
+        grid()
+        fname ='movie/fig%03d.png'%x
+        fig.savefig(fname)
+        fig.clf();
+        
+        #print traj_xy[x], traj_std[x]
+    
+    os.system("mencoder 'mf://movie/fig*.png' -mf type=png:fps=1 \
+              -ovc lavc -lavcopts vcodec=wmv2 -oac copy -o movie/animation.avi")
 
 if __name__ == "__main__":
     
     read_state_index()
     read_state_trajectories()
-    read_lqg_trajectories()
+    #read_lqg_trajectories()
     draw_goal()
-    
+    #read_belief_traj()
+
     fig = figure(1)
     grid()
     if(nf1 != "none"):
@@ -292,9 +335,16 @@ if __name__ == "__main__":
     if NUM_DIM == 2:
         subplot(211)
         xlim(0, TRAJ_LEN)
+        ylim(-1,1)
+        xlabel('time [No. of steps]')
+        ylabel('x(t)')
         subplot(212)
+        ylim(-1,1)
         xlim(0, TRAJ_LEN)
+        xlabel('time [No. of steps]')
+        ylabel('y(t)')
     elif NUM_DIM == 1:
+        ylim(-1,1)
         xlim(0, TRAJ_LEN)
         xlabel('time [No. of steps]')
         ylabel('x(t)')

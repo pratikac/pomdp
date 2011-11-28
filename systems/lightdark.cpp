@@ -35,8 +35,8 @@ System::System()
     
         init_state.x[i] = 0;
     
-        min_right_beacon[0] = 0.8;
-        max_right_beacon[0] = 1.0; 
+        min_right_beacon[i] = 0.8;
+        max_right_beacon[i] = 1.0; 
     }
    
 
@@ -182,8 +182,15 @@ void System::get_obs_variance(State& s, double* var)
     {
         var[i] = obs_noise[i]*pow((0.9 - s.x[i]), 2) + 1e-4;
     }
-#else    
-    if( (s.x[0] >= min_right_beacon[0]) && (s.x[0] <= max_right_beacon[0]))
+#else
+    bool flag = false;
+    if (NUM_DIM==1)
+        flag = (s.x[0] >= min_right_beacon[0]) && (s.x[0] <= max_right_beacon[0]);
+    else if(NUM_DIM==2)
+        flag = (s.x[0] >= min_right_beacon[0]) && (s.x[0] <= max_right_beacon[0])
+          &&  (s.x[1] >= min_right_beacon[1]) && (s.x[1] <= max_right_beacon[1]);
+    
+    if(flag)
     {
         for(int i=0; i<NUM_DIM_OBS; i++)
             var[i] = obs_noise[i]/1000;

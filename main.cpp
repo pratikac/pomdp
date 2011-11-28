@@ -30,19 +30,28 @@ int main(int argc, char** argv)
         // mdp.graph->print_rrg();
         // cout<<"getchar: "<< endl; getchar();
     }
+#if 1
+    //mdp.graph->constant_holding_time = 0.001;
+    for(int i=0; i< mdp.graph->num_vert; i++)
+    {
+        mdp.graph->connect_edges_approx(mdp.graph->vlist[i]);
+    }
+#else
     mdp.graph->make_holding_time_constant_all();
+#endif
     toc();
     
     if(sys.name == "lightdark")
         mdp.write_pomdp_file_lightdark();
     else if(sys.name == "singleint")
+    {
         mdp.write_pomdp_file_singleint();
-
+        mdp.run_lqg();
+    }
     mdp.plot_trajectory();
     mdp.graph->plot_graph();
     bot_lcmgl_switch_buffer(lcmgl);
 
-    mdp.run_lqg();
     cout<<"Finished" << endl;
 
     return 0;

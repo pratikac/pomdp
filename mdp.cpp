@@ -47,7 +47,7 @@ MDP::~MDP()
 void MDP::draw_lcm_grid()
 {
     bot_lcmgl_color4f(lcmgl, 0, 0, 0, 0.5);
-    
+
     bot_lcmgl_begin(lcmgl, GL_LINES);
     for(double x = -10; x < 10; x += 0.01)
     {
@@ -106,7 +106,7 @@ void MDP::write_pomdp_file_singleint()
         totprob += prior;
         tmp.push_back(prior);
     }
-    
+
     for(int i=0; i< graph->num_vert; i++)
     {
         pout<< tmp[i]/totprob<<" ";
@@ -115,7 +115,7 @@ void MDP::write_pomdp_file_singleint()
     pout <<"uniform" << endl;
 #endif
     pout<<endl << endl;
-    
+
     pout<<"#Transition probabilities"<<endl;
     for(int i=0; i<graph->num_vert; i++)
     {
@@ -132,7 +132,7 @@ void MDP::write_pomdp_file_singleint()
         else
         {
             pout <<"T: * : "<< vtmp->index_in_vlist << " : "\
-                    << vtmp->index_in_vlist <<" " << 1 << endl;
+                << vtmp->index_in_vlist <<" " << 1 << endl;
         }
     }
     pout<< endl << endl;
@@ -142,7 +142,7 @@ void MDP::write_pomdp_file_singleint()
     {
         Vertex *v1 = graph->vlist[i];
         State obs_v1 = sys->observation(v1->s, true);
-        
+
         totprob = 0;
         tmp.clear();
         for(int j=0; j < graph->num_vert; j++)
@@ -181,7 +181,7 @@ void MDP::write_pomdp_file_singleint()
         {
             Vertex *v1 = graph->vlist[j];
             pout <<"R: " << i <<" : * : "<< j << " : * " << -(v1->s).norm2() + \
-                    -(sys->sampled_controls[i]).norm2()  << endl;
+                -(sys->sampled_controls[i]).norm2()  << endl;
         }
 
     }
@@ -227,7 +227,7 @@ void MDP::write_pomdp_file_lightdark()
         totprob += prior;
         tmp.push_back(prior);
     }
-    
+
     for(int i=0; i< graph->num_vert; i++)
     {
         pout<< tmp[i]/totprob<<" ";
@@ -237,7 +237,7 @@ void MDP::write_pomdp_file_lightdark()
     pout <<"uniform" << endl;
 #endif
     pout<<endl << endl;
-    
+
     pout<<"#Transition probabilities"<<endl;
     // kushner
     for(int i=0; i<graph->num_vert; i++)
@@ -280,7 +280,7 @@ void MDP::write_pomdp_file_lightdark()
     {
         Vertex *v1 = graph->vlist[i];
         State obs_v1 = sys->observation(v1->s, true);
-        
+
         totprob = 0;
         tmp.clear();
         for(int j=0; j < graph->num_vert; j++)
@@ -316,7 +316,7 @@ void MDP::write_pomdp_file_lightdark()
 
 
     pout << endl;
-    
+
     pout <<"#Rewards" << endl;
 
     for(int i=0; i< graph->num_vert; i++)
@@ -343,7 +343,7 @@ Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl)
     lcmgl = in_lcmgl;
 
     system = &sys;
-   
+
     num_sampled_controls = system->sampled_controls.size();
 
     vlist.clear();
@@ -359,7 +359,7 @@ Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl)
         factor = 4/3*M_PI;
     else if(NUM_DIM == 4)
         factor = 0.5*M_PI*M_PI;
-    
+
     factor = 1;
     gamma = 2.1*pow( (1+1/(double)NUM_DIM), 1/(double)NUM_DIM) *pow(factor, -1/(double)NUM_DIM);
 };
@@ -376,7 +376,7 @@ Graph::~Graph()
     {
         delete *i;
     }
-    
+
     vlist.clear();
 
     kd_free(state_tree);
@@ -389,19 +389,19 @@ int Graph::vertex_delete_edges(Vertex* v)
     for(list<Edge *>::reverse_iterator i = v->edges_out.rbegin(); i != v->edges_out.rend(); i++)
     {
         //debug
-        
+
         Edge* etmp = (*i);
         //cout<<"elist: " << distance(elist.begin(), etmp->elist_iter) << endl;
         //cout<<"to_list: " << distance(etmp->to->edges_in.begin(), etmp->to_iter) << endl;
         //cout<<"from_list: " << distance(etmp->from->edges_out.begin(), etmp->from_iter) << endl;
-        
+
         elist.erase(etmp->elist_iter);
         etmp->to->edges_in.erase(etmp->to_iter);
         delete etmp;
     }
     v->edges_out.clear();
     //cout<<"delete_edges after: " << v->edges_out.size() << endl;
-    
+
     return 0;
 }
 
@@ -424,8 +424,8 @@ void Graph::plot_graph()
 #if 1
     bot_lcmgl_color4f(lcmgl, 0, 1, 0, 0.5);
     bot_lcmgl_point_size(lcmgl, 4.0);
-    
-    
+
+
     //cout<<"rrg size: "<< vlist.size() << endl;
     for(vector<Vertex*>::iterator i = vlist.begin(); i != vlist.end(); i++)
     {
@@ -436,13 +436,13 @@ void Graph::plot_graph()
             Vertex *tend = (*eo)->to;
 
             //draw the edge
-            
+
             bot_lcmgl_begin(lcmgl, GL_LINES);
             double toput1[3] ={0};
             for(int i =0; i< NUM_DIM; i++)
                 toput1[i] = tstart->s.x[i];
             bot_lcmgl_vertex3f(lcmgl, toput1[0], toput1[1], toput1[2]);
-            
+
             for(int i =0; i< NUM_DIM; i++)
                 toput1[i] = tend->s.x[i];
             bot_lcmgl_vertex3f(lcmgl, toput1[0], toput1[1], toput1[2]);
@@ -467,7 +467,7 @@ void MDP::plot_trajectory()
     double curr_time =0;
     bot_lcmgl_color4f(lcmgl, 1, 0, 0, 1);
     bot_lcmgl_point_size(lcmgl, 4.0);
-    
+
     bot_lcmgl_begin(lcmgl, GL_LINES);
     for(vector<State>::iterator i= truth.begin(); i != truth.end(); i++)
     {
@@ -480,11 +480,11 @@ void MDP::plot_trajectory()
             toput1[i] = curr.x[i];
 
         bot_lcmgl_vertex3f(lcmgl, toput1[0], toput1[1], toput1[2]);
-        
+
         if( (j) != truth.end() )
         {
             State& next = *(j);
-        
+
             double toput2[3] ={0};
             for(int i =0; i< NUM_DIM; i++)
                 toput2[i] = next.x[i];
@@ -499,12 +499,12 @@ void MDP::plot_trajectory()
     count = 0;
     bot_lcmgl_color4f(lcmgl, 0, 0, 1, 0.3);
     bot_lcmgl_point_size(lcmgl, 4.0);
-    
+
     bot_lcmgl_begin(lcmgl, GL_POINTS);
     for(vector<State>::iterator i= obs.begin(); i != obs.end(); i++)
     {
         State& curr = *i;
-        
+
         double toput1[3] ={0};
         for(int i =0; i< NUM_DIM; i++)
             toput1[i] = curr.x[i];
@@ -556,7 +556,7 @@ int Graph::make_holding_time_constant_all()
                 constant_holding_time = vtmp->holding_times[j];
         }
     }
-    constant_holding_time = constant_holding_time/10;
+    constant_holding_time = constant_holding_time;
 
     cout<<"delta: " << constant_holding_time << endl;
     for(int i=0; i< num_vert; i++)
@@ -575,7 +575,7 @@ int Graph::make_holding_time_constant(Vertex* from)
     for(list<Edge *>::iterator i = from->edges_out.begin(); i != from->edges_out.end(); i ++)
     {
         edges_num++;
-        
+
         list<Edge *>::iterator i_plus_one = i;
         i_plus_one++;
 
@@ -583,7 +583,7 @@ int Graph::make_holding_time_constant(Vertex* from)
         {
             // cout<<"controls_iter_iter: " << from->controls_iter[controls_iter_iter] << endl;
             // normalize between last_edge_count and edge_count
-            
+
             // add new edge
             double pself = 1 - constant_holding_time/from->holding_times[controls_iter_iter];
             if( (pself > 1) || (pself < 0) )
@@ -591,9 +591,9 @@ int Graph::make_holding_time_constant(Vertex* from)
                 cout<<"pself greater: " << pself<<" constant holding_time: " << constant_holding_time << endl;
             }
             from->holding_times[controls_iter_iter] = constant_holding_time;
-            
+
             Edge* eself = new Edge(from, from, pself, constant_holding_time);
-            
+
             eself->control = &(system->sampled_controls[controls_iter_iter]);
             eself->control_index = controls_iter_iter;
 
@@ -613,7 +613,7 @@ int Graph::make_holding_time_constant(Vertex* from)
                 etmp->transition_time = constant_holding_time;
                 //cout<<"wrote edge prob: "<< etmp->transition_prob << endl;
             }
-                        
+
             last_control_iter = i_plus_one;      // edges belonging to new control start from here
             controls_iter_iter++;
         }
@@ -632,7 +632,7 @@ void Graph::normalize_edges(Vertex *from)
     {
         edges_num++;
         totprob += (*i)->transition_prob;
-        
+
         list<Edge *>::iterator i_plus_one = i;
         i_plus_one++;
 
@@ -640,7 +640,7 @@ void Graph::normalize_edges(Vertex *from)
         {
             // cout<<"controls_iter_iter: " << from->controls_iter[controls_iter_iter] << endl;
             // normalize between last_edge_count and edge_count
-            
+
             if(totprob > 1.0/DBL_MAX)
             {
                 for(list<Edge *>::iterator j = last_control_iter;\
@@ -663,7 +663,7 @@ void Graph::normalize_edges(Vertex *from)
                 }
                 //cout<<"totprob is: "<< totprob << " [DITCH]" << endl;
             }
-            
+
             last_control_iter = i_plus_one;      // edges belonging to new control start from here
             totprob = 0;
             controls_iter_iter++;
@@ -712,14 +712,12 @@ int Graph::add_sample(bool is_init)
     if (num_vert < 2)
         stmp = system->sample_init_state();
     else if(num_vert < 4)
-    {
         stmp = system->sample_goal();
-    }
     else
         stmp = system->sample_state();
 
     Vertex *v = new Vertex(stmp);
-    
+
     if(num_vert == 0)
     {
         v->index_in_vlist = 0;
@@ -727,19 +725,16 @@ int Graph::add_sample(bool is_init)
         vlist.push_back(v);
         num_vert++;
         insert_into_state_tree(v);
-    
-#if 0
-        for(int i=0; i<50; i++)
-        {
-            State *sobs = new State();
-            *sobs = system->observation(v->s, false);
-            v->state_obs.push_back(sobs);
-            insert_into_obs_tree(sobs);
-        }
-#endif
     }
     else
     {
+#if 1
+        v->index_in_vlist = num_vert;
+
+        vlist.push_back(v);
+        num_vert++;
+        insert_into_state_tree(v);
+#else
         if( connect_edges_approx(v) == 0 )
         {
             v->index_in_vlist = num_vert;
@@ -747,15 +742,7 @@ int Graph::add_sample(bool is_init)
             vlist.push_back(v);
             num_vert++;
             insert_into_state_tree(v);
-#if 0
-            for(int i=0; i<50; i++)
-            {
-                State *sobs = new State();
-                *sobs = system->observation(v->s, false);
-                v->state_obs.push_back(sobs);
-                insert_into_obs_tree(sobs);
-            }
-#endif
+
             reconnect_edges_neighbors(v);
         }
         else
@@ -763,6 +750,7 @@ int Graph::add_sample(bool is_init)
             delete v;
             return 1;
         }
+#endif
     }
     return 0;
 }
@@ -770,7 +758,7 @@ int Graph::add_sample(bool is_init)
 int Graph::reconnect_edges_neighbors(Vertex* v)
 {
 #if 1
-    
+
     double key[NUM_DIM] ={0};
     system->get_key(v->s, key);
 
@@ -789,7 +777,7 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
         if(v1 != v)
         {
             // remove old edges
-            
+
             //cout<<"reconnecting vertex: " << v1->index_in_vlist << endl;
             vertex_delete_edges(v1);
             connect_edges_approx(v1);
@@ -798,7 +786,7 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
         kd_res_next(res);
     }
     kd_res_free(res);
-    
+
 #endif
 
 #if 0
@@ -829,7 +817,7 @@ int Graph::connect_edges_approx(Vertex* v)
     double key[NUM_DIM] ={0};
     system->get_key(v->s, key);
 
-    double bowlr = max(gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
+    double bowlr = gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM);
     //cout<<"bowlr: " << bowlr << endl;
 
     kdres *res;
@@ -843,13 +831,22 @@ int Graph::connect_edges_approx(Vertex* v)
 
     double *sys_var = new double[NUM_DIM];
     
+    State max_control;
+    State max_state;
+    for(int i=0; i<NUM_DIM; i++)
+    {
+        max_control.x[i] = system->max_controls[i];
+        max_state.x[i] = system->max_states[i];
+    }
+
     int num_edges = 0;
     for(int i = 0; i< num_sampled_controls; i++)
     {
         State *curr_control = &(system->sampled_controls[i]);
         v->controls.push_back( curr_control );
 
-        double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
+        double holding_time = system->get_holding_time(max_state, max_control, gamma, num_vert);
+        // double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
         v->holding_times.push_back(holding_time);
         //cout<<"ht: "<< holding_time << endl;
 
@@ -882,7 +879,7 @@ int Graph::connect_edges_approx(Vertex* v)
             }
             kd_res_next(res);
         }
-        
+
         kd_res_rewind(res);
         v->controls_iter.push_back(num_edges);      // this is the number of edges
     }
@@ -1115,7 +1112,7 @@ void Graph::plot_monte_carlo_density(char* filename)
         //cout<<"curr_prob: "<< curr_prob << endl;
 
         State& curr_state = curr_traj.back();
-        
+
         if(curr_prob > 1e-2)
         {
             double toput[3] ={0};

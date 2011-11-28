@@ -125,7 +125,7 @@ namespace momdp
 
     int SimulationEngine::runFor(int iters, ofstream* streamOut, double& reward, double& expReward, vector<int>& state_trajectory)
     {
-        //ofstream print_belief("singleint_sim.dat");
+        ofstream print_belief("belief_trajectory.dat");
         state_trajectory.clear();
 
         DEBUG_TRACE(cout << "runFor" << endl; );
@@ -216,8 +216,8 @@ namespace momdp
         vector<int> fhout(xDim,0);
         for(int timeIter = 0; timeIter < iters; timeIter++)
         { 
-            //print_belief<< 1 << endl;
-            //currBelSt->bvec->write(print_belief) << endl;
+            print_belief<< timeIter << endl;
+            currBelSt->bvec->write(print_belief) << endl;
             DEBUG_TRACE( cout << "timeIter " << timeIter << endl; );
 
             if(enableFiling && timeIter == 0)
@@ -481,8 +481,7 @@ namespace momdp
 
         }
 
-
-        //print_belief.close();
+        print_belief.close();
         return firstAction;
     }
 };
