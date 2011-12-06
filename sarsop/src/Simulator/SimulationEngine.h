@@ -36,7 +36,7 @@ namespace momdp
 
 
             void display(belief_vector& b, ostream& s);
-            int runFor(int iters, ofstream* streamOut, double& reward, double& expReward, vector<int>& state_trajectory);
+            int runFor(int iters, ofstream* streamOut, double& reward, double& expReward, vector<int>& state_trajectory, bool write_belief=false);
 
 
 

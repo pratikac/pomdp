@@ -209,7 +209,7 @@ void MDP::write_pomdp_file_lightdark()
     pout <<"values: reward" << endl;
     pout <<"states: "<< graph->num_vert + 2<< endl;                         // other_state and goal_state
     pout <<"actions: "<< graph->num_sampled_controls + 1 << endl;           // stopping action
-    pout <<"observations: "<< graph->num_vert + 2<< endl;
+    pout <<"observations: "<< sys->sampled_observations.size() + 2 << endl; // +2 for goal, non-goal states
     pout << endl;
 
     int goal_state_index = graph->num_vert;
@@ -283,19 +283,17 @@ void MDP::write_pomdp_file_lightdark()
 
         totprob = 0;
         tmp.clear();
-        for(int j=0; j < graph->num_vert; j++)
+        for(unsigned int j=0; j < sys->sampled_observations.size(); j++)
         {
-            Vertex *v2 = graph->vlist[j];
-            State obs_v2 = sys->observation(v2->s, true);
             double local_obs_variance[NUM_DIM_OBS] = {0};
             sys->get_obs_variance(v1->s, local_obs_variance);
-            double ptmp = normal_val( obs_v1.x, local_obs_variance, obs_v2.x, NUM_DIM_OBS);
+            double ptmp = normal_val( obs_v1.x, local_obs_variance, sys->sampled_observations[j].x, NUM_DIM_OBS);
             totprob += ptmp;
 
             tmp.push_back(ptmp);
         }
         pout <<"O: * : " << i <<" ";
-        for(int j=0; j < graph->num_vert; j++)
+        for(unsigned int j=0; j < sys->sampled_observations.size(); j++)
         {
 #if 0
             if( j != i)
@@ -311,8 +309,8 @@ void MDP::write_pomdp_file_lightdark()
     }
 
     // add goal + non_goal state observations
-    pout <<"O: * : " << goal_state_index <<" : " << goal_state_index << " " << 1 << endl;
-    pout <<"O: * : " << non_goal_state_index <<" : " << non_goal_state_index << " " << 1 << endl;
+    pout <<"O: * : " << goal_state_index <<" : " << sys->sampled_observations.size() << " " << 1 << endl;
+    pout <<"O: * : " << non_goal_state_index <<" : " << sys->sampled_observations.size()+1 << " " << 1 << endl;
 
 
     pout << endl;
@@ -585,7 +583,7 @@ int Graph::make_holding_time_constant(Vertex* from)
             // normalize between last_edge_count and edge_count
 
             // add new edge
-            double pself = 1 - constant_holding_time/from->holding_times[controls_iter_iter];
+            double pself = 1- constant_holding_time/from->holding_times[controls_iter_iter];
             if( (pself > 1) || (pself < 0) )
             {
                 cout<<"pself greater: " << pself<<" constant holding_time: " << constant_holding_time << endl;
@@ -845,8 +843,8 @@ int Graph::connect_edges_approx(Vertex* v)
         State *curr_control = &(system->sampled_controls[i]);
         v->controls.push_back( curr_control );
 
-        double holding_time = system->get_holding_time(max_state, max_control, gamma, num_vert);
-        // double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
+        // double holding_time = system->get_holding_time(max_state, max_control, gamma, num_vert);
+        double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
         v->holding_times.push_back(holding_time);
         //cout<<"ht: "<< holding_time << endl;
 

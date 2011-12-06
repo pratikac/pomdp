@@ -36,6 +36,7 @@ int main(int argc, char** argv)
     {
         mdp.graph->connect_edges_approx(mdp.graph->vlist[i]);
     }
+    mdp.graph->make_holding_time_constant_all();
 #else
     mdp.graph->make_holding_time_constant_all();
 #endif

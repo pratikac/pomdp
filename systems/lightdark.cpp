@@ -24,8 +24,8 @@ System::System()
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        min_states[i] = -1;
-        max_states[i] = 1;
+        min_states[i] = -2;
+        max_states[i] = 2;
         
         min_goal[i] = -1;
         max_goal[i] = -0.9;
@@ -35,7 +35,7 @@ System::System()
     
         init_state.x[i] = 0;
     
-        min_right_beacon[i] = 0.8;
+        min_right_beacon[i] = 0.6;
         max_right_beacon[i] = 1.0; 
     }
    
@@ -47,11 +47,11 @@ System::System()
         init_var[i] = 1e-2;
     }
     sim_time_delta = 1e-3;
-    discount = 0.95;
+    discount = 0.98;
 
     controls_tree = kd_create(NUM_DIM);
     // sample controls, add zero control to make any region as goal region
-    for(int i=0; i< 10; i++)
+    for(int i=0; i< 5; i++)
     {
         State ctmp = sample_control();
         sampled_controls.push_back(ctmp);
@@ -64,6 +64,14 @@ System::System()
 
     sampled_controls.push_back(ctmp);
     kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
+
+    sampled_observations.clear();
+    for(int i=0; i< 10; i++)
+    {
+        State sobs = sample_observation();
+        sampled_observations.push_back(sobs);
+        //sobs.print();
+    }
 }
 
 System::~System()

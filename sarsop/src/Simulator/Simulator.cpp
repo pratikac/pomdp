@@ -210,7 +210,7 @@ int main(int argc, char **argv)
             double reward = 0, expReward = 0;
 
             vector<int> curr_traj;
-            int firstAction = engine.runFor(p->simLen, foutStream, reward, expReward, curr_traj);
+            int firstAction = engine.runFor(p->simLen, foutStream, reward, expReward, curr_traj, p->write_belief);
             if(firstAction < 0)
             {
                 // something wrong happend, exit

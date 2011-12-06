@@ -92,6 +92,13 @@ class State
 
             which_stream<< endl;
         }
+        void print()
+        {
+            for(int i=0; i< NUM_DIM; i++)
+                cout<< x[i] << "\t";
+
+            cout<< endl;
+        }
 };
 
 class System
@@ -124,6 +131,7 @@ class System
         State init_state;
         vector<State> sampled_controls;
         kdtree* controls_tree; 
+        vector<State> sampled_observations;
 
         System();
         ~System();
@@ -186,6 +194,26 @@ class System
                     break;
             }
             return s;
+        }
+        
+        State sample_observation()
+        {
+            State s;
+            double *max_p = max_states;
+            double *min_p = min_states;
+            while(1)
+            {
+                for(int i=0; i< NUM_DIM; i++)
+                {
+                    s.x[i] = min_p[i] + RANDF*( max_p[i] - min_p[i]);
+                }
+
+                if( is_free(s) )
+                    break;
+            }
+
+            State obs_s = observation(s, false);
+            return obs_s;
         }
 
         State sample_state()

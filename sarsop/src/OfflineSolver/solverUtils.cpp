@@ -174,7 +174,7 @@ namespace momdp{
 		{ "simNum",			1, NULL, 'U' }, // Use ARG as the number of simulation runs (compulsory).
 		{ "srand",			1, NULL, 'R' }, // Set ARG as the random seed for simulation. It is the current time by default.
 		{ "output-file",		1, NULL, 'O' }, // Use ARG as the name for the output file that contains the simulation trace.
-
+		{ "write-belief",		1, NULL, 'Z'}, // for writing output belief
 
 	// ***** simulate only options
 		// --------- internal use
@@ -364,7 +364,9 @@ namespace momdp{
 			case 'R':
 				p.seed = atoi(optarg) >= 0 ? atoi(optarg) : time(0);
 				break;
-
+			case 'Z':
+				p.write_belief = true;
+				break;
 			case '?': // unknown option
 			case ':': // option with missing parameter
 				// getopt() prints an informative error message

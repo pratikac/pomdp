@@ -71,6 +71,7 @@ namespace momdp{
 		int simLen;
 		int simNum;
 		int seed;
+		bool write_belief;
 
 		const char* cmdName;
 		int strategy;
