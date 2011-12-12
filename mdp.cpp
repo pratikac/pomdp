@@ -79,13 +79,21 @@ void MDP::write_pomdp_file_singleint()
     System *sys = graph->system;
 
     ofstream sindex("sarsop/state_index.dat");
-
     for(int i=0; i< graph->num_vert; i++)
     {
         sindex<<i<<"\t";
         graph->vlist[i]->s.print(sindex);
     }
     sindex.close();
+    
+    ofstream cindex("sarsop/control_index.dat");
+    for(unsigned int i=0; i< sys->sampled_controls.size(); i++)
+    {
+        cindex<<i<<"\t";
+        sys->sampled_controls[i].print(cindex);
+    }
+    cindex.close();
+
 
     ofstream pout("sarsop/problem.pomdp");
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
@@ -195,13 +203,21 @@ void MDP::write_pomdp_file_lightdark()
     System *sys = graph->system;
 
     ofstream sindex("sarsop/state_index.dat");
-
     for(int i=0; i< graph->num_vert; i++)
     {
         sindex<<i<<"\t";
         graph->vlist[i]->s.print(sindex);
     }
     sindex.close();
+    
+    ofstream cindex("sarsop/control_index.dat");
+    for(unsigned int i=0; i< sys->sampled_controls.size(); i++)
+    {
+        cindex<<i<<"\t";
+        sys->sampled_controls[i].print(cindex);
+    }
+    cindex.close();
+
 
     ofstream pout("sarsop/problem.pomdp");
     pout <<"#This is an auto-generated pomdp file from the MDP\n" << endl;
@@ -707,10 +723,12 @@ bool Graph::is_edge_free( Edge *etmp)
 int Graph::add_sample(bool is_init)
 {
     State stmp;
-    if (num_vert < 2)
+    if (num_vert < 1)
         stmp = system->sample_init_state();
-    else if(num_vert < 4)
+    else if(num_vert < 2)
         stmp = system->sample_goal();
+    else if(num_vert < 3)
+        stmp = system->sample_light();
     else
         stmp = system->sample_state();
 
@@ -831,6 +849,7 @@ int Graph::connect_edges_approx(Vertex* v)
     
     State max_control;
     State max_state;
+    State zero_state;
     for(int i=0; i<NUM_DIM; i++)
     {
         max_control.x[i] = system->max_controls[i];
@@ -843,10 +862,10 @@ int Graph::connect_edges_approx(Vertex* v)
         State *curr_control = &(system->sampled_controls[i]);
         v->controls.push_back( curr_control );
 
-        // double holding_time = system->get_holding_time(max_state, max_control, gamma, num_vert);
-        double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
+        double holding_time = system->get_holding_time(max_state, max_control, gamma, num_vert);
+        // double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
         v->holding_times.push_back(holding_time);
-        //cout<<"ht: "<< holding_time << endl;
+        // cout<<"ht: "<< holding_time << endl;
 
         State stmp = system->get_fdt(v->s, *curr_control, holding_time);
         system->get_variance(v->s, holding_time, sys_var);

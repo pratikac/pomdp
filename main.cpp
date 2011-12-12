@@ -13,6 +13,7 @@ int main(int argc, char** argv)
     bot_lcmgl_line_width(lcmgl, 2.0);
     
     System sys;
+    sys.sample_control_observations(tot_vert);
     Graph graph(sys, lcmgl);
     MDP mdp(graph, lcmgl);
     mdp.draw_lcm_grid();
@@ -36,7 +37,7 @@ int main(int argc, char** argv)
     {
         mdp.graph->connect_edges_approx(mdp.graph->vlist[i]);
     }
-    mdp.graph->make_holding_time_constant_all();
+    // mdp.graph->make_holding_time_constant_all();
 #else
     mdp.graph->make_holding_time_constant_all();
 #endif

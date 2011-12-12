@@ -30,7 +30,7 @@ class State
             assert(which_dim < NUM_DIM);
             return x[which_dim];
         }
-        
+
         double norm2()
         {
             double sum = 0;
@@ -79,7 +79,7 @@ class State
             {
                 for(int i=0; i< NUM_DIM; i++)
                     x[i] = that.x[i];
-                
+
                 return *this;
             }
             else
@@ -104,7 +104,7 @@ class State
 class System
 {
     public:
-        
+
         string name;
 
         double *obs_noise;
@@ -113,7 +113,7 @@ class System
 
         double *min_states;
         double *max_states;
-        
+
         double *min_goal;
         double *max_goal;
 
@@ -124,7 +124,7 @@ class System
 
         double *min_controls;
         double *max_controls;
-         
+
         double sim_time_delta;
         double discount;
 
@@ -137,24 +137,22 @@ class System
         ~System();
 
         // functions
-        
+
         double get_holding_time(State& s, State& control, double gamma, int num_vert)
         {
             State absf = control;
 
-            double h = max(gamma * pow( log(num_vert+1.0)/(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
+            double h = gamma * pow( log(num_vert+1.0)/(num_vert+1.0), 1.0/(double)NUM_DIM);
             double num = h*h;
-            
-            for(int i=0; i<NUM_DIM; i++)
-                num = num*sq(max_states[i] - min_states[i]);
 
-            double sqnum = sqrt(num);
+            num = num*sq(max_states[0] - min_states[0]);
+
             double den = 0;
             for(int i=0; i< NUM_DIM; i++)
                 den += process_noise[i];
-            
-            den += (sqnum*absf.norm());
-            
+
+            den += (sqrt(num)*absf.norm());
+
             double tmp = num/den;
             if(tmp < 1e-5)
             {
@@ -163,7 +161,7 @@ class System
             }
             return num/(den);
         }
-        
+
         int get_key(State& s, double *key)
         {
             for(int i =0; i < NUM_DIM; i++)
@@ -183,7 +181,7 @@ class System
             }
             return true;
         };
-        
+
         State sample_init_state()
         {
             State s;
@@ -195,7 +193,7 @@ class System
             }
             return s;
         }
-        
+
         State sample_observation()
         {
             State s;
@@ -253,7 +251,7 @@ class System
             return s;
 
         }
-        
+
         State sample_control()
         {
             State c;
@@ -264,6 +262,16 @@ class System
 
             return c;
         }
+        State sample_light()
+        {
+            State g;
+            for(int i=0; i< NUM_DIM; i++)
+            {
+                g.x[i] = min_right_beacon[i] + RANDF*( max_right_beacon[i] - min_right_beacon[i]);
+            }
+            return g;
+        }
+
         State sample_goal()
         {
             State g;
@@ -289,9 +297,11 @@ class System
         State get_controller(State& s);
         State integrate(State& s, double duration, bool is_clean);
         State observation(State& s, bool is_clean);
-        
+
+        int sample_control_observations(int num_vert);
+
         int get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_covar, \
-        vector<State>& lqg_control, double& total_cost);
+                vector<State>& lqg_control, double& total_cost);
 };
 
 

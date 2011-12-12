@@ -24,14 +24,14 @@ System::System()
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        min_states[i] = -2;
-        max_states[i] = 2;
+        min_states[i] = -1;
+        max_states[i] = 1;
         
         min_goal[i] = -1;
         max_goal[i] = -0.9;
         
-        min_controls[i] = -0.5;
-        max_controls[i] = 0.5;
+        min_controls[i] = -1;
+        max_controls[i] = 1;
     
         init_state.x[i] = 0;
     
@@ -50,28 +50,7 @@ System::System()
     discount = 0.98;
 
     controls_tree = kd_create(NUM_DIM);
-    // sample controls, add zero control to make any region as goal region
-    for(int i=0; i< 5; i++)
-    {
-        State ctmp = sample_control();
-        sampled_controls.push_back(ctmp);
-        kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
-    }
 
-    State ctmp;
-    for(int i=0; i<NUM_DIM; i++)
-        ctmp.x[i] = 0;
-
-    sampled_controls.push_back(ctmp);
-    kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
-
-    sampled_observations.clear();
-    for(int i=0; i< 10; i++)
-    {
-        State sobs = sample_observation();
-        sampled_observations.push_back(sobs);
-        //sobs.print();
-    }
 }
 
 System::~System()
@@ -209,6 +188,35 @@ void System::get_obs_variance(State& s, double* var)
             var[i] = obs_noise[i];
     }
 #endif
+}
+
+int System::sample_control_observations(int num_vert)
+{
+    sampled_controls.clear();
+    // sample controls, add zero control to make any region as goal region
+    for(int i=0; i< 5*log(num_vert); i++)
+    {
+        State ctmp = sample_control();
+        sampled_controls.push_back(ctmp);
+        kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
+    }
+
+    State ctmp;
+    for(int i=0; i<NUM_DIM; i++)
+        ctmp.x[i] = 0;
+
+    sampled_controls.push_back(ctmp);
+    kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
+
+    sampled_observations.clear();
+    for(int i=0; i< 5*log(num_vert); i++)
+    {
+        State sobs = sample_observation();
+        sampled_observations.push_back(sobs);
+        //sobs.print();
+    }
+
+    return 0;
 }
 
 int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_covar, \

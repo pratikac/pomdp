@@ -172,7 +172,7 @@ class Graph:
         traj_probs = []
         traj_times = []
         max_time = u_traj[-1][0]
-        for traj_index in range(10000):
+        for traj_index in range(10):
             traj_curr = []
             curr_time = 0
             traj_time = []
@@ -225,10 +225,12 @@ class Graph:
         traj_std = array([wstd(trajs[:,i], traj_probs) for i in range(len(trajs[0,:]))])
         
         grid()
-        plot(traj_times[0], traj_avg, 'b-')
-        plot(traj_times[0], traj_avg-traj_std, 'b--')
+        plot(traj_times[0], traj_avg, 'b-', label='mean')
+        plot(traj_times[0], traj_avg-traj_std, 'b--', label='+/- std')
         plot(traj_times[0], traj_avg+traj_std, 'b--')
-        plot(linspace(0,max_time,1000), exp(-linspace(0,max_time,1000)), 'r-')
+        plot(linspace(0,max_time,1000), exp(-linspace(0,max_time,1000)), 'r-', label='cont. mean')
+        xlabel('t [s]')
+        ylabel( 'x(t), xd(t)')
         #plot(u_traj[:,0], u_traj[:,1], 'r-')
         show()
 
