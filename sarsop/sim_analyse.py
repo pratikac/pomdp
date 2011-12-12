@@ -312,8 +312,8 @@ def read_belief_traj():
                 grid()
                 ylim(0,4.2)
                 xlim(-2,2)
-                fname ='movie/fig%03d.png'%x
-                fig.savefig(fname)
+                fname ='movie/fig%03d.pdf'%x
+                fig.savefig(fname, bbox_inches='tight', pad_inches=0)
                 fig.clf();
 
                 #print traj_xy[x], traj_std[x]
@@ -335,11 +335,11 @@ def read_belief_traj():
                 ax.add_patch(rect)
                 xlim(-1,1)
                 ylim(-1,1)
-                fname ='movie/fig%03d.png'%i
-                fig.savefig(fname)
+                fname ='movie/fig%03d.pdf'%i
+                fig.savefig(fname, bbox_inches='tight', pad_inches=0)
                 fig.clf();
 
-        os.system("mencoder 'mf://movie/fig*.png' -mf type=png:fps=1 -ovc lavc -lavcopts vcodec=wmv2 -oac copy -o movie/animation.avi")
+        #os.system("mencoder 'mf://movie/fig*.png' -mf type=png:fps=1 -ovc lavc -lavcopts vcodec=wmv2 -oac copy -o movie/animation.avi")
 
     fp.close()
 
