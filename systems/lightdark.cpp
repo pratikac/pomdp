@@ -35,7 +35,7 @@ System::System()
     
         init_state.x[i] = 0;
     
-        min_right_beacon[i] = 0.6;
+        min_right_beacon[i] = 0.8;
         max_right_beacon[i] = 1.0; 
     }
    

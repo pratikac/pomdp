@@ -227,20 +227,20 @@ def draw_goal():
 
     if NUM_DIM == 1:
         ax = subplot(111)
-        rect = Rectangle( (0, 0.6), TRAJ_LEN, 0.4, fc='green', alpha = 0.4)
+        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
         ax.add_patch(rect)
         rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
         ax.add_patch(rect)
     
     if NUM_DIM == 2:
         ax = subplot(211)
-        rect = Rectangle( (0, 0.6), TRAJ_LEN, 0.4, fc='green', alpha = 0.4)
+        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
         ax.add_patch(rect)
         rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
         ax.add_patch(rect)
 
         ax = subplot(212)
-        rect = Rectangle( (0, 0.6), TRAJ_LEN, 0.4, fc='green', alpha = 0.4)
+        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
         ax.add_patch(rect)
         rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
         ax.add_patch(rect)
