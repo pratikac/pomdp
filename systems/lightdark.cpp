@@ -30,8 +30,8 @@ System::System()
         min_goal[i] = -1;
         max_goal[i] = -0.9;
         
-        min_controls[i] = -1;
-        max_controls[i] = 1;
+        min_controls[i] = -1.0;
+        max_controls[i] = 1.0;
     
         init_state.x[i] = 0;
     
@@ -192,9 +192,10 @@ void System::get_obs_variance(State& s, double* var)
 
 int System::sample_control_observations(int num_vert)
 {
+    int how_many = 3*log(num_vert);
     sampled_controls.clear();
     // sample controls, add zero control to make any region as goal region
-    for(int i=0; i< 5*log(num_vert); i++)
+    for(int i=0; i< how_many; i++)
     {
         State ctmp = sample_control();
         sampled_controls.push_back(ctmp);
@@ -207,9 +208,10 @@ int System::sample_control_observations(int num_vert)
 
     sampled_controls.push_back(ctmp);
     kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
+    // cout<<"sampled controls: " << sampled_controls.size() << endl;
 
     sampled_observations.clear();
-    for(int i=0; i< 5*log(num_vert); i++)
+    for(int i=0; i< how_many; i++)
     {
         State sobs = sample_observation();
         sampled_observations.push_back(sobs);
