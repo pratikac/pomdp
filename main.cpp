@@ -4,15 +4,28 @@ int main(int argc, char** argv)
 {
     srand(0);
     int tot_vert = 50;
+    float discount = 0.95;
+    double process_noise = 0.01;
     if (argc > 1)
+    {
         tot_vert = atoi(argv[1]);
-
-
+        cout<<"vert: "<< tot_vert << endl;
+    }
+    if (argc > 2)
+    {
+        discount = atof(argv[2]);
+        cout<<"discount: "<< discount << endl;
+    }
+    if (argc > 3)
+    {
+        process_noise = atof(argv[3]);
+        cout<<"process_noise: "<< process_noise << endl;
+    }
     lcm_t *lcm = bot_lcm_get_global(NULL);
     bot_lcmgl_t *lcmgl = bot_lcmgl_init(lcm, "plotter");
     bot_lcmgl_line_width(lcmgl, 2.0);
     
-    System sys;
+    System sys(discount, process_noise);
     sys.sample_control_observations(tot_vert);
     Graph graph(sys, lcmgl);
     MDP mdp(graph, lcmgl);

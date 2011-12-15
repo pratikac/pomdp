@@ -377,5 +377,5 @@ if __name__ == "__main__":
     if(nf2 != "none"):
         fig.savefig(nf2)
 
-    if( (nf1 == "none") or (nf2 =="none")):
+    if( (nf1 == "none") and (nf2 =="none")):
         show()

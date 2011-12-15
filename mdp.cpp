@@ -327,6 +327,25 @@ void MDP::write_pomdp_file_lightdark()
     // add goal + non_goal state observations
     pout <<"O: * : " << goal_state_index <<" : " << sys->sampled_observations.size() << " " << 1 << endl;
     pout <<"O: * : " << non_goal_state_index <<" : " << sys->sampled_observations.size()+1 << " " << 1 << endl;
+    
+    pout << endl;
+
+    pout <<"#Rewards" << endl;
+
+    for(int i=0; i< graph->num_vert; i++)
+    {
+        Vertex *v1 = graph->vlist[i];
+        if(sys->is_inside_goal(v1->s))
+            pout <<"R: " << stopping_action_index <<" : " << i <<" : * : * " << 1000 << endl;
+        else
+            pout <<"R: " << stopping_action_index <<" : " << i <<" : * : * " << -1000 << endl;
+
+        for(int j=0; j< graph->num_sampled_controls; j++)
+        {
+            //pout <<"R: " << j <<" : " << i <<" : * : * " << -1 << endl;
+        }
+    }
+    pout << endl;
 
 
     pout << endl;
@@ -863,6 +882,7 @@ int Graph::connect_edges_approx(Vertex* v)
         v->controls.push_back( curr_control );
 
         double holding_time = system->get_holding_time(max_state, max_control, gamma, num_vert);
+        // cout<<"holding time: "<< holding_time << endl;
         // double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
         v->holding_times.push_back(holding_time);
         // cout<<"ht: "<< holding_time << endl;

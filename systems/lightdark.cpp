@@ -1,6 +1,6 @@
 #include "lightdark.h"
 
-System::System()
+System::System(double discount_factor, double process_noise_in)
 {
     name = "lightdark";
 
@@ -42,12 +42,12 @@ System::System()
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        process_noise[i] = 2*1e-2;
+        process_noise[i] = process_noise_in;
         obs_noise[i] = 1;
-        init_var[i] = 1e-2;
+        init_var[i] = 0.01;
     }
     sim_time_delta = 1e-3;
-    discount = 0.98;
+    discount = discount_factor;
 
     controls_tree = kd_create(NUM_DIM);
 
@@ -193,6 +193,7 @@ void System::get_obs_variance(State& s, double* var)
 int System::sample_control_observations(int num_vert)
 {
     int how_many = 3*log(num_vert);
+    cout<<"sampling: "<< how_many <<" controls and observations"<<endl;
     sampled_controls.clear();
     // sample controls, add zero control to make any region as goal region
     for(int i=0; i< how_many; i++)
