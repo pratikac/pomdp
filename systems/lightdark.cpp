@@ -44,11 +44,12 @@ System::System(double discount_factor, double process_noise_in)
     {
         process_noise[i] = process_noise_in;
         obs_noise[i] = 1;
-        init_var[i] = 0.01;
+        init_var[i] = 0.1;
     }
     sim_time_delta = 1e-3;
     discount = discount_factor;
-
+    
+    //cout<<"system_init: "<< discount<<" "<< process_noise[0] << endl;
     controls_tree = kd_create(NUM_DIM);
 
 }

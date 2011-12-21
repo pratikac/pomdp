@@ -79,6 +79,7 @@ void MDP::write_pomdp_file_singleint()
     System *sys = graph->system;
 
     ofstream sindex("sarsop/state_index.dat");
+    sindex<< graph->vlist[0]->holding_times[0]<<endl;
     for(int i=0; i< graph->num_vert; i++)
     {
         sindex<<i<<"\t";
@@ -203,6 +204,7 @@ void MDP::write_pomdp_file_lightdark()
     System *sys = graph->system;
 
     ofstream sindex("sarsop/state_index.dat");
+    sindex<< graph->vlist[0]->holding_times[0]<<endl;
     for(int i=0; i< graph->num_vert; i++)
     {
         sindex<<i<<"\t";

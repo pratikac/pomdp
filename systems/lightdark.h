@@ -133,7 +133,7 @@ class System
         kdtree* controls_tree; 
         vector<State> sampled_observations;
 
-        System(double discount_factor=0.95, double process_noise_in=0.01);
+        System(double discount_factor, double process_noise_in);
         ~System();
 
         // functions
@@ -159,7 +159,7 @@ class System
                 cout<<"holding time too less " << num << " " << den << endl;
                 getchar();
             }
-            //return tmp;
+            return tmp;
         }
 
         int get_key(State& s, double *key)

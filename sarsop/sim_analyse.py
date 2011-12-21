@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.mlab as mlab
 import os
 
+holding_time = 1
 state_array = []
 NUM_DIM = 1
 NUM_STATES = -1
@@ -165,6 +166,7 @@ def read_state_trajectories():
     print state_traj_x.shape, state_traj_y.shape
     
     state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=10) for i in range(TRAJ_LEN)])
+    state_traj_x_percentile_50 = np.array([mlab.prctile(state_traj_x[:,i],p=50) for i in range(TRAJ_LEN)])
     state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=90) for i in range(TRAJ_LEN)])
     state_traj_x_percentile = np.array([state_traj_x_percentile_10, state_traj_x_percentile_90])
 
@@ -174,34 +176,38 @@ def read_state_trajectories():
         state_traj_y_percentile = np.array([state_traj_y_percentile_10, state_traj_y_percentile_90])
         
         subplot(211)
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/90 percentile')
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/90 percentile')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
         legend()
         grid()
     
         subplot(212)
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_y, axis=0), 'b-', label='mean')
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_y_percentile_10, 'b--', label='10/90 percentile')
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_y_percentile_90, 'b--')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_y, axis=0), 'b-', label='mean')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_y_percentile_10, 'b--', label='10/90 percentile')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_y_percentile_90, 'b--')
         legend()
         grid()
 
     elif NUM_DIM==1:
         subplot(111)
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/90 percentile')
-        plot( np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/50/90 percentile')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
+        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_50, 'b--')
         legend()
         grid()
 
 
 def read_state_index():
-    global state_array, NUM_DIM, NUM_STATES
+    global state_array, NUM_DIM, NUM_STATES, holding_time
     
     states = open("state_index.dat", 'r')
     
     if states:
+        l = states.readline()
+        s = l.split('\t')
+        holding_time = float(s[0])
         lines = states.readlines()
         for l in lines:
             s = l.split('\t')
@@ -214,7 +220,8 @@ def read_state_index():
     state_array = state_array[:,1:]     # remove index
     NUM_STATES = len(state_array[:,0])
     print "num_states: ", NUM_STATES
-    
+    print "holding_time: ", holding_time
+
     """
     fig = figure(1)
     ax = fig.add_subplot(111, aspect='equal')
@@ -313,7 +320,7 @@ def read_belief_traj():
                 ylim(0,4.2)
                 xlim(-2,2)
                 fname ='movie/fig%03d.pdf'%x
-                fig.savefig(fname, bbox_inches='tight', pad_inches=0)
+                fig.savefig(fname, bbox_inches='tight')
                 fig.clf();
 
                 #print traj_xy[x], traj_std[x]
@@ -336,7 +343,7 @@ def read_belief_traj():
                 xlim(-1,1)
                 ylim(-1,1)
                 fname ='movie/fig%03d.pdf'%i
-                fig.savefig(fname, bbox_inches='tight', pad_inches=0)
+                fig.savefig(fname, bbox_inches='tight')
                 fig.clf();
 
         #os.system("mencoder 'mf://movie/fig*.png' -mf type=png:fps=1 -ovc lavc -lavcopts vcodec=wmv2 -oac copy -o movie/animation.avi")
@@ -354,7 +361,7 @@ if __name__ == "__main__":
     fig = figure(1)
     grid()
     if(nf1 != "none"):
-        fig.savefig(nf1)
+        fig.savefig(nf1, bbox_inches='tight')
     
     fig = figure(2)
     if NUM_DIM == 2:
@@ -375,7 +382,7 @@ if __name__ == "__main__":
         ylabel('x(t)')
 
     if(nf2 != "none"):
-        fig.savefig(nf2)
+        fig.savefig(nf2, bbox_inches='tight')
 
     if( (nf1 == "none") and (nf2 =="none")):
         show()
