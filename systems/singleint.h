@@ -2,8 +2,8 @@
 #define __singleint_h__
 
 #include "../utils/common.h"
-#define NUM_DIM         (2)
-#define NUM_DIM_OBS     (2)
+#define NUM_DIM         (1)
+#define NUM_DIM_OBS     (1)
 // no time in this algorithm
 
 class State
@@ -119,15 +119,24 @@ class System
         State init_state;
         vector<State> sampled_controls;
         kdtree* controls_tree; 
+        vector<State> sampled_observations;
 
-        System();
+        System(double discount_factor, double process_noise_in);
         ~System();
 
         // functions
         
         double get_holding_time(State& s, State& control, double gamma, int num_vert)
         {
-            State absf = control - s;
+            State max_control;
+            State min_state;
+            for(int i=0; i<NUM_DIM; i++)
+            {
+                max_control.x[i] = max_controls[i];
+                min_state.x[i] = min_states[i];
+            }
+
+            State absf = max_control - min_state;
 
             double h = max(gamma * pow( log(num_vert+1.0)/(num_vert+1.0), 1.0/(double)NUM_DIM), 1e-3);
             double num = h*h;
@@ -214,6 +223,26 @@ class System
 
             return c;
         }
+        State sample_observation()
+        {
+            State s;
+            double *max_p = max_states;
+            double *min_p = min_states;
+            while(1)
+            {
+                for(int i=0; i< NUM_DIM; i++)
+                {
+                    s.x[i] = min_p[i] + RANDF*( max_p[i] - min_p[i]);
+                }
+
+                if( is_free(s) )
+                    break;
+            }
+
+            State obs_s = observation(s, false);
+            return obs_s;
+        }
+
         State sample_goal()
         {
             State g;
@@ -240,6 +269,7 @@ class System
         State integrate(State& s, State& control, double duration, bool is_clean);
         State integrate_alpha(double alpha, State& s, State& control, double duration, bool is_clean);
         State observation(State& s, bool is_clean);
+        int sample_control_observations(int num_vert);
         
         int get_lgq_path(double dT, vector<State>& lgq_path, vector<State>& lqg_covar, \
         vector<State>& lqg_control, double& total_cost);

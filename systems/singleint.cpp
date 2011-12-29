@@ -1,6 +1,6 @@
 #include "singleint.h"
 
-System::System()
+System::System(double discount_factor, double process_noise_in)
 {
     name = "singleint";
 
@@ -19,15 +19,15 @@ System::System()
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        min_states[i] = 0;
-        max_states[i] = 0.5;
+        min_states[i] = -1.0;
+        max_states[i] = 1.0;
         
-        min_goal[i] = 0;
-        max_goal[i] = 0.05;
+        min_goal[i] = -0.01;
+        max_goal[i] = 0.01;
         
-        init_state.x[i] = 0.4;
+        init_state.x[i] = 0.8;
 
-        min_controls[i] = 0;
+        min_controls[i] = -0.5;
         max_controls[i] = 0.5;
     }
     
@@ -41,20 +41,6 @@ System::System()
     discount = 0.99;
 
     controls_tree = kd_create(NUM_DIM);
-    // sample controls, add zero control to make any region as goal region
-    for(int i=0; i< 10; i++)
-    {
-        State ctmp = sample_control();
-        sampled_controls.push_back(ctmp);
-        kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
-    }
-
-    State ctmp;
-    for(int i=0; i<NUM_DIM; i++)
-        ctmp.x[i] = 0;
-
-    sampled_controls.push_back(ctmp);
-    kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
 }
 
 System::~System()
@@ -80,7 +66,7 @@ State System::get_fdt(State& s, State& control, double duration)
     State t;
     for(int i=0; i< NUM_DIM; i++)
     {
-        t.x[i] = (-s.x[i] + control.x[i])*duration;
+        t.x[i] = (-s.x[i]/(1+sq(s.x[i])) + control.x[i])*duration;
         //cout << t.x[i] << endl;
     }
     return t;
@@ -204,6 +190,38 @@ State System::observation(State& s, bool is_clean)
     return t;
 }
 
+int System::sample_control_observations(int num_vert)
+{
+    int how_many = 3*log(num_vert);
+    cout<<"sampling: "<< how_many <<" controls and observations"<<endl;
+    sampled_controls.clear();
+    // sample controls, add zero control to make any region as goal region
+    for(int i=0; i< how_many; i++)
+    {
+        State ctmp = sample_control();
+        sampled_controls.push_back(ctmp);
+        kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
+    }
+
+    State ctmp;
+    for(int i=0; i<NUM_DIM; i++)
+        ctmp.x[i] = 0;
+
+    sampled_controls.push_back(ctmp);
+    kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
+    // cout<<"sampled controls: " << sampled_controls.size() << endl;
+
+    sampled_observations.clear();
+    for(int i=0; i< how_many; i++)
+    {
+        State sobs = sample_observation();
+        sampled_observations.push_back(sobs);
+        //sobs.print();
+    }
+
+    return 0;
+}
+
 int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_covar, \
         vector<State>& lqg_control, double& total_cost)
 {
@@ -211,7 +229,7 @@ int System::get_lgq_path(double dT, vector<State>& lqg_path, vector<State>& lqg_
     lqg_covar.clear();
     lqg_control.clear();
 
-    int traj_len = 200;
+    int traj_len = 50;
     double alpha = (1-discount)/2/dT;
 
     lqg_path.push_back(init_state);

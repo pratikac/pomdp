@@ -195,7 +195,7 @@ def read_state_trajectories():
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/50/90 percentile')
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_50, 'b--')
-        legend()
+        #legend()
         grid()
 
 
@@ -364,6 +364,7 @@ if __name__ == "__main__":
         fig.savefig(nf1, bbox_inches='tight')
     
     fig = figure(2)
+    
     if NUM_DIM == 2:
         subplot(211)
         xlim(0, TRAJ_LEN)
@@ -380,6 +381,7 @@ if __name__ == "__main__":
         xlim(0, TRAJ_LEN)
         xlabel('time [No. of steps]')
         ylabel('x(t)')
+    
 
     if(nf2 != "none"):
         fig.savefig(nf2, bbox_inches='tight')

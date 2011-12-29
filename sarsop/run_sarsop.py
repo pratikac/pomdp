@@ -44,9 +44,9 @@ if args.graph:
     os.system("src/polgraph --policy-file "+policy_file+" --policy-graph "+graph_file+" "+prob_file)
     
 if args.test:
-    num_vert = [10,11,12,13,14,15]
-    discount = [0.98]
-    process_noise = 0.01*linspace(1,1,1)
+    num_vert = [10,11]
+    discount = [0.95]
+    process_noise = 0.02*linspace(1,1,1)
     for vert in num_vert:
         for d in discount:
             for noise in process_noise:
@@ -54,5 +54,5 @@ if args.test:
                 os.system("cd ..;./main "+str(vert)+" "+str(d)+" "+str(noise)+";cd -")
                 os.system("src/pomdpsol --timeout "+args.timeout+" -p 1e-1 -o "+policy_file+" "+prob_file)
                 os.system("src/pomdpsim --simLen="+args.simlen+" --simNum="+args.simnum+" --policy-file "+policy_file+" "+prob_file)
-                os.system("./sim_analyse.py figures/t1.png figures/fig_"+str(vert)+"_"+str(d)+"_"+str(noise)+".png")
+                os.system("./sim_analyse.py figures/t1.png figures/fig_"+str(vert)+"_"+str(d)+"_"+str(noise)+".pdf")
                 #raw_input()

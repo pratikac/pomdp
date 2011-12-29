@@ -102,7 +102,7 @@ void MDP::write_pomdp_file_singleint()
     pout <<"values: reward" << endl;
     pout <<"states: "<< graph->num_vert<< endl;
     pout <<"actions: "<< graph->num_sampled_controls<< endl;
-    pout <<"observations: "<< graph->num_vert<< endl;
+    pout <<"observations: "<< sys->sampled_observations.size()<< endl;
     pout << endl;
 
     pout <<"start: ";
@@ -154,19 +154,17 @@ void MDP::write_pomdp_file_singleint()
 
         totprob = 0;
         tmp.clear();
-        for(int j=0; j < graph->num_vert; j++)
+        for(unsigned int j=0; j < sys->sampled_observations.size(); j++)
         {
-            Vertex *v2 = graph->vlist[j];
-            State obs_v2 = sys->observation(v2->s, true);
             double local_obs_variance[NUM_DIM_OBS] = {0};
             sys->get_obs_variance(v1->s, local_obs_variance);
-            double ptmp = normal_val( obs_v1.x, local_obs_variance, obs_v2.x, NUM_DIM_OBS);
+            double ptmp = normal_val( obs_v1.x, local_obs_variance, sys->sampled_observations[j].x, NUM_DIM_OBS);
             totprob += ptmp;
 
             tmp.push_back(ptmp);
         }
         pout <<"O: * : " << i <<" ";
-        for(int j=0; j < graph->num_vert; j++)
+        for(unsigned int j=0; j < sys->sampled_observations.size(); j++)
         {
 #if 0
             if( j != i)
@@ -227,7 +225,7 @@ void MDP::write_pomdp_file_lightdark()
     pout <<"values: reward" << endl;
     pout <<"states: "<< graph->num_vert + 2<< endl;                         // other_state and goal_state
     pout <<"actions: "<< graph->num_sampled_controls + 1 << endl;           // stopping action
-    pout <<"observations: "<< sys->sampled_observations.size() + 2 << endl; // +2 for goal, non-goal states
+    pout <<"observations: "<< sys->sampled_observations.size()<< endl;
     pout << endl;
 
     int goal_state_index = graph->num_vert;
@@ -322,15 +320,23 @@ void MDP::write_pomdp_file_lightdark()
             pout << tmp[j]/totprob <<" ";
 #endif
         }
-        pout << 0 <<" "<< 0;                // probability of being in the last two states is zero always
+        //pout << 0 <<" "<< 0;                // probability of being in the last two states is zero always
         pout<<endl;
     }
 
     // add goal + non_goal state observations
-    pout <<"O: * : " << goal_state_index <<" : " << sys->sampled_observations.size() << " " << 1 << endl;
-    pout <<"O: * : " << non_goal_state_index <<" : " << sys->sampled_observations.size()+1 << " " << 1 << endl;
-    
-    pout << endl;
+    pout <<"O: * : " << goal_state_index <<" ";
+    for(unsigned int j=0; j < sys->sampled_observations.size(); j++)
+    {
+        pout<<1/(double)sys->sampled_observations.size()<<" ";
+    }
+    pout<<endl;
+    pout <<"O: * : " << non_goal_state_index <<" ";
+    for(unsigned int j=0; j < sys->sampled_observations.size(); j++)
+    {
+        pout<<1/(double)sys->sampled_observations.size()<<" ";
+    }
+    pout << endl<<endl;
 
     pout <<"#Rewards" << endl;
 
@@ -748,8 +754,6 @@ int Graph::add_sample(bool is_init)
         stmp = system->sample_init_state();
     else if(num_vert < 2)
         stmp = system->sample_goal();
-    else if(num_vert < 3)
-        stmp = system->sample_light();
     else
         stmp = system->sample_state();
 
@@ -868,14 +872,6 @@ int Graph::connect_edges_approx(Vertex* v)
 
     double *sys_var = new double[NUM_DIM];
     
-    State max_control;
-    State max_state;
-    State zero_state;
-    for(int i=0; i<NUM_DIM; i++)
-    {
-        max_control.x[i] = system->max_controls[i];
-        max_state.x[i] = system->max_states[i];
-    }
 
     int num_edges = 0;
     for(int i = 0; i< num_sampled_controls; i++)
@@ -883,9 +879,7 @@ int Graph::connect_edges_approx(Vertex* v)
         State *curr_control = &(system->sampled_controls[i]);
         v->controls.push_back( curr_control );
 
-        double holding_time = system->get_holding_time(max_state, max_control, gamma, num_vert);
-        // cout<<"holding time: "<< holding_time << endl;
-        // double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
+        double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
         v->holding_times.push_back(holding_time);
         // cout<<"ht: "<< holding_time << endl;
 

@@ -28,7 +28,7 @@ def wstd(x,w):
 def fdt(x, u, dt):
     return array((-x +u)*dt)
 def get_process_var(dt):
-    return diag(array([0.01*dt]))
+    return diag(array([0.1*dt]))
 def observation_var():
     return 0.1
 def get_holding_time(z, u, bowlr):
@@ -39,7 +39,7 @@ def get_holding_time(z, u, bowlr):
         return bowlr*bowlr/(bowlr*linalg.norm(fdt(z,u,dt)) + trace(get_process_var(dt)))
     else:
         return bowlr*bowlr/(bowlr*linalg.norm(fdt(0,1,dt)) + get_process_var(dt)[0,0])
-        # return bowlr*bowlr/(bowlr*linalg.norm(fdt(z,u,dt)) + get_process_var(dt)[0,0])
+        #return bowlr*bowlr/(bowlr*linalg.norm(fdt(z,u,dt)) + get_process_var(dt)[0,0])
 
 def normal_val(x, mu, var):
     dim = len(mu)
@@ -89,14 +89,12 @@ class Graph:
     def __init__(self, vert):
         self.num_vert = vert
         self.bowlr = 2.1*pow(log(self.num_vert)/float(self.num_vert),1/float(NUM_DIM))
-        print "bowlr: ", self.bowlr
         self.delta = 0.1
 
         self.nodes = []
         self.point = []
         self.controls = []
-        self.num_controls = int((umax[0] - umin[0])/0.01)
-        print "num_controls: ", self.num_controls
+        self.num_controls = int(10*log(self.num_vert))
 
         self.tree = []
         self.mydict = []
@@ -106,9 +104,7 @@ class Graph:
             self.nodes.append(Node())
         self.points = [self.key(mynode.x) for mynode in self.nodes]
         self.tree = kdtree.KDTree(self.points)
-        
-        self.controls.append([0])
-        for i in range(self.num_controls-1):
+        for i in range(self.num_controls):
             self.controls.append([umin[i] + random()*(umax[i]-umin[i]) for i in range(NUM_DIM)])
 
     def draw_edges(self, n1):
@@ -169,14 +165,14 @@ class Graph:
         tmp = [ abs(mylist[i] - myvar) for i in range(len(mylist))]
         return tmp.index(min(tmp))
 
-    def simulate_trajectories(self, u_traj, how_many):
+    def simulate_trajectories(self, u_traj):
         # utraj is a array of (t, u)
         fig = figure(1)
         trajs = []
         traj_probs = []
         traj_times = []
         max_time = u_traj[-1][0]
-        for traj_index in range(how_many):
+        for traj_index in range(10):
             traj_curr = []
             curr_time = 0
             traj_time = []
@@ -220,7 +216,7 @@ class Graph:
             traj_probs.append(traj_prob)
             traj_times.append(traj_time)
             
-            #plot(traj_time, to_put,'b-')
+            #plot(traj_time, to_put,'bo-')
             #plot(traj_times,traj_controls,'r--')
         
         trajs = array(trajs)
@@ -232,17 +228,11 @@ class Graph:
         plot(traj_times[0], traj_avg, 'b-', label='mean')
         plot(traj_times[0], traj_avg-traj_std, 'b--', label='+/- std')
         plot(traj_times[0], traj_avg+traj_std, 'b--')
-        
+        plot(linspace(0,max_time,1000), exp(-linspace(0,max_time,1000)), 'r-', label='cont. mean')
         xlabel('t [s]')
         ylabel( 'x(t), xd(t)')
         #plot(u_traj[:,0], u_traj[:,1], 'r-')
-
-    
-    def plot_samples(self):
-        fig = figure(2)
-        zero = [0 for i in self.nodes]
-        x = [n1.x[0] for n1 in self.nodes]
-        plot(zero, x, 'yo')
+        show()
 
 
 if __name__ == "__main__":
@@ -254,22 +244,6 @@ if __name__ == "__main__":
 
     seed(0)
     
-    figure(1)
-    u_traj = array([ [i, umax[0]*sin(i)] for i in linspace(0,5,100)])
-    x_traj = 0*u_traj
-    x_curr = init_state
-    curr_time = 0
-    for next_time_index in range(len(u_traj[:,0])):
-        next_time = u_traj[next_time_index,0]
-        delta_time = next_time - curr_time
-        x_next = ((-x_curr + u_traj[next_time_index,1])*delta_time) + x_curr
-        x_traj[next_time_index] = [next_time, x_next]
-
-        x_curr = x_next
-        curr_time = next_time
-
-    plot(x_traj[:,0], x_traj[:,1], 'r-', label='cont. mean')
-    
     if len(sys.argv) >=3:
         if sys.argv[1] == 'w':
             tic = clock()
@@ -278,20 +252,10 @@ if __name__ == "__main__":
             
             # graph.print_graph()
             pickle.dump(graph, open('graph.pkl','wb'))
+
             print clock() - tic, '[s]'
-        
-        elif sys.argv[1] == 's':
-            graph = pickle.load(open('graph.pkl','rb'))
-
-            graph.simulate_trajectories(u_traj, int(sys.argv[2]))
-            
-            # graph.plot_samples()
-            show()
-
     else:
         graph = pickle.load(open('graph.pkl','rb'))
 
-        graph.simulate_trajectories(u_traj, 100)
-            
-        # graph.plot_samples()
-        show()
+        u_traj = array([ [i, 0] for i in linspace(0,5,100)])
+        graph.simulate_trajectories(u_traj)

@@ -51,6 +51,7 @@ int main(int argc, char** argv)
         mdp.graph->connect_edges_approx(mdp.graph->vlist[i]);
     }
     // mdp.graph->make_holding_time_constant_all();
+    mdp.graph->constant_holding_time = mdp.graph->vlist[0]->holding_times[0];
 #else
     mdp.graph->make_holding_time_constant_all();
 #endif
@@ -61,7 +62,7 @@ int main(int argc, char** argv)
     else if(sys.name == "singleint")
     {
         mdp.write_pomdp_file_singleint();
-        mdp.run_lqg();
+        // mdp.run_lqg();
     }
     mdp.plot_trajectory();
     mdp.graph->plot_graph();
