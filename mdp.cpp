@@ -356,25 +356,6 @@ void MDP::write_pomdp_file_lightdark()
     pout << endl;
 
 
-    pout << endl;
-
-    pout <<"#Rewards" << endl;
-
-    for(int i=0; i< graph->num_vert; i++)
-    {
-        Vertex *v1 = graph->vlist[i];
-        if(sys->is_inside_goal(v1->s))
-            pout <<"R: " << stopping_action_index <<" : " << i <<" : * : * " << 1000 << endl;
-        else
-            pout <<"R: " << stopping_action_index <<" : " << i <<" : * : * " << -1000 << endl;
-
-        for(int j=0; j< graph->num_sampled_controls; j++)
-        {
-            //pout <<"R: " << j <<" : " << i <<" : * : * " << -1 << endl;
-        }
-    }
-    pout << endl;
-
     pout.close();
 }
 
@@ -401,7 +382,7 @@ Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl)
     else if(NUM_DIM == 4)
         factor = 0.5*M_PI*M_PI;
 
-    factor = 1;
+    //factor = 1;
     gamma = 2.1*pow( (1+1/(double)NUM_DIM), 1/(double)NUM_DIM) *pow(factor, -1/(double)NUM_DIM);
 };
 

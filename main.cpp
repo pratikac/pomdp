@@ -2,7 +2,6 @@
 
 int main(int argc, char** argv)
 {
-    srand(0);
     int tot_vert = 20;
     float discount = 0.95;
     double process_noise = 0.01;
@@ -25,6 +24,7 @@ int main(int argc, char** argv)
     bot_lcmgl_t *lcmgl = bot_lcmgl_init(lcm, "plotter");
     bot_lcmgl_line_width(lcmgl, 2.0);
     
+    srand(0);
     System sys(discount, process_noise);
     sys.sample_control_observations(tot_vert);
     Graph graph(sys, lcmgl);

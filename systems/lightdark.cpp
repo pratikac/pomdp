@@ -24,14 +24,14 @@ System::System(double discount_factor, double process_noise_in)
 
     for(int i=0; i< NUM_DIM; i++)
     {
-        min_states[i] = -1;
-        max_states[i] = 1;
+        min_states[i] = -2;
+        max_states[i] = 2;
         
         min_goal[i] = -1;
-        max_goal[i] = -0.9;
+        max_goal[i] = -0.8;
         
-        min_controls[i] = -1.0;
-        max_controls[i] = 1.0;
+        min_controls[i] = -0.2;
+        max_controls[i] = 0.2;
     
         init_state.x[i] = 0;
     
@@ -43,8 +43,8 @@ System::System(double discount_factor, double process_noise_in)
     for(int i=0; i< NUM_DIM; i++)
     {
         process_noise[i] = process_noise_in;
-        obs_noise[i] = 0.5;
-        init_var[i] = 10;
+        obs_noise[i] = 0.01;
+        init_var[i] = 1e-2;
     }
     sim_time_delta = 1e-3;
     discount = discount_factor;
