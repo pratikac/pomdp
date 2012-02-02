@@ -597,7 +597,7 @@ int Graph::make_holding_time_constant_all()
                 constant_holding_time = vtmp->holding_times[j];
         }
     }
-    constant_holding_time = constant_holding_time;
+    constant_holding_time = 0.99*constant_holding_time;
 
     cout<<"delta: " << constant_holding_time << endl;
     for(int i=0; i< num_vert; i++)

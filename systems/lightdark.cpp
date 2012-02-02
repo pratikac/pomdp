@@ -43,15 +43,14 @@ System::System(double discount_factor, double process_noise_in)
     for(int i=0; i< NUM_DIM; i++)
     {
         process_noise[i] = process_noise_in;
-        obs_noise[i] = 1;
-        init_var[i] = 0.1;
+        obs_noise[i] = 0.5;
+        init_var[i] = 10;
     }
     sim_time_delta = 1e-3;
     discount = discount_factor;
     
     //cout<<"system_init: "<< discount<<" "<< process_noise[0] << endl;
     controls_tree = kd_create(NUM_DIM);
-
 }
 
 System::~System()
@@ -92,7 +91,7 @@ State System::get_controller(State& s)
 {
     State t;
     for(int i=0; i< NUM_DIM; i++)
-        t.x[i] = -5*s.x[i];
+        t.x[i] = -0.1*s.x[i];
 
     return t;
 }
@@ -112,7 +111,7 @@ State System::integrate(State& s, double duration, bool is_clean)
 
     for(int i=0; i<NUM_DIM; i++)
     {   
-        var[i] = process_noise[i]*( exp(duration) -1);
+        var[i] = process_noise[i]*duration;
         tmp[i] = 0;
         mean[i] = 0;
     }
@@ -165,11 +164,12 @@ void System::get_variance(State& s, double duration, double* var)
 }
 void System::get_obs_variance(State& s, double* var)
 {
-#if 0
+#if 1
     for(int i=0; i<NUM_DIM_OBS; i++)
     {
         var[i] = obs_noise[i]*pow((0.9 - s.x[i]), 2) + 1e-4;
     }
+    return;
 #else
     bool flag = false;
     if (NUM_DIM==1)
@@ -193,11 +193,11 @@ void System::get_obs_variance(State& s, double* var)
 
 int System::sample_control_observations(int num_vert)
 {
-    int how_many = 3*log(num_vert);
+    int how_many = 10; // 3*log(num_vert);
     cout<<"sampling: "<< how_many <<" controls and observations"<<endl;
     sampled_controls.clear();
     // sample controls, add zero control to make any region as goal region
-    for(int i=0; i< how_many; i++)
+    for(int i=0; i< how_many-1; i++)
     {
         State ctmp = sample_control();
         sampled_controls.push_back(ctmp);

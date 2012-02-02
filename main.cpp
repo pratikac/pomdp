@@ -3,7 +3,7 @@
 int main(int argc, char** argv)
 {
     srand(0);
-    int tot_vert = 50;
+    int tot_vert = 20;
     float discount = 0.95;
     double process_noise = 0.01;
     if (argc > 1)
@@ -34,27 +34,12 @@ int main(int argc, char** argv)
     tic();
     cout<<"Start sampling" << endl;
     for(int i=0; i < tot_vert; i++)
-    {
         mdp.graph->add_sample();
-        if( (i % 100 == 0) && (i!= 0))
-        {
-            cout<<i<<" ";
-            toc();
-        }
-        // mdp.graph->print_rrg();
-        // cout<<"getchar: "<< endl; getchar();
-    }
-#if 1
-    //mdp.graph->constant_holding_time = 0.001;
     for(int i=0; i< mdp.graph->num_vert; i++)
     {
         mdp.graph->connect_edges_approx(mdp.graph->vlist[i]);
     }
-    // mdp.graph->make_holding_time_constant_all();
-    mdp.graph->constant_holding_time = mdp.graph->vlist[0]->holding_times[0];
-#else
     mdp.graph->make_holding_time_constant_all();
-#endif
     toc();
     
     if(sys.name == "lightdark")

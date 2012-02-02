@@ -165,6 +165,7 @@ namespace momdp
             const SharedPointer<DenseVector>& startBeliefX = problem->initialBeliefX;
             actStateCompl->sval = chooseFromDistribution(*startBeliefX);
             copy(currBelX, *startBeliefX);
+            cout<<"choosing random starting state"<<endl;
         }
         else
         {
@@ -175,7 +176,9 @@ namespace momdp
         // now choose a starting unobserved state for the actual system
         SharedPointer<SparseVector> startBeliefVec;
         if (problem->initialBeliefStval->bvec)
+        {
             startBeliefVec = problem->initialBeliefStval->bvec;
+        }
         else
             startBeliefVec = problem->initialBeliefYByX[actStateCompl->sval];
         int currUnobsState = chooseFromDistribution(*startBeliefVec);

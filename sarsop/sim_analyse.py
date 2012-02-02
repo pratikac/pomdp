@@ -165,9 +165,9 @@ def read_state_trajectories():
     
     print state_traj_x.shape, state_traj_y.shape
     
-    state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=10) for i in range(TRAJ_LEN)])
+    state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=30) for i in range(TRAJ_LEN)])
     state_traj_x_percentile_50 = np.array([mlab.prctile(state_traj_x[:,i],p=50) for i in range(TRAJ_LEN)])
-    state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=90) for i in range(TRAJ_LEN)])
+    state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=70) for i in range(TRAJ_LEN)])
     state_traj_x_percentile = np.array([state_traj_x_percentile_10, state_traj_x_percentile_90])
 
     if NUM_DIM == 2:
@@ -319,7 +319,7 @@ def read_belief_traj():
                 grid()
                 ylim(0,4.2)
                 xlim(-2,2)
-                fname ='movie/fig%03d.pdf'%x
+                fname ='movie/fig%03d.png'%x
                 fig.savefig(fname, bbox_inches='tight')
                 fig.clf();
 
@@ -342,7 +342,7 @@ def read_belief_traj():
                 ax.add_patch(rect)
                 xlim(-1,1)
                 ylim(-1,1)
-                fname ='movie/fig%03d.pdf'%i
+                fname ='movie/fig%03d.png'%i
                 fig.savefig(fname, bbox_inches='tight')
                 fig.clf();
 
@@ -353,11 +353,12 @@ def read_belief_traj():
 if __name__ == "__main__":
     
     read_state_index()
-    read_state_trajectories()
+    #read_state_trajectories()
     #read_lqg_trajectories()
-    draw_goal()
+    #draw_goal()
     read_belief_traj()
-
+    
+    """
     fig = figure(1)
     grid()
     if(nf1 != "none"):
@@ -382,9 +383,9 @@ if __name__ == "__main__":
         xlabel('time [No. of steps]')
         ylabel('x(t)')
     
-
     if(nf2 != "none"):
         fig.savefig(nf2, bbox_inches='tight')
 
     if( (nf1 == "none") and (nf2 =="none")):
         show()
+    """
