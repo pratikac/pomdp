@@ -165,9 +165,9 @@ def read_state_trajectories():
     
     print state_traj_x.shape, state_traj_y.shape
     
-    state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=30) for i in range(TRAJ_LEN)])
+    state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=20) for i in range(TRAJ_LEN)])
     state_traj_x_percentile_50 = np.array([mlab.prctile(state_traj_x[:,i],p=50) for i in range(TRAJ_LEN)])
-    state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=70) for i in range(TRAJ_LEN)])
+    state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=80) for i in range(TRAJ_LEN)])
     state_traj_x_percentile = np.array([state_traj_x_percentile_10, state_traj_x_percentile_90])
 
     if NUM_DIM == 2:
@@ -272,12 +272,16 @@ def read_belief_traj():
                 a =  int(s[0])
                 #print a, float(s[1])
                 to_put[a] = float(s[1])
-
         belief_traj.append(to_put)
 
         #print belief_traj
         belief_traj = np.array(belief_traj)
+        #print belief_traj
+        #print
+        #print state_array
+        #raw_input()
 
+        """
         traj_xy = []
         traj_std = []
         num_traj = len(belief_traj[:,0])
@@ -291,74 +295,49 @@ def read_belief_traj():
 
         traj_xy = np.array(traj_xy)
         traj_std = np.array(traj_std)
-
         print traj_std.shape, traj_xy.shape
+        """
 
         os.system('rm -rf movie/fig* movie/animation.avi')
         if NUM_DIM==1:
-
-            xarr = np.linspace(-2,2,1000)
-            for x in range(len(traj_xy)):
-                fig = figure(1)
-                ax = fig.add_subplot(111, aspect='equal')
-
-                yarr = 0*xarr;
-                for i in range(len(xarr)):
-                    yarr[i] = 1/sqrt(2*3.1415)/traj_std[x]*exp(-0.5/(traj_std[x]**2)*(xarr[i] - traj_xy[x])**2)
-                plot(xarr, yarr, 'b-')
-                fill_between(xarr, yarr, 0*yarr, facecolor='blue', alpha=0.3)
+            fig = figure(1)
+            fig.clf();
+            xarr = linspace(-1,1,100)
+            for i in arange(0, len(belief_traj[:,0])):
                 
-                rect = Rectangle( (traj_xy[x][0]-0.05, 0), 0.1,1/sqrt(2*3.1415)/traj_std[x], fc='blue', alpha=0.5)
+                tarr = zip(state_array[:,0], belief_traj[i,:])
+                tarr.sort()
+                s1, b1 = zip(*tarr)
+                #print tarr
+                #print s1, b1
+                #raw_input()
+                yarr = interp(xarr, s1, b1);
+                #fill_between(xarr, yarr, 0*yarr, facecolor='blue', alpha=0.3)
+                #fill_between(state_array[:,0], belief_traj[i,:], 0*belief_traj[i,:], facecolor='blue', alpha=0.3)
+                #plot(xarr, yarr, 'b-')
+                plot(s1, b1, 'bo-')
+                
+                """
+                rect = Rectangle( (0.8, 4), 0.2, 0.2, fc='green', alpha = 0.4)
                 ax.add_patch(rect)
-                rect = Rectangle( (0.6, 4), 0.4, 0.2, fc='green', alpha = 0.4)
-                ax.add_patch(rect)
-                rect = Rectangle( (-1, 4), 0.2, 0.2, fc='red', alpha = 0.4)
-                ax.add_patch(rect)
-                rect = Rectangle( (-0.8, 4), 1.4, 0.2, fc='grey', alpha = 0.4)
+                rect = Rectangle( (-1, 4), 0.1, 0.2, fc='red', alpha = 0.4)
                 ax.add_patch(rect)
                 grid()
-                ylim(0,4.2)
-                xlim(-2,2)
-                fname ='movie/fig%03d.png'%x
-                fig.savefig(fname, bbox_inches='tight')
-                fig.clf();
-
-                #print traj_xy[x], traj_std[x]
-
-        elif NUM_DIM==2:
-
-            for i in range(len(traj_xy[:,0])):
-                fig = figure(1)
-                ax = fig.add_subplot(111, aspect='equal')
-
-                plot(traj_xy[0:i,0], traj_xy[0:i,1], 'b--')
-                for j in range(i):
-                    circle = Circle( (traj_xy[j,0], traj_xy[j,1]), traj_std[j,0], alpha=0.2, fc='blue')
-                    ax.add_patch(circle)
-
-                rect = Rectangle( (0.6, 0.6), 0.4, 0.4, fc='green', alpha = 0.4)
-                ax.add_patch(rect)
-                rect = Rectangle( (-1, -1), 0.2, 0.2, fc='red', alpha = 0.4)
-                ax.add_patch(rect)
-                xlim(-1,1)
-                ylim(-1,1)
+                """
                 fname ='movie/fig%03d.png'%i
                 fig.savefig(fname, bbox_inches='tight')
                 fig.clf();
-
         #os.system("mencoder 'mf://movie/fig*.png' -mf type=png:fps=1 -ovc lavc -lavcopts vcodec=wmv2 -oac copy -o movie/animation.avi")
-
     fp.close()
 
 if __name__ == "__main__":
     
     read_state_index()
-    #read_state_trajectories()
     #read_lqg_trajectories()
     #draw_goal()
-    read_belief_traj()
+    #read_belief_traj()
     
-    """
+    read_state_trajectories()
     fig = figure(1)
     grid()
     if(nf1 != "none"):
@@ -388,4 +367,3 @@ if __name__ == "__main__":
 
     if( (nf1 == "none") and (nf2 =="none")):
         show()
-    """
