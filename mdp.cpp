@@ -360,7 +360,7 @@ void MDP::write_pomdp_file_lightdark()
 }
 
 
-Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl) 
+Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl, int max_vert_in) 
 {
     lcmgl = in_lcmgl;
 
@@ -370,20 +370,13 @@ Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl)
 
     vlist.clear();
     num_vert = 0;
+    max_vert = max_vert_in;
 
     state_tree = kd_create(NUM_DIM);
     obs_tree = kd_create(NUM_DIM);
 
-    double factor = 1;
-    if(NUM_DIM == 2)
-        factor = M_PI;
-    else if(NUM_DIM == 3)
-        factor = 4/3*M_PI;
-    else if(NUM_DIM == 4)
-        factor = 0.5*M_PI*M_PI;
-
-    //factor = 1;
-    gamma = 2.1*pow( (1+1/(double)NUM_DIM), 1/(double)NUM_DIM) *pow(factor, -1/(double)NUM_DIM);
+    gamma = 2.1*pow( (1+1/(double)NUM_DIM), 1/(double)NUM_DIM);
+    //gamma = 0.5;
 };
 
 Graph::~Graph()
@@ -731,15 +724,18 @@ bool Graph::is_edge_free( Edge *etmp)
 int Graph::add_sample(bool is_init)
 {
     State stmp;
+#if 0
     if (num_vert < 1)
         stmp = system->sample_init_state();
     else if(num_vert < 2)
         stmp = system->sample_goal();
     else
         stmp = system->sample_state();
-
+#else
+    double h = (system->max_states[0] - system->min_states[0])/(double)max_vert;
+    stmp.x[0] = system->min_states[0] + num_vert*h;
+#endif
     Vertex *v = new Vertex(stmp);
-
     if(num_vert == 0)
     {
         v->index_in_vlist = 0;
@@ -752,7 +748,6 @@ int Graph::add_sample(bool is_init)
     {
 #if 1
         v->index_in_vlist = num_vert;
-
         vlist.push_back(v);
         num_vert++;
         insert_into_state_tree(v);
@@ -839,8 +834,9 @@ int Graph::connect_edges_approx(Vertex* v)
     double key[NUM_DIM] ={0};
     system->get_key(v->s, key);
 
-    double bowlr = gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM);
+    //double bowlr = gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM);
     //cout<<"bowlr: " << bowlr << endl;
+    double bowlr = (system->max_states[0] - system->min_states[0])/(double)max_vert;
 
     kdres *res;
     res = kd_nearest_range(state_tree, key, bowlr );

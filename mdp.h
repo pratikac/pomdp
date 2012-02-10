@@ -73,7 +73,7 @@ class Graph{
        
         System* system;
 
-        Graph(System& sys, bot_lcmgl_t *in_lcmgl);
+        Graph(System& sys, bot_lcmgl_t *in_lcmgl,int max_vert_in);
         ~Graph();
         
         vector<Vertex *> vlist;
@@ -82,6 +82,7 @@ class Graph{
         double constant_holding_time;
         int num_sampled_controls;
         int num_vert;
+        int max_vert;
                 
         // graph sanity check
         list< list<State> > monte_carlo_trajectories;

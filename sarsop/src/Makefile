@@ -57,7 +57,7 @@ endif
 
 CC            = gcc
 
-CFLAGS        = -w -pg -O3 $(INCDIR) -msse2 -mfpmath=sse $(CYGWIN_CFLAGS) -march=native #-DDEBUG_TRACE_ON 
+CFLAGS        = -w -O3 $(INCDIR) -msse2 -mfpmath=sse $(CYGWIN_CFLAGS) -march=native #-DDEBUG_TRACE_ON 
 
 CXX           = g++
 

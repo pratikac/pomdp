@@ -164,10 +164,10 @@ def read_state_trajectories():
     state_traj_y = np.array(state_traj_y)
     
     print state_traj_x.shape, state_traj_y.shape
-    
-    state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=30) for i in range(TRAJ_LEN)])
+
+    state_traj_x_percentile_10 = np.array([mlab.prctile(state_traj_x[:,i],p=10) for i in range(TRAJ_LEN)])
     state_traj_x_percentile_50 = np.array([mlab.prctile(state_traj_x[:,i],p=50) for i in range(TRAJ_LEN)])
-    state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=70) for i in range(TRAJ_LEN)])
+    state_traj_x_percentile_90 = np.array([mlab.prctile(state_traj_x[:,i],p=90) for i in range(TRAJ_LEN)])
     state_traj_x_percentile = np.array([state_traj_x_percentile_10, state_traj_x_percentile_90])
 
     if NUM_DIM == 2:
@@ -188,16 +188,19 @@ def read_state_trajectories():
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_y_percentile_90, 'b--')
         legend()
         grid()
+        xlabel('t [s]')
+        axis('tight')
 
     elif NUM_DIM==1:
         subplot(111)
-        plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
+        #plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_x, axis=0), 'b-', label='mean')
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_10, 'b--', label='10/50/90 percentile')
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_50, 'b--')
-        #legend()
+        legend()
         grid()
-
+        xlabel('t [s]')
+        axis('tight')
 
 def read_state_index():
     global state_array, NUM_DIM, NUM_STATES, holding_time
@@ -234,22 +237,22 @@ def draw_goal():
 
     if NUM_DIM == 1:
         ax = subplot(111)
-        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
+        rect = Rectangle( (0, 0.8), holding_time*TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
         ax.add_patch(rect)
-        rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
+        rect = Rectangle( (0, -1), holding_time*TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
         ax.add_patch(rect)
     
     if NUM_DIM == 2:
         ax = subplot(211)
-        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
+        rect = Rectangle( (0, 0.8), holding_time*TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
         ax.add_patch(rect)
-        rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
+        rect = Rectangle( (0, -1), holding_time*TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
         ax.add_patch(rect)
 
         ax = subplot(212)
-        rect = Rectangle( (0, 0.8), TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
+        rect = Rectangle( (0, 0.8), holding_time*TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
         ax.add_patch(rect)
-        rect = Rectangle( (0, -1), TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
+        rect = Rectangle( (0, -1), holding_time*TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
         ax.add_patch(rect)
 
 
@@ -350,46 +353,25 @@ def read_belief_traj():
                 fig.savefig(fname, bbox_inches='tight')
                 fig.clf();
 
-        #os.system("mencoder 'mf://movie/fig*.png' -mf type=png:fps=1 -ovc lavc -lavcopts vcodec=wmv2 -oac copy -o movie/animation.avi")
+        os.system("mencoder 'mf://movie/fig*.png' -mf type=png:fps=1 -ovc lavc -lavcopts vcodec=wmv2 -oac copy -o movie/animation.avi")
 
     fp.close()
 
 if __name__ == "__main__":
     
     read_state_index()
-    #read_state_trajectories()
     #read_lqg_trajectories()
-    #draw_goal()
-    read_belief_traj()
     
-    """
-    fig = figure(1)
-    grid()
-    if(nf1 != "none"):
-        fig.savefig(nf1, bbox_inches='tight')
-    
-    fig = figure(2)
-    
-    if NUM_DIM == 2:
-        subplot(211)
-        xlim(0, TRAJ_LEN)
-        ylim(-1,1)
-        xlabel('time [No. of steps]')
-        ylabel('x(t)')
-        subplot(212)
-        ylim(-1,1)
-        xlim(0, TRAJ_LEN)
-        xlabel('time [No. of steps]')
-        ylabel('y(t)')
-    elif NUM_DIM == 1:
-        ylim(-1,1)
-        xlim(0, TRAJ_LEN)
-        xlabel('time [No. of steps]')
-        ylabel('x(t)')
-    
-    if(nf2 != "none"):
-        fig.savefig(nf2, bbox_inches='tight')
-
-    if( (nf1 == "none") and (nf2 =="none")):
-        show()
-    """
+    if 1:
+        read_state_trajectories()
+        draw_goal()
+        fig = figure(1)
+        grid()
+        if(nf1 != "none"):
+            fig.savefig(nf1, bbox_inches='tight')
+        if(nf2 != "none"):
+            fig.savefig(nf2, bbox_inches='tight')
+        if( (nf1 == "none") and (nf2 =="none")):
+            show()
+    else:
+        read_belief_traj()

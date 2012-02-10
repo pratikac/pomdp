@@ -194,8 +194,9 @@ void System::get_obs_variance(State& s, double* var)
 int System::sample_control_observations(int num_vert)
 {
     int how_many = 10; // 3*log(num_vert);
-    cout<<"sampling: "<< how_many <<" controls and observations"<<endl;
     sampled_controls.clear();
+#if 0
+    cout<<"sampling: "<< how_many <<" controls and observations"<<endl;
     // sample controls, add zero control to make any region as goal region
     for(int i=0; i< how_many-1; i++)
     {
@@ -211,7 +212,12 @@ int System::sample_control_observations(int num_vert)
     sampled_controls.push_back(ctmp);
     kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
     // cout<<"sampled controls: " << sampled_controls.size() << endl;
-
+#else
+    State ctmp; 
+    ctmp.x[0] = 1; sampled_controls.push_back(ctmp);
+    ctmp.x[0] = -1; sampled_controls.push_back(ctmp);
+    //ctmp.x[0] = 0; sampled_controls.push_back(ctmp);
+#endif
     sampled_observations.clear();
     for(int i=0; i< how_many; i++)
     {
