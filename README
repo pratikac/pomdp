@@ -1,0 +1,32 @@
+Some instructions to use the code:
+
+Creating the POMDP
+=================
+
+1.  run make inside the folder to create main which can be given the following arguments
+    <1> n = number of state samples in the Markov chain used to create the POMDP
+    <2> process_noise = process_noise of the continuous time dynamics
+        it is essential to play with this parameter a bit to make sure sarsop can find the
+        policy quickly. There are a couple of test cases commented out in the code.
+
+2.  systems/lightdark.cpp contains the dynamics and observation model. 
+    The parameters are self-explanatory, relevant functions being, sample_controls, get_observation_noise
+    and the constructor of the class System which sets the goal region / light-box region etc.
+
+3.  mdp.cpp creates the Markov chain. connect_edges_approx() uses local
+    consistency to connect the states sampled in the Markov chain. write_pomdp_file_lightdark() outputs the 
+    file problem.pomdp in the directory sarsop/
+
+4.  inside the directory sarsop/, there is a script run_sarsop.py which can be executed with a number of 
+    command line options to run sarsop. Notable ones are
+    ./run_sarsop.py -sol                    --  solves the pomdp with 100 secs timeout
+    ./run_sarsop.py -sim -n 1000 -l 100     --  runs the simulator on the obtained policy to produce files state_trajectories.dat
+                                                which are 1000 trajectories indexed by state_index.dat
+    ./run_sarsop.py -sim -n 1 -l 100 -b     --  runs the simulator to output a trajectory of beliefs to create a file belief_trajectory.dat
+                                                (note I made changes in the sarsop code placed in sarsop/src/ to output these trajectories,
+                                                when outputting the belief trajectory, run only one simulation, otherwise it is going to overwrite
+                                                in the same file)
+    ./run_sarsop.py -e -n 1000 -l 100       -- runs the evaluator instead of the simulator
+
+5.  after running sarsop, run the script ./sim_analyse.py to make a movie of the belief_trajectory. It might be necessary to create a directory
+    called sarsop/movie before runnign this script for the first time.

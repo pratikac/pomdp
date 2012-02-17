@@ -1,19 +1,22 @@
 #include "mdp.h"
 
+/*
+test cases:
+    n = 20, process_noise = 0.08
+    n = 22, process_noise = 0.05
+*/
 int main(int argc, char** argv)
 {
     int tot_vert = 20;
-    float discount = 0.99;
-    double process_noise = 0.08;
+    double process_noise = 0.05;
     if (argc > 1)
         tot_vert = atoi(argv[1]);
     
     discount = exp(-1/(float)tot_vert);
     
     if (argc > 2)
-        discount = atof(argv[2]);
-    if (argc > 3)
-        process_noise = atof(argv[3]);
+        process_noise = atof(argv[2]);
+
     cout<<"vert: "<< tot_vert << endl;
     cout<<"discount: "<< discount << endl;
     cout<<"process_noise: "<< process_noise << endl;
