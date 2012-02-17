@@ -16,9 +16,9 @@
 #include <cassert>
 #include <string>
 
-#include <bot_core/bot_core.h>
-#include <bot_lcmgl_client/lcmgl.h>
-#include <bot_vis/gl_util.h>
+//#include <bot_core/bot_core.h>
+//#include <bot_lcmgl_client/lcmgl.h>
+//#include <bot_vis/gl_util.h>
 #include "kdtree.h"
 
 #include <Eigen/Dense>

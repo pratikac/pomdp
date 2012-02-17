@@ -241,7 +241,8 @@ def draw_goal():
         ax.add_patch(rect)
         rect = Rectangle( (0, -1), holding_time*TRAJ_LEN, 0.2, fc='red', alpha = 0.4)
         ax.add_patch(rect)
-    
+        ylim([-1,1])
+
     if NUM_DIM == 2:
         ax = subplot(211)
         rect = Rectangle( (0, 0.8), holding_time*TRAJ_LEN, 0.2, fc='green', alpha = 0.4)
@@ -315,8 +316,8 @@ def read_belief_traj():
                     rect = Rectangle( (state_array[i,0]-0.05,0), 0.1, belief_traj[x,i], fc='blue', alpha=0.3)
                     ax.add_patch(rect)
                 
-                rect = Rectangle( (traj_xy[x][0]-0.05, 0), 0.1,1/sqrt(2*3.1415)/traj_std[x], fc='blue', alpha=0.5)
-                ax.add_patch(rect)
+                #rect = Rectangle( (traj_xy[x][0]-0.05, 0), 0.1,1/sqrt(2*3.1415)/traj_std[x], fc='blue', alpha=0.5)
+                #ax.add_patch(rect)
                 rect = Rectangle( (0.8, 1), 0.2, 0.2, fc='green', alpha = 0.4)
                 ax.add_patch(rect)
                 rect = Rectangle( (-1, 1), 0.2, 0.2, fc='red', alpha = 0.4)
@@ -362,11 +363,9 @@ if __name__ == "__main__":
     read_state_index()
     #read_lqg_trajectories()
     
-    if 1:
+    if 0:
         read_state_trajectories()
-        draw_goal()
-        fig = figure(1)
-        grid()
+        #draw_goal()
         if(nf1 != "none"):
             fig.savefig(nf1, bbox_inches='tight')
         if(nf2 != "none"):

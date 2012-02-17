@@ -12,11 +12,12 @@ OBJS = $(C_OBJS) $(CPP_OBJS)
 INCS = -I./ -I systems/ -I utils/ -I /home/pratik/apps/eigen
 LIBS = 
 
-CFLAGS = -Wall -g -pg -O3 `pkg-config --cflags bot2-core`
-LDFLAGS = -g -pg `pkg-config --libs bot2-lcmgl-client` \
+CFLAGS = -Wall -g -pg -O3 
+#`pkg-config --cflags bot2-core`
+LDFLAGS = -g -pg 
+#`pkg-config --libs bot2-lcmgl-client` \
 		  `pkg-config --libs bot2-core`
 
-#@touch data/monte_carlo.dat data/rrg.dat data/rrgp.dat data/traj.dat
 all: $(BIN)
 
 $(BIN): $(OBJS)

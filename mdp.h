@@ -65,7 +65,7 @@ class Graph{
 
     public:
         
-        bot_lcmgl_t *lcmgl;
+        //bot_lcmgl_t *lcmgl;
         
         double gamma, gamma_t;
         struct kdtree *state_tree;
@@ -73,7 +73,7 @@ class Graph{
        
         System* system;
 
-        Graph(System& sys, bot_lcmgl_t *in_lcmgl,int max_vert_in);
+        Graph(System& sys, int max_vert_in);
         ~Graph();
         
         vector<Vertex *> vlist;
@@ -154,10 +154,9 @@ class MDP{
 
     public:
          
-        MDP(Graph& in_graph, bot_lcmgl_t *in_lcmgl);
+        MDP(Graph& in_graph);
         ~MDP();
 
-        bot_lcmgl_t *lcmgl;
         Graph *graph;
 
         double max_obs_time;

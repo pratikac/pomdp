@@ -28,9 +28,8 @@ Edge::Edge(Vertex *f, Vertex *t, double prob, double trans_time){
     transition_time = trans_time;
 }
 
-MDP::MDP(Graph& in_graph, bot_lcmgl_t *in_lcmgl)
+MDP::MDP(Graph& in_graph)
 {
-    lcmgl = in_lcmgl;
     graph = &in_graph;
     obs_curr_index = 0;
     max_obs_time = 1.0;
@@ -46,6 +45,7 @@ MDP::~MDP()
 
 void MDP::draw_lcm_grid()
 {
+    /*
     bot_lcmgl_color4f(lcmgl, 0, 0, 0, 0.5);
 
     bot_lcmgl_begin(lcmgl, GL_LINES);
@@ -72,6 +72,7 @@ void MDP::draw_lcm_grid()
     }
     bot_lcmgl_end(lcmgl);
 #endif
+*/
 };
 
 void MDP::write_pomdp_file_singleint()
@@ -360,10 +361,8 @@ void MDP::write_pomdp_file_lightdark()
 }
 
 
-Graph::Graph(System& sys, bot_lcmgl_t *in_lcmgl, int max_vert_in) 
+Graph::Graph(System& sys, int max_vert_in) 
 {
-    lcmgl = in_lcmgl;
-
     system = &sys;
 
     num_sampled_controls = system->sampled_controls.size();
@@ -436,6 +435,7 @@ void Graph::remove_edge(Edge *e)
 
 void Graph::plot_graph()
 {
+    /*
 #if 1
     bot_lcmgl_color4f(lcmgl, 0, 1, 0, 0.5);
     bot_lcmgl_point_size(lcmgl, 4.0);
@@ -474,10 +474,12 @@ void Graph::plot_graph()
         bot_lcmgl_end(lcmgl);
     }
 #endif
+*/
 }
 
 void MDP::plot_trajectory()
 {
+    /*
 #if 1
     double curr_time =0;
     bot_lcmgl_color4f(lcmgl, 1, 0, 0, 1);
@@ -530,6 +532,7 @@ void MDP::plot_trajectory()
     bot_lcmgl_end(lcmgl);
 #endif
 #endif
+*/
 }
 
 
@@ -554,13 +557,6 @@ Vertex* Graph::nearest_vertex(State s)
 
 int Graph::make_holding_time_constant_all()
 {
-    State holding_state, holding_control;
-    for(int i=0; i<NUM_DIM; i++)
-    {
-        holding_state.x[i] = system->min_states[i];
-        holding_control.x[i] = system->max_controls[i];
-    }
-
     constant_holding_time = 1000;
     for(int i=0; i< num_vert; i++)
     {
@@ -835,8 +831,8 @@ int Graph::connect_edges_approx(Vertex* v)
     system->get_key(v->s, key);
 
     //double bowlr = gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM);
+    double bowlr = 1.1/(double)num_vert;
     //cout<<"bowlr: " << bowlr << endl;
-    double bowlr = (system->max_states[0] - system->min_states[0])/(double)max_vert;
 
     kdres *res;
     res = kd_nearest_range(state_tree, key, bowlr );
@@ -856,11 +852,13 @@ int Graph::connect_edges_approx(Vertex* v)
         State *curr_control = &(system->sampled_controls[i]);
         v->controls.push_back( curr_control );
 
-        double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
+        double holding_time = 0.1; // system->get_holding_time(v->s, *curr_control, gamma, num_vert);
         v->holding_times.push_back(holding_time);
         // cout<<"ht: "<< holding_time << endl;
 
         State stmp = system->get_fdt(v->s, *curr_control, holding_time);
+        for(int j=0; j<NUM_DIM; j++)
+            stmp.x[j] = stmp.x[j] + v->s.x[j];
         system->get_variance(v->s, holding_time, sys_var);
 
         double pos[NUM_DIM] = {0};
@@ -1097,6 +1095,7 @@ void Graph::plot_monte_carlo_trajectories()
 
 void Graph::plot_monte_carlo_density(char* filename)
 {
+    /*
     bot_lcmgl_point_size(lcmgl, 10.0);
     bot_lcmgl_color4f(lcmgl, 1, 0, 0.5, 0.5);
 
@@ -1135,5 +1134,6 @@ void Graph::plot_monte_carlo_density(char* filename)
         count++;
     }
     bot_lcmgl_end(lcmgl);
+    */
 }
 
