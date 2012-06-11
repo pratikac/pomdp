@@ -2,24 +2,29 @@
 
 /*
 test cases:
+1d
     n = 20, process_noise = 0.08
     n = 22, process_noise = 0.05
+2d
+    n = 64, process_noise = 0.01, obs = 25
+    n = 100, process_noise = 0.01, obs = 25
+    n = 196, process_noise = 0.01, obs = 25
 */
 int main(int argc, char** argv)
 {
     int tot_vert = 20;
-    double process_noise = 0.05;
+    double process_noise = 0.08;
     if (argc > 1)
         tot_vert = atoi(argv[1]);
     
-    discount = exp(-1/(float)tot_vert);
+    double discount = pow(0.99, pow((float)tot_vert/log(tot_vert), 0.5));
     
     if (argc > 2)
         process_noise = atof(argv[2]);
 
     cout<<"vert: "<< tot_vert << endl;
-    cout<<"discount: "<< discount << endl;
     cout<<"process_noise: "<< process_noise << endl;
+    cout<<"discount: "<< discount << endl;
 
     srand(0);
     System sys(discount, process_noise);
@@ -34,7 +39,7 @@ int main(int argc, char** argv)
     {
         mdp.graph->connect_edges_approx(mdp.graph->vlist[i]);
     }
-    //mdp.graph->make_holding_time_constant_all();
+    mdp.graph->make_holding_time_constant_all();
     toc();
     
     if(sys.name == "lightdark")

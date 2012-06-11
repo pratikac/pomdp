@@ -3,8 +3,8 @@
 
 
 #include "../utils/common.h"
-#define NUM_DIM         (1)
-#define NUM_DIM_OBS     (1)
+#define NUM_DIM         (2)
+#define NUM_DIM_OBS     (2)
 
 class State
 {

@@ -18,7 +18,7 @@ parser.add_argument('-g', '--graph', action='store_true', dest='graph')
 parser.add_argument('-t', '--test', action='store_true', dest='test')
 
 parser.add_argument('-sim', '--sim', action='store_true', dest='sim')
-parser.add_argument('-l', '--simlen', default='20')
+parser.add_argument('-l', '--simlen', default='40')
 parser.add_argument('-n', '--simnum', default='100')
 parser.add_argument('-b', '--write-belief', action='store_true', dest='write_belief')
 

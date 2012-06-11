@@ -28,17 +28,20 @@ System::System(double discount_factor, double process_noise_in)
         max_states[i] = 2;
         
         min_goal[i] = -1.0;
-        max_goal[i] = -0.8;
+        max_goal[i] = -0.6;
         
         min_controls[i] = -1.0;
         max_controls[i] = 1.0;
     
-        init_state.x[i] = 0;
-    
         min_right_beacon[i] = 0.8;
-        max_right_beacon[i] = 1.0; 
+        max_right_beacon[i] = 2.0; 
     }
-   
+#if NUM_DIM==2
+    init_state.x[0] = -1.0;
+    init_state.x[1] = 1.5;
+#elif NUM_DIM==1
+    init_state.x[0] = 0;
+#endif
 
     for(int i=0; i< NUM_DIM; i++)
     {
@@ -90,41 +93,12 @@ State System::get_fdt(State& s, State& control, double duration)
 State System::get_controller(State& s)
 {
     State t;
-    for(int i=0; i< NUM_DIM; i++)
-        t.x[i] = -0.1*s.x[i];
-
     return t;
 }
 
 State System::integrate(State& s, double duration, bool is_clean)
 {
     State t;
-
-    double *var = new double[NUM_DIM];
-    double *mean = new double[NUM_DIM];
-    double *tmp = new double[NUM_DIM];
-
-    for(int i=0; i<NUM_DIM; i++)
-    {
-        t.x[i] = s.x[i];
-    }
-
-    for(int i=0; i<NUM_DIM; i++)
-    {   
-        var[i] = process_noise[i]*duration;
-        tmp[i] = 0;
-        mean[i] = 0;
-    }
-    if( !is_clean)  
-        multivar_normal( mean, var, tmp, NUM_DIM);
-
-    for(int i=0; i<NUM_DIM; i++)
-        t.x[i] = exp(-duration)*t.x[i] + tmp[i];
-
-    delete[] mean;
-    delete[] tmp;
-    delete[] var;
-
     return t;
 }
 
@@ -165,9 +139,11 @@ void System::get_variance(State& s, double duration, double* var)
 void System::get_obs_variance(State& s, double* var)
 {
 #if 0
+    State beacon; beacon.x[0] = 0.9; beacon.x[1] = 0.9;
+    double dist2 = sq(beacon.x[0] - s.x[0]) + sq(beacon.x[1] - s.x[1]);
     for(int i=0; i<NUM_DIM_OBS; i++)
     {
-        var[i] = obs_noise[i]*pow((0.9 - s.x[i]), 2) + 0.01;
+        var[i] = obs_noise[i]*dist2 + 0.001;
     }
     return;
 #else
@@ -181,7 +157,7 @@ void System::get_obs_variance(State& s, double* var)
     if(flag)
     {
         for(int i=0; i<NUM_DIM_OBS; i++)
-            var[i] = 0.01;
+            var[i] = 0.001;
     }
     else
     {
@@ -193,40 +169,47 @@ void System::get_obs_variance(State& s, double* var)
 
 int System::sample_control_observations(int num_vert)
 {
-    int how_many = 10; // 3*log(num_vert);
+    int how_many = 4;
     sampled_controls.clear();
-#if 0
-    cout<<"sampling: "<< how_many <<" controls and observations"<<endl;
-    // sample controls, add zero control to make any region as goal region
-    for(int i=0; i< how_many-1; i++)
-    {
-        State ctmp = sample_control();
-        sampled_controls.push_back(ctmp);
-        kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
-    }
 
-    State ctmp;
-    for(int i=0; i<NUM_DIM; i++)
-        ctmp.x[i] = 0;
-
-    sampled_controls.push_back(ctmp);
-    kd_insert(controls_tree, ctmp.x, &(sampled_controls.back()));
-    // cout<<"sampled controls: " << sampled_controls.size() << endl;
-#else
     State ctmp; 
+#if NUM_DIM==1
     ctmp.x[0] = max_controls[0]; sampled_controls.push_back(ctmp);
     ctmp.x[0] = min_controls[0]; sampled_controls.push_back(ctmp);
-    //ctmp.x[0] = 0; sampled_controls.push_back(ctmp);
-#endif
+    ctmp.x[0] = 0; sampled_controls.push_back(ctmp);
+    
     sampled_observations.clear();
     for(int i=0; i< how_many; i++)
     {
         State sobs;
-        for(int j=0; j< NUM_DIM; j++)
-            sobs.x[j] = min_states[j] + i/(float)how_many*(max_states[j] - min_states[j]);
+        sobs.x[0] = min_states[0] + i/(float)how_many*(max_states[0] - min_states[0]);
         sampled_observations.push_back(sobs);
-        //sobs.print();
     }
+#elif NUM_DIM==2
+    ctmp.x[0] = max_controls[0]; ctmp.x[1] = 0;
+    sampled_controls.push_back(ctmp);
+    ctmp.x[0] = min_controls[0]; ctmp.x[1] = 0;
+    sampled_controls.push_back(ctmp);
+    ctmp.x[1] = max_controls[1]; ctmp.x[0] = 0;
+    sampled_controls.push_back(ctmp);
+    ctmp.x[1] = min_controls[1]; ctmp.x[0] = 0;
+    sampled_controls.push_back(ctmp);
+    ctmp.x[0] = 0; ctmp.x[1] = 0;
+    sampled_controls.push_back(ctmp);
+    
+    sampled_observations.clear();
+    for(int i=0; i< how_many; i++)
+    {
+        for(int j=0; j< how_many; j++)
+        {
+            State sobs;
+            sobs.x[0] = min_states[0] + i/(float)how_many*(max_states[0] - min_states[0]);
+            sobs.x[1] = min_states[1] + j/(float)how_many*(max_states[1] - min_states[1]);
+            sampled_observations.push_back(sobs);
+        }
+    }
+#endif
+
 
     return 0;
 }

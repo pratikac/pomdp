@@ -4,6 +4,7 @@ import time
 from sys import *
 from pylab import *
 from matplotlib import patches
+from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.colors as mcolor
 import matplotlib.cm as cm
 import numpy as np
@@ -12,7 +13,7 @@ import os
 
 holding_time = 1
 state_array = []
-NUM_DIM = 1
+NUM_DIM = 2
 NUM_STATES = -1
 TRAJ_LEN = 10
 
@@ -181,6 +182,9 @@ def read_state_trajectories():
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_x_percentile_90, 'b--')
         legend()
         grid()
+        ylabel('x (t)')
+        xlabel('t [s]')
+        axis('tight')
     
         subplot(212)
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), np.average(state_traj_y, axis=0), 'b-', label='mean')
@@ -188,6 +192,7 @@ def read_state_trajectories():
         plot( holding_time*np.linspace(0,TRAJ_LEN,num=TRAJ_LEN), state_traj_y_percentile_90, 'b--')
         legend()
         grid()
+        ylabel('y (t)')
         xlabel('t [s]')
         axis('tight')
 
@@ -225,11 +230,9 @@ def read_state_index():
     print "num_states: ", NUM_STATES
     print "holding_time: ", holding_time
 
-    """
-    fig = figure(1)
+    fig = figure(3)
     ax = fig.add_subplot(111, aspect='equal')
     scatter( state_array[:,0], state_array[:,1], c='y', marker='o', s=30, alpha=0.8)
-    """
 
 def draw_goal():
     
@@ -298,7 +301,7 @@ def read_belief_traj():
 
         print traj_std.shape, traj_xy.shape
 
-        os.system('rm -rf movie/fig* movie/animation.avi')
+        os.system('rm -r movie/fig* movie/animation.avi')
         if NUM_DIM==1:
 
             xarr = np.linspace(-1,1,1000)
@@ -334,26 +337,28 @@ def read_belief_traj():
                 #print traj_xy[x], traj_std[x]
 
         elif NUM_DIM==2:
-
+            
             for i in range(len(traj_xy[:,0])):
                 fig = figure(1)
                 ax = fig.add_subplot(111, aspect='equal')
 
-                plot(traj_xy[0:i,0], traj_xy[0:i,1], 'b--')
-                for j in range(i):
+                plot(traj_xy[0:i+1,0], traj_xy[0:i+1,1], 'b--')
+                for j in np.arange(max(i+1-5,0),i+1):
                     circle = Circle( (traj_xy[j,0], traj_xy[j,1]), traj_std[j,0], alpha=0.2, fc='blue')
                     ax.add_patch(circle)
 
-                rect = Rectangle( (0.6, 0.6), 0.4, 0.4, fc='green', alpha = 0.4)
+                rect = Rectangle( (-2, -2), 4, 4, fc='grey', alpha = 0.3)
                 ax.add_patch(rect)
-                rect = Rectangle( (-1, -1), 0.2, 0.2, fc='red', alpha = 0.4)
+                rect = Rectangle( (0.8, 0.8), 1.2, 1.2, fc='white', alpha = 0.3)
                 ax.add_patch(rect)
-                xlim(-1,1)
-                ylim(-1,1)
+                rect = Rectangle( (-1, -1), 0.4, 0.4, fc='red', alpha = 0.3)
+                ax.add_patch(rect)
+                xlim(-2,2)
+                ylim(-2,2)
                 fname ='movie/fig%03d.png'%i
                 fig.savefig(fname, bbox_inches='tight')
                 fig.clf();
-
+                       
         os.system("mencoder 'mf://movie/fig*.png' -mf type=png:fps=1 -ovc lavc -lavcopts vcodec=wmv2 -oac copy -o movie/animation.avi")
 
     fp.close()

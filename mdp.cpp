@@ -375,7 +375,6 @@ Graph::Graph(System& sys, int max_vert_in)
     obs_tree = kd_create(NUM_DIM);
 
     gamma = 2.1*pow( (1+1/(double)NUM_DIM), 1/(double)NUM_DIM);
-    //gamma = 0.5;
 };
 
 Graph::~Graph()
@@ -721,50 +720,30 @@ int Graph::add_sample(bool is_init)
 {
     State stmp;
 #if 0
-    if (num_vert < 1)
+    if (num_vert < 2)
         stmp = system->sample_init_state();
-    else if(num_vert < 2)
+    else if(num_vert < 4)
         stmp = system->sample_goal();
     else
         stmp = system->sample_state();
 #else
+#if NUM_DIM==2
+    int rmv = sqrt(max_vert);
+    int i = num_vert/rmv; 
+    int j = num_vert%rmv;
+    double h = (system->max_states[0] - system->min_states[0])/(double)rmv;
+    stmp.x[0] = system->min_states[0] + i*h;
+    stmp.x[1] = system->min_states[1] + j*h;
+#elif NUM_DIM==1
     double h = (system->max_states[0] - system->min_states[0])/(double)max_vert;
     stmp.x[0] = system->min_states[0] + num_vert*h;
 #endif
-    Vertex *v = new Vertex(stmp);
-    if(num_vert == 0)
-    {
-        v->index_in_vlist = 0;
-
-        vlist.push_back(v);
-        num_vert++;
-        insert_into_state_tree(v);
-    }
-    else
-    {
-#if 1
-        v->index_in_vlist = num_vert;
-        vlist.push_back(v);
-        num_vert++;
-        insert_into_state_tree(v);
-#else
-        if( connect_edges_approx(v) == 0 )
-        {
-            v->index_in_vlist = num_vert;
-
-            vlist.push_back(v);
-            num_vert++;
-            insert_into_state_tree(v);
-
-            reconnect_edges_neighbors(v);
-        }
-        else
-        {
-            delete v;
-            return 1;
-        }
 #endif
-    }
+    Vertex *v = new Vertex(stmp);
+    v->index_in_vlist = num_vert;
+    vlist.push_back(v);
+    num_vert++;
+    insert_into_state_tree(v);
     return 0;
 }
 
@@ -802,16 +781,6 @@ int Graph::reconnect_edges_neighbors(Vertex* v)
 
 #endif
 
-#if 0
-    for(list<Edge*>::iterator i = v->edges_out.begin(); i != v->edges_out.end(); i++)
-    {
-        Vertex* v1 = (*i)->to;
-        cout<<"reconnecting vertex: " << v1->index_in_vlist << endl;
-        vertex_delete_edges(v1);
-        connect_edges_approx(v1);
-    }
-#endif
-
     return 0;
 }
 
@@ -830,8 +799,9 @@ int Graph::connect_edges_approx(Vertex* v)
     double key[NUM_DIM] ={0};
     system->get_key(v->s, key);
 
+    double bowlr = 1.2/sqrt(num_vert);
     //double bowlr = gamma * pow( log(num_vert+1.0)/(double)(num_vert+1.0), 1.0/(double)NUM_DIM);
-    double bowlr = 1.1/(double)num_vert;
+    //double bowlr = 1.1/(double)pow(num_vert, 1/(float)NUM_DIM);
     //cout<<"bowlr: " << bowlr << endl;
 
     kdres *res;
@@ -852,7 +822,8 @@ int Graph::connect_edges_approx(Vertex* v)
         State *curr_control = &(system->sampled_controls[i]);
         v->controls.push_back( curr_control );
 
-        double holding_time = 0.1; // system->get_holding_time(v->s, *curr_control, gamma, num_vert);
+        //double holding_time = 0.1;
+        double holding_time = system->get_holding_time(v->s, *curr_control, gamma, num_vert);
         v->holding_times.push_back(holding_time);
         // cout<<"ht: "<< holding_time << endl;
 
