@@ -12,7 +12,7 @@ OBJS = $(C_OBJS) $(CPP_OBJS)
 INCS =
 LIBS = 
 
-CFLAGS = -Wall -g -pg -O3 
+CFLAGS = -Wall -g -pg -O0 
 LDFLAGS = -g -pg 
 
 all: $(BIN)
@@ -35,8 +35,9 @@ clean:
 ctags:
 	ctags -R $(C_SRCS) $(CPP_SRCS) *.h
 
-
 depend:
 	makedepend -f deps -- $(CFLAGS) -- $(C_SRCS) -- $(CPP_SRCS)
 
+docs:
+	doxygen Doxyfile
 include deps

@@ -8,7 +8,9 @@ using namespace pomdp;
 
 namespace sarsop{
 
-
+    /*! Implements alpha vectors
+     * that are gradients of the value function
+     */
     class Alpha
     {
         public:
@@ -16,18 +18,30 @@ namespace sarsop{
             vector<float> gradient;
 
             Alpha(){};
+            /*! Constructor
+             * @param[in] aid Action Id: index of optimal action associated with alpha vector
+             * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
+             */
             Alpha(int aid, vector<float>& gradin)
             {
                 actionid = aid;
                 for(unsigned int i=0; i< gradin.size(); i++)
                     gradient.push_back(gradin[i]);
             }
+            /*! return value function as dot product of alpha with belief
+             * @param[in] b belief at which value is calculated
+             * \return float value dot(gradient, b)
+             */
             float get_value(Belief& b)
             {
                 return dot(gradient, b.p);
             }
     };
 
+    /*! node of a belief_tree, stores belief, pointers to parent, children, 
+     * action-observation that result in the children edges, number of children
+     * value function upper bound and lower bound
+     */
     class BeliefNode
     {
         public:
@@ -38,7 +52,7 @@ namespace sarsop{
             vector< pair<int, int> > aoid;
             int nchildren;
 
-            float upper_bound, lower_bound;
+            float value_upper_bound, value_lower_bound, value_prediction_optimal;
 
             BeliefNode(Belief& bin, BeliefNode* par, int aid, int oid)
             {
@@ -54,8 +68,9 @@ namespace sarsop{
                 }
                 nchildren = 0;
 
-                upper_bound = large_num;
-                lower_bound = -large_num;
+                value_upper_bound = large_num;
+                value_lower_bound = -large_num;
+                value_prediction_optimal = -large_num;
             }
             void get_key(double* k)
             {
@@ -70,6 +85,9 @@ namespace sarsop{
             vector<Alpha> alphas;
             vector<BeliefNode*> belief_tree_nodes;
             BeliefNode* root_node;
+            
+            vec mdp_value;
+            vector<Alpha> fixed_action_alphas;
 
             struct kdtree* belief_tree;
 
@@ -80,6 +98,8 @@ namespace sarsop{
                 BeliefNode* b0 = new BeliefNode(model->b0, NULL, -1, -1);
                 insert_belief_node_into_tree(b0);
                 root_node = b0;
+
+                mdp_value = vec(model->nstates, 0);
             }
             ~Solver()
             {
@@ -96,7 +116,8 @@ namespace sarsop{
                 delete key;
             }
 
-            void backup(Belief* b);
+            void mdp_value_iteration();
+            void fixed_action_alpha_iteration();
 
             float predicted_optimal_reward(Belief& b);
             float lower_bound_reward(Belief& b);
@@ -105,6 +126,13 @@ namespace sarsop{
             float get_poga_mult_bound(Belief& b, int aid, int oid, bool is_lower);
             void sample(float target_epsilon);
             void sample_belief_points(BeliefNode* bn, float L, float U, float epsilon, int level);
+    
+            void backup(Belief& b);
+            
+            int prune(vector<Alpha>& alp);
+
+            void solve(float target_epsilon);
+            bool check_termination_condition(float ep);
     };
 
     class Simulator

@@ -132,27 +132,43 @@ namespace pomdp
                 }
                 return p_o_given_b;
             }
+            /*! simple MDP model
+             * s1, s2(goal), s3(terminal state)
+             * a1 = transition, a2 = stopping action
+             * observations noisy in first 2 states
+             * reward in goal state
+             */
             Model test_model()
             {
-                vector<vec> P(2, vec(2));
-                vector<vec> Q(2, vec(2));
-                vector<vec> R(2, vec(2));
-                P[0][0] = 0.2; P[0][1] = 0.8;
-                P[1][0] = 0.8; P[1][1] = 0.2;
-
+                vector<vec> P(3, vec(3));
+                vector<vec> Q(3, vec(3));
+                vector<vec> R(3, vec(2));
+                
                 ttrans tmp;
+                
+                // a1
+                P[0][0] = 0.2; P[0][1] = 0.8; P[0][2] = 0;
+                P[1][0] = 0.8; P[1][1] = 0.2; P[1][2] = 0;
+                P[2][0] = 0.; P[2][1] = 0.; P[2][2] = 1;
                 tmp.push_back(P);
+                
+                // a2
+                P[0][0] = 0.; P[0][1] = 0.; P[0][2] = 1;
+                P[1][0] = 0.; P[1][1] = 0.; P[1][2] = 1;
+                P[2][0] = 0.; P[2][1] = 0.; P[2][2] = 1;
                 tmp.push_back(P);
 
-                Q[0][0] = 0.6; Q[0][1] = 0.4;
-                Q[1][0] = 0.4; Q[1][1] = 0.6;
+                Q[0][0] = 0.7; Q[0][1] = 0.3; Q[0][2] = 0;
+                Q[1][0] = 0.3; Q[1][1] = 0.7; Q[1][2] = 0;
+                Q[2][0] = 0.; Q[2][1] = 0.; Q[2][2] = 1;
 
-                R[0][0] = -1; R[0][1] = -1;
-                R[1][0] = 10; R[1][1] = -1;
+                R[0][0] = -2; R[0][1] = -10;
+                R[1][0] = -2; R[1][1] = 10;
+                R[2][0] = 0; R[2][1] = 0;
 
-                vec vb0(2); vb0[0]=0.1; vb0[1]=0.9;
+                vec vb0(3); vb0[0]=0.9; vb0[1]=0.1; vb0[2] = 0.;
                 Belief b0(vb0);
-                Model m(2, 2, 2, tmp, Q, 0.95, R, b0);
+                Model m(3, 2, 3, tmp, Q, 0.75, R, b0);
                 m.print();
 
                 return m;
