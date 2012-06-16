@@ -2,6 +2,7 @@
 #define __pomdp_h__
 
 #include <vector>
+#include <cmath>
 #include "mymath.h"
 using namespace std;
 
@@ -47,7 +48,7 @@ namespace pomdp
             treward preward;
             Belief b0;
 
-
+            Model(){};
             Model(int ns,int na, int no, ttrans& tin, tobs& oin, float din, treward& rin, const Belief& bin)
             {
                 nstates = ns;
@@ -114,33 +115,50 @@ namespace pomdp
                 }
                 return nb;
             }
+            
+            float get_expected_step_reward(Belief& b, int aid)
+            {
+                float tmp;
+                for(int i=0; i< nstates; i++)
+                    tmp += preward[i][aid]*b.p[i];
+                return tmp;
+            }
+            float get_p_o_given_b(Belief& b, int oid)
+            {
+                float p_o_given_b = 0;
+                for(int k=0; k< nstates; k++)
+                {
+                    p_o_given_b += pobservation[oid][k]*(b.p[k]);
+                }
+                return p_o_given_b;
+            }
+            Model test_model()
+            {
+                vector<vec> P(2, vec(2));
+                vector<vec> Q(2, vec(2));
+                vector<vec> R(2, vec(2));
+                P[0][0] = 0.2; P[0][1] = 0.8;
+                P[1][0] = 0.8; P[1][1] = 0.2;
+
+                ttrans tmp;
+                tmp.push_back(P);
+                tmp.push_back(P);
+
+                Q[0][0] = 0.6; Q[0][1] = 0.4;
+                Q[1][0] = 0.4; Q[1][1] = 0.6;
+
+                R[0][0] = -1; R[0][1] = -1;
+                R[1][0] = 10; R[1][1] = -1;
+
+                vec vb0(2); vb0[0]=0.1; vb0[1]=0.9;
+                Belief b0(vb0);
+                Model m(2, 2, 2, tmp, Q, 0.95, R, b0);
+                m.print();
+
+                return m;
+            }
 
     };
-    Model test_model()
-    {
-        vector<vec> P(2, vec(2));
-        vector<vec> Q(2, vec(2));
-        vector<vec> R(2, vec(2));
-        P[0][0] = 0.2; P[0][1] = 0.8;
-        P[1][0] = 0.8; P[1][1] = 0.2;
-
-        ttrans tmp;
-        tmp.push_back(P);
-        tmp.push_back(P);
-
-        Q[0][0] = 0.6; Q[0][1] = 0.4;
-        Q[1][0] = 0.4; Q[1][1] = 0.6;
-        
-        R[0][0] = -1; R[0][1] = -1;
-        R[1][0] = 10; R[1][1] = -1;
-
-        vec vb0(2); vb0[0]=0.1; vb0[1]=0.9;
-        Belief b0(vb0);
-        Model m(2, 2, 2, tmp, Q, 0.95, R, b0);
-        m.print();
-
-        return m;
-    }
 
 };
 

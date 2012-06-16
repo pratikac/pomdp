@@ -1,0 +1,11 @@
+need
+    sarsop
+    simulator
+
+    classes
+        belief
+        alpha vector
+        pomdp
+            S, A, O, P, Q, R
+        
+        
