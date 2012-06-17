@@ -133,12 +133,7 @@ namespace pomdp
             }
             float get_p_o_given_b(Belief& b, int aid, int oid)
             {
-                float p_o_given_b = 0;
-                for(int k=0; k< nstates; k++)
-                {
-                    p_o_given_b += (pobservation[aid][oid][k]*b.p[k]);
-                }
-                return p_o_given_b;
+                return dot(pobservation[aid][oid], b.p);
             }
     };
 };

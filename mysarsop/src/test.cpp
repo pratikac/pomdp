@@ -13,7 +13,7 @@ int main()
     Solver s = Solver(m);
     s.initialize();
     
-    s.sample(1);
+    s.solve(0.1);
     
     return 0;
 }

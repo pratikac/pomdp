@@ -39,7 +39,7 @@ namespace sarsop{
             {
                 return dot(gradient, b.p);
             }
-    };
+     };
 
     /*! node of a belief_tree, stores belief, pointers to parent, children, 
      * action-observation that result in the children edges, number of children
@@ -80,16 +80,22 @@ namespace sarsop{
                 for(int i=0; i< b.dim; i++)
                     k[i] = b.p[i];
             }
+            void print()
+            {
+                //cout<<"par: "; print_vec(parent->b.p);
+                cout<<"prob: "; print_vec(b.p);
+                cout<<"bounds: "<<value_upper_bound<<" "<<value_prediction_optimal<<" "<<value_lower_bound<<endl<<endl;
+            }
     };
     class Solver
     {
         public:
             Model* model;
-            
+
             vector<BeliefNode*> belief_tree_nodes;
             BeliefNode* root_node;
             struct kdtree* belief_tree;
-            
+
             vec mdp_value;
             vector<Alpha> alphas;
 
@@ -118,6 +124,14 @@ namespace sarsop{
                 kd_insert(belief_tree, key, bn);
                 delete key;
             }
+            void print_alphas()
+            {
+                for(unsigned int i=0; i<alphas.size(); i++)
+                {
+                    cout<<alphas[i].actionid<<": ";
+                    print_vec(alphas[i].gradient);
+                }
+            }
 
             void mdp_value_iteration();
             void fixed_action_alpha_iteration();
@@ -129,10 +143,11 @@ namespace sarsop{
             float get_poga_mult_bound(Belief& b, int aid, int oid, bool is_lower);
             void sample(float target_epsilon);
             void sample_belief_points(BeliefNode* bn, float L, float U, float epsilon, int level);
-    
+
             void backup(Belief& b);
             
-            int prune(vector<Alpha>& alp);
+            int check_alpha_dominated(Alpha& a1, Alpha& a2);
+            int prune(bool only_last);
 
             void initialize();
             void solve(float target_epsilon);

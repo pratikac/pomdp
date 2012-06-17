@@ -25,8 +25,9 @@ void Solver::mdp_value_iteration()
                 float tmp = 0;
                 for(int k=0; k< m.nstates; k++)
                 {
-                    tmp = tmp + m.ptransition[j][k][i]*(m.preward[j][i] + m.discount*mdp_value_copy[k]);
+                    tmp = tmp + m.ptransition[j][k][i]*m.discount*mdp_value_copy[k];
                 }
+                tmp = tmp + m.preward[j][i]; 
                 if (tmp > max_value)
                     max_value = tmp;
             }
@@ -36,8 +37,8 @@ void Solver::mdp_value_iteration()
         }
         //print_vec(mdp_value);
     }
-    cout<<"mdp_value: ";
-    print_vec(mdp_value);
+    //cout<<"mdp_value: ";
+    //print_vec(mdp_value);
 }
 
 /*! calculates one single alpha plane for the best fixed action policy (HSVI2 paper)
@@ -67,7 +68,7 @@ void Solver::fixed_action_alpha_iteration()
     }
     alpha.actionid = fixed_aid;
     for(int i=0; i< m.nstates; i++)
-        alpha.gradient[i] = max_lower_bound/(1- m.discount);
+        alpha.gradient[i] = max_lower_bound/(1.0 - m.discount);
 
     alphas.push_back(alpha);
 
@@ -97,11 +98,8 @@ void Solver::fixed_action_alpha_iteration()
     }
     prune(fixed_action_alphas);
     */
-    for(unsigned int i=0; i<alphas.size(); i++)
-    {
-        cout<<alphas[i].actionid<<": ";
-        print_vec(alphas[i].gradient);
-    }
+    //cout<<"fixed_action_initialize: "<<endl;
+    //print_alphas();
 }
 
 void Solver::backup(Belief& b)
@@ -132,8 +130,8 @@ void Solver::backup(Belief& b)
             alpha_id[i][j] = max_alpha_id;
         }
     }
-    print_mat(alpha_id);
-    getchar();
+    //print_mat(alpha_id);
+    //getchar();
 
     Alpha new_alpha, tmp_alpha;
     tmp_alpha.gradient = vec(m.nstates, 0);
@@ -159,6 +157,7 @@ void Solver::backup(Belief& b)
     }
 
     alphas.push_back(new_alpha);
+    prune(true);
 }
 
 /*! predict optimal reward using binning of beliefs
@@ -313,10 +312,13 @@ void Solver::sample_belief_points(BeliefNode* bn, float L, float U, float epsilo
         belief_tree_nodes.push_back(newbn);
         insert_belief_node_into_tree(newbn);
         
-        newbn->value_prediction_optimal = get_predicted_optimal_reward(new_belief);
-        newbn->value_upper_bound = get_upper_bound_reward(new_belief);
-        newbn->value_lower_bound = get_lower_bound_reward(new_belief);
-        
+        newbn->value_prediction_optimal = Lt;
+        newbn->value_upper_bound = Ut;
+        newbn->value_lower_bound = Lt;
+       
+        newbn->print();
+        //getchar();
+
         backup(b);
 
         sample_belief_points(newbn, Lt, Ut, epsilon, level+1);
@@ -324,9 +326,58 @@ void Solver::sample_belief_points(BeliefNode* bn, float L, float U, float epsilo
 }
 
 
-int Solver::prune(vector<Alpha>& avec)
+/*! returns
+ *  0: no dominance
+ *  1: a1 dominates
+ *  2: a2 dominates
+*/
+int Solver::check_alpha_dominated(Alpha& a1, Alpha& a2)
 {
-   return 0; 
+    int nnodes = belief_tree_nodes.size();
+    int dominated_nodes = 0;
+    for(unsigned int i=0; i< belief_tree_nodes.size(); i++)
+    {
+        BeliefNode* bn = belief_tree_nodes[i];
+        if( a1.get_value(bn->b) > a2.get_value(bn->b))
+            dominated_nodes++;
+        else
+            dominated_nodes--;
+    }
+    if(dominated_nodes == nnodes)
+        return 1;
+    else if(dominated_nodes == -nnodes)
+        return 2;
+    
+    return 0;
+}
+/*! prunes alpha vectors O(n^2)
+ * only_last flag checks only whether last vector can be removed
+ * \return number of planes pruned
+ */
+int Solver::prune(bool only_last)
+{
+    if(only_last)
+    {
+        Alpha& alpha_last = alphas.back();
+        int na = alphas.size()-2;
+        for(int i=na; i>=0; i++)
+        {
+            int ret_val = check_alpha_dominated(alphas[i], alpha_last);
+            if(ret_val == 1)
+            {
+                alphas.pop_back();
+                return 1;
+            }
+            else if(ret_val == 2)
+            {
+                cout<<"erased one inside"<<endl;
+                alphas.erase(alphas.begin()+i);
+                if(alphas.size() == 1)
+                    return na+1;
+            }
+        }
+    }
+    return 0;
 }
 
 bool Solver::check_termination_condition(float ep)
@@ -349,17 +400,22 @@ void Solver::initialize()
 
 void Solver::solve(float target_epsilon)
 {
-    float epsilon = 100;
+    float epsilon = 10;
     bool is_converged = false;
+    int iteration = 0;
+    cout<<"start solver"<<endl;
     while(!is_converged)
     {
+        iteration++;
         sample(epsilon);
 
-        int how_many = prune(alphas);
+        int how_many = prune(false);
         
         is_converged = check_termination_condition(target_epsilon);
         
-        if(how_many > 5)
-            epsilon = epsilon/2.0;
+        cout<<"iteration: "<< iteration << endl;
+        print_alphas();
+
+        epsilon = epsilon/2.0;
     }
 }
