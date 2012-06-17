@@ -1,6 +1,7 @@
 #ifndef __sarsop_h__
 #define __sarsop_h__
 
+#include "utils.h"
 #include "pomdp.h"
 #include "kdtree.h"
 
@@ -17,7 +18,9 @@ namespace sarsop{
             int actionid;
             vector<float> gradient;
 
-            Alpha(){};
+            Alpha(){
+
+            };
             /*! Constructor
              * @param[in] aid Action Id: index of optimal action associated with alpha vector
              * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
@@ -82,14 +85,14 @@ namespace sarsop{
     {
         public:
             Model* model;
-            vector<Alpha> alphas;
+            
             vector<BeliefNode*> belief_tree_nodes;
             BeliefNode* root_node;
+            struct kdtree* belief_tree;
             
             vec mdp_value;
-            vector<Alpha> fixed_action_alphas;
+            vector<Alpha> alphas;
 
-            struct kdtree* belief_tree;
 
             Solver(Model& min)
             {
@@ -108,20 +111,20 @@ namespace sarsop{
                     delete belief_tree_nodes[i];
                 belief_tree_nodes.clear();
             }
-            void insert_belief_node_into_tree(BeliefNode* b)
+            void insert_belief_node_into_tree(BeliefNode* bn)
             {
-                double* key = new double[model->b0.dim];
-                b->get_key(key);
-                kd_insert(belief_tree, key, b);
+                double* key = new double[bn->b.dim];
+                bn->get_key(key);
+                kd_insert(belief_tree, key, bn);
                 delete key;
             }
 
             void mdp_value_iteration();
             void fixed_action_alpha_iteration();
 
-            float predicted_optimal_reward(Belief& b);
-            float lower_bound_reward(Belief& b);
-            float upper_bound_reward(Belief& b);
+            float get_predicted_optimal_reward(Belief& b);
+            float get_lower_bound_reward(Belief& b);
+            float get_upper_bound_reward(Belief& b);
             float get_bound_child(Belief& b, bool is_lower, int& aid);
             float get_poga_mult_bound(Belief& b, int aid, int oid, bool is_lower);
             void sample(float target_epsilon);
@@ -131,6 +134,7 @@ namespace sarsop{
             
             int prune(vector<Alpha>& alp);
 
+            void initialize();
             void solve(float target_epsilon);
             bool check_termination_condition(float ep);
     };

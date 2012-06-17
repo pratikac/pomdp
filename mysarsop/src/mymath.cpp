@@ -14,7 +14,7 @@ float dot(vec& v1, vec& v2)
 vec vec_vec_termwise(vec& v1, vec& v2)
 {
     int d = v1.size();
-    vec tmp(d);
+    vector<float> tmp(d, 0);
     for(int i=0; i<d; i++)
     {
         tmp[i] = v1[i]*v2[i];
@@ -25,7 +25,7 @@ vec vec_vec_termwise(vec& v1, vec& v2)
 vec mat_vec(vector<vec>& mat, vec& vin)
 {
     unsigned int d = vin.size();
-    vec tmp(d);
+    vector<float> tmp(d, 0);
     for(unsigned int i=0; i< mat.size(); i++)
     {
         if (mat[i].size() != d)
@@ -53,7 +53,7 @@ vector< vec > mat_mat( vector<vec>& m1, vector<vec >& m2)
     unsigned int n = m1[0].size();
     unsigned int m = m1.size();
     unsigned int k = m2[0].size();
-    vector<vec > tmp(m, vec(k));
+    vector<vec > tmp(m, vec(k,0));
 
     for(unsigned int i=0; i< m; i++)
     {
@@ -83,6 +83,16 @@ void print_mat(vector< vec >& m)
         cout<<endl;
     }
 }
+void print_mat(vector< vec_i >& m)
+{
+    for(unsigned int i=0; i< m.size(); i++)
+    {
+        cout<<"\t";
+        for(unsigned int j=0; j< m[i].size(); j++)
+            cout<<m[i][j]<<" ";
+        cout<<endl;
+    }
+}
 
 void test_mymath()
 {
@@ -94,12 +104,20 @@ void test_mymath()
     Q[0][0] = 0.6; Q[0][1] = 0.4;
     Q[1][0] = 0.4; Q[1][1] = 0.6;
 
-    vec r(3);
-    r[0] = 0.1; r[1]=0.2; r[2] = 0.7;
+    vec r(2);
+    r[0] = 0.1; r[1]=0.2;
 
     vector<vec> tmp1 = mat_mat(P, Q);
     print_mat(tmp1);
 
     vec tmp2 = mat_vec(P, r);
     print_vec(tmp2);
+}
+
+float sum(vec& v)
+{
+    float tmp = 0;
+    for(unsigned int i=0; i< v.size(); i++)
+        tmp += v[i];
+    return tmp;
 }

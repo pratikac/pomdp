@@ -21,6 +21,8 @@ vec mat_vec(vector<vec>& mat, vec& vin);
 vector< vec > mat_mat( vector<vec>& m1, vector<vec >& m2);
 void print_vec(vec& v);
 void print_mat(vector< vec >& m);
+void print_mat(vector< vec_i >& m);
 void test_mymath();
 
+float sum(vec& v);
 #endif
