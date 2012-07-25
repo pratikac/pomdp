@@ -73,7 +73,7 @@ namespace sarsop{
 
                 value_upper_bound = large_num;
                 value_lower_bound = -large_num;
-                value_prediction_optimal = -large_num;
+                value_prediction_optimal = large_num;
             }
             void get_key(double* k)
             {
@@ -83,8 +83,8 @@ namespace sarsop{
             void print()
             {
                 //cout<<"par: "; print_vec(parent->b.p);
-                cout<<"prob: "; print_vec(b.p);
-                cout<<"bounds: "<<value_upper_bound<<" "<<value_prediction_optimal<<" "<<value_lower_bound<<endl<<endl;
+                cout<<"belief prob: "; print_vec(b.p);
+                //cout<<"bounds: "<<value_upper_bound<<" "<<value_prediction_optimal<<" "<<value_lower_bound<<endl;
             }
     };
     class Solver
@@ -140,11 +140,11 @@ namespace sarsop{
             float get_lower_bound_reward(Belief& b);
             float get_upper_bound_reward(Belief& b);
             float get_bound_child(Belief& b, bool is_lower, int& aid);
-            float get_poga_mult_bound(Belief& b, int aid, int oid, bool is_lower);
+            float get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_bound, float& upper_bound);
             void sample(float target_epsilon);
-            void sample_belief_points(BeliefNode* bn, float L, float U, float epsilon, int level);
+            void sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level);
 
-            void backup(Belief& b);
+            void backup(BeliefNode* bn);
             
             int check_alpha_dominated(Alpha& a1, Alpha& a2);
             int prune(bool only_last);
@@ -164,7 +164,6 @@ namespace sarsop{
                 solver = &s;
             }
     };
-
 };
 
 #endif

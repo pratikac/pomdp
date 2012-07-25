@@ -6,7 +6,7 @@ float dot(vec& v1, vec& v2)
     float tmp = 0;
     for(int i=0; i<d; i++)
     {
-        tmp += v1[i]*v2[i];
+        tmp = tmp + v1[i]*v2[i];
     }
     return tmp;
 }
@@ -114,6 +114,7 @@ void test_mymath()
     print_vec(tmp2);
 }
 
+inline
 float sum(vec& v)
 {
     float tmp = 0;

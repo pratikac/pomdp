@@ -26,6 +26,10 @@ namespace pomdp
                 for(int i=0; i<dim; i++)
                     p[i] = p[i]/sum;
             }
+            void print()
+            {
+                print_vec(p);
+            }
     };
     class Model
     {
@@ -36,7 +40,7 @@ namespace pomdp
             float discount;
             
             /*! transition matrix
-             * A x S x S : control x to x from
+             * A x S_1 x S_2 : P(s_2 | s_1, a)
              */
             ttrans ptransition;
             /*! observation matrix

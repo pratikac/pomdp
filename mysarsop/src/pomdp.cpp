@@ -48,7 +48,7 @@ Model create_model()
     Belief b0;
     b0.dim = 2;
     b0.p = vb0; 
-    Model m(2, 3, 2, tmp1, tmp2, 0.25, R, b0);
+    Model m(2, 3, 2, tmp1, tmp2, 0.90, R, b0);
     
     //m.print();
 

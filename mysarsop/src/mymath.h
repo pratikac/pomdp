@@ -7,7 +7,7 @@
 #include "utils.h"
 using namespace std;
 
-#define large_num   1e20
+#define large_num   1e10
 
 typedef vector<float> vec;
 typedef vector<int> vec_i;
