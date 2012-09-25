@@ -3,7 +3,7 @@ CPP = g++
 
 BIN = ./test
 C_SRCS = kdtree.c 
-CPP_SRCS = logger.cpp mymath.cpp pomdp.cpp sarsop.cpp test.cpp
+CPP_SRCS = logger.cpp mymath.cpp pomdp.cpp test.cpp
 
 C_OBJS = $(C_SRCS:.c=.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)
@@ -12,7 +12,7 @@ OBJS = $(C_OBJS) $(CPP_OBJS)
 INCS =
 LIBS = 
 
-CFLAGS = -Wall -g -pg 
+CFLAGS = -Wall -g -pg -O3
 LDFLAGS = -g -pg 
 
 all: $(BIN)
