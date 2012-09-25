@@ -9,38 +9,6 @@ using namespace pomdp;
 
 namespace sarsop{
 
-    /*! Implements alpha vectors
-     * that are gradients of the value function
-     */
-    class Alpha
-    {
-        public:
-            int actionid;
-            vector<float> gradient;
-
-            Alpha(){
-
-            };
-            /*! Constructor
-             * @param[in] aid Action Id: index of optimal action associated with alpha vector
-             * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
-             */
-            Alpha(int aid, vector<float>& gradin)
-            {
-                actionid = aid;
-                for(unsigned int i=0; i< gradin.size(); i++)
-                    gradient.push_back(gradin[i]);
-            }
-            /*! return value function as dot product of alpha with belief
-             * @param[in] b belief at which value is calculated
-             * \return float value dot(gradient, b)
-             */
-            float get_value(Belief& b)
-            {
-                return dot(gradient, b.p);
-            }
-     };
-
     /*! node of a belief_tree, stores belief, pointers to parent, children, 
      * action-observation that result in the children edges, number of children
      * value function upper bound and lower bound
@@ -55,7 +23,7 @@ namespace sarsop{
             vector< pair<int, int> > aoid;
             int nchildren;
 
-            float value_upper_bound, value_lower_bound, value_prediction_optimal;
+            double value_upper_bound, value_lower_bound, value_prediction_optimal;
 
             BeliefNode(Belief& bin, BeliefNode* par, int aid, int oid)
             {
@@ -136,13 +104,13 @@ namespace sarsop{
             void mdp_value_iteration();
             void fixed_action_alpha_iteration();
 
-            float get_predicted_optimal_reward(Belief& b);
-            float get_lower_bound_reward(Belief& b);
-            float get_upper_bound_reward(Belief& b);
-            float get_bound_child(Belief& b, bool is_lower, int& aid);
-            float get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_bound, float& upper_bound);
-            void sample(float target_epsilon);
-            void sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level);
+            double get_predicted_optimal_reward(Belief& b);
+            double get_lower_bound_reward(Belief& b);
+            double get_upper_bound_reward(Belief& b);
+            double get_bound_child(Belief& b, bool is_lower, int& aid);
+            double get_poga_mult_bound(Belief& b, int aid, int oid, double& lower_bound, double& upper_bound);
+            void sample(double target_epsilon);
+            void sample_beliefs(BeliefNode* bn, double L, double U, double epsilon, int level);
 
             void backup(BeliefNode* bn);
             
@@ -150,8 +118,8 @@ namespace sarsop{
             int prune(bool only_last);
 
             void initialize();
-            void solve(float target_epsilon);
-            bool check_termination_condition(float ep);
+            void solve(double target_epsilon);
+            bool check_termination_condition(double ep);
     };
 
     class Simulator

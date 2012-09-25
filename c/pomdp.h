@@ -8,19 +8,19 @@ using namespace std;
 
 namespace pomdp
 {
-    typedef vector< vector< vector<float> > > ttrans;
-    typedef vector< vector< vector<float> > > tobs;
-    typedef vector< vector<float> > treward;
+    typedef vector< vector< vector<double> > > ttrans;
+    typedef vector< vector< vector<double> > > tobs;
+    typedef vector< vector<double> > treward;
 
     class Belief
     {
         public:
-            vector<float> p;
+            vector<double> p;
             int dim;
             
             void normalize()
             {
-                float sum = 0;
+                double sum = 0;
                 for(int i=0; i<dim; i++)
                     sum += p[i];
                 for(int i=0; i<dim; i++)
@@ -31,13 +31,45 @@ namespace pomdp
                 print_vec(p);
             }
     };
+
+    /*! Implements alpha vectors
+     * that are gradients of the value function
+     */
+    class Alpha
+    {
+        public:
+            int actionid;
+            vector<double> gradient;
+
+            Alpha(){
+
+            };
+            /*! Constructor
+             * @param[in] aid Action Id: index of optimal action associated with alpha vector
+             * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
+             */
+            Alpha(int aid, vector<double>& gradin)
+            {
+                actionid = aid;
+                for(unsigned int i=0; i< gradin.size(); i++)
+                    gradient.push_back(gradin[i]);
+            }
+            /*! return value function as dot product of alpha with belief
+             * @param[in] b belief at which value is calculated
+             * \return double value dot(gradient, b)
+             */
+            double get_value(Belief& b)
+            {
+                return dot(gradient, b.p);
+            }
+    };
     class Model
     {
         public:
             int nstates;
             int nactions;
             int nobservations;
-            float discount;
+            double discount;
             
             /*! transition matrix
              * A x S_1 x S_2 : P(s_2 | s_1, a)
@@ -53,7 +85,7 @@ namespace pomdp
             treward preward;
             Belief b0;
 
-            Model(int ns,int na, int no, ttrans& tin, tobs& oin, float din, treward& rin, Belief& bin)
+            Model(int ns,int na, int no, ttrans& tin, tobs& oin, double din, treward& rin, Belief& bin)
             {
                 nstates = ns;
                 nactions = na;
@@ -61,8 +93,8 @@ namespace pomdp
                 discount = din;
                 b0 = bin;
 
-                ptransition = ttrans(na, vector< vector<float> >(ns, vector<float> (ns)));
-                pobservation = tobs(na, vector< vector<float> >(no, vector<float> (ns)));
+                ptransition = ttrans(na, vector< vector<double> >(ns, vector<double> (ns)));
+                pobservation = tobs(na, vector< vector<double> >(no, vector<double> (ns)));
                 preward = treward(na, vec(ns));
 
                 for(int i=0; i<na; i++)
@@ -131,11 +163,11 @@ namespace pomdp
                 return newb;
             }
             
-            float get_expected_step_reward(Belief& b, int aid)
+            double get_expected_step_reward(Belief& b, int aid)
             {
                 return dot(preward[aid], b.p);
             }
-            float get_p_o_given_b(Belief& b, int aid, int oid)
+            double get_p_o_given_b(Belief& b, int aid, int oid)
             {
                 return dot(pobservation[aid][oid], b.p);
             }
