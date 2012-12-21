@@ -8,14 +8,14 @@ using namespace std;
 
 namespace pomdp
 {
-    typedef vector< vector< vector<double> > > ttrans;
-    typedef vector< vector< vector<double> > > tobs;
-    typedef vector< vector<double> > treward;
+    typedef vector< matrix > ttrans;
+    typedef vector< matrix > tobs;
+    typedef matrix treward;
 
     class Belief
     {
         public:
-            vector<double> p;
+            vec p;
             int dim;
             
             void normalize()
@@ -39,7 +39,7 @@ namespace pomdp
     {
         public:
             int actionid;
-            vector<double> gradient;
+            vec gradient;
 
             Alpha(){
 
@@ -48,7 +48,7 @@ namespace pomdp
              * @param[in] aid Action Id: index of optimal action associated with alpha vector
              * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
              */
-            Alpha(int aid, vector<double>& gradin)
+            Alpha(int aid, vec& gradin)
             {
                 actionid = aid;
                 for(unsigned int i=0; i< gradin.size(); i++)
@@ -93,9 +93,9 @@ namespace pomdp
                 discount = din;
                 b0 = bin;
 
-                ptransition = ttrans(na, vector< vector<double> >(ns, vector<double> (ns)));
-                pobservation = tobs(na, vector< vector<double> >(no, vector<double> (ns)));
-                preward = treward(na, vec(ns));
+                ptransition = ttrans(na, matrix(ns, zero(ns)));
+                pobservation = tobs(na, matrix(no, zero(ns)));
+                preward = treward(na, zero(ns));
 
                 for(int i=0; i<na; i++)
                 {
