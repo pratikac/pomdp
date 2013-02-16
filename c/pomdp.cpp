@@ -8,6 +8,7 @@ using namespace pomdp;
  * a1 = listen, a2 = open_left, a3 = open_right
  * o1 = left, o2 = right
  */
+/*
 Model create_model()
 {
   vector<vec> P(2, vec(2));
@@ -54,7 +55,7 @@ Model create_model()
 
   return m;
 }
-
+*/
 void test_model(Model& m)
 {
   // next_belief_testing

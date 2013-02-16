@@ -3,13 +3,13 @@ CPP = g++
 
 BIN = ./test
 C_SRCS = kdtree.c 
-CPP_SRCS = logger.cpp mymath.cpp pomdp.cpp test.cpp
+CPP_SRCS = test.cpp
 
 C_OBJS = $(C_SRCS:.c=.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 OBJS = $(C_OBJS) $(CPP_OBJS)
 
-INCS =
+INCS = -I /home/pratik/code/utils -I /home/pratik/apps
 LIBS = 
 
 CFLAGS = -Wall -g -pg -O3
@@ -36,7 +36,7 @@ ctags:
 	ctags -R $(C_SRCS) $(CPP_SRCS) *.h
 
 depend:
-	makedepend -f deps -- $(CFLAGS) -- $(C_SRCS) -- $(CPP_SRCS)
+	makedepend -f deps $(INCS) -- $(CFLAGS) -- $(C_SRCS) -- $(CPP_SRCS)
 
 docs:
 	doxygen Doxyfile
