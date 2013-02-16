@@ -2,7 +2,9 @@
 #include "linalg.h"
 #include "utils.h"
 #include "pomdp.h"
+
 using namespace std;
+using namespace pomdp;
 
 void test_eigen_sparse()
 {
@@ -29,9 +31,30 @@ void test_eigen_sparse()
   cout<<times.toc()<< " [s]"<<endl;
 }
 
+void test1(){
+  spmat A(10,10);
+  spvec x(10);
+  for(int i=0; i<10;i++)
+  {
+    int r = rand()%10;
+    int c = rand()%10;
+    A.coeffRef(r,c) += 1e-3;
+  }
+  for(int i=0; i<5;i++)
+  {
+    int r = rand()%10;
+    x.coeffRef(r) += 100;
+  }
+  //cout<<A<<endl<<A.col(1).transpose()*x<<endl;
+  cout<< vec(x).array().matrix()<<endl;
+}
+
 int main()
 {
-  Belief b;
-
+  Model m = create_model();    
+  //m.print();
+  test_model(m);
+  
+  //test1();
   return 0;
 }

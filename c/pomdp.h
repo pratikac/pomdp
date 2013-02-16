@@ -1,6 +1,7 @@
 #ifndef __pomdp_h__
 #define __pomdp_h__
 
+#include <iostream>
 #include <vector>
 #include <cmath>
 #include "linalg.h"
@@ -10,12 +11,11 @@ namespace pomdp{
 
   typedef vector< spmat > ttrans;
   typedef vector< spmat > tobs;
-  typedef vector< spvec> treward;
+  typedef vector< spvec > treward;
 
   class Belief{
     public:
       spvec p;
-      int dim;
       void normalize(){
         p = p/p.sum();
       }
@@ -114,15 +114,18 @@ namespace pomdp{
       Belief next_belief(Belief& b, int aid=-1, int oid=-1)
       {
         Belief newb;
-        newb.dim = b.dim;
         newb.p = b.p;
+        
+        //cout<<b.p<<endl;
 
         if(aid != -1)
           newb.p = ptransition[aid] * b.p;
         if( (oid != -1) && (aid != -1))
         {
           // FIX-ME!!
-          newb.p = (pobservation[aid](oid).array() * newb.p.array()).matrix();
+          vec t1 = vec(newb.p);
+          t1 = (t1.array() * mat(pobservation[aid]).col(oid).array()).matrix();
+          newb.p = t1.sparseView();
           newb.normalize();
         }
         return newb;
@@ -134,7 +137,7 @@ namespace pomdp{
       }
       double get_p_o_given_b(Belief& b, int aid, int oid)
       {
-        return pobservation[aid][oid].dot(b.p);
+        return pobservation[aid].col(oid).dot(b.p);
       }
   };
 };
