@@ -2,9 +2,11 @@
 #include "linalg.h"
 #include "utils.h"
 #include "pomdp.h"
+#include "sarsop.h"
 
 using namespace std;
 using namespace pomdp;
+using namespace sarsop;
 
 void test_eigen_sparse()
 {
@@ -46,10 +48,13 @@ void test1(){
     x.coeffRef(r) += 100;
   }
   //cout<<A<<endl<<A.col(1).transpose()*x<<endl;
+  /*
   float* key = vec(x).data();
   for(int i=0; i<10; i++)
     cout<<key[i]<<" ";
   cout<<endl;
+  */
+  cout<< x.size() << endl;
 }
 
 int main()
@@ -61,5 +66,10 @@ int main()
   */
   
   test1();
+
+  Model m = create_model();    
+  Solver s(m);
+  s.mdp_value_iteration();
+  
   return 0;
 }

@@ -41,7 +41,7 @@ Model create_model()
   spvec vb0(2); vb0.insert(0)=0.5; vb0.insert(1)=0.5;
   Belief b0;
   b0.p = vb0; 
-  Model m(2, 3, 2, P, Q, 0.90, R, b0);
+  Model m(2, 3, 2, P, Q, 0.95, R, b0);
 
   //m.print();
 

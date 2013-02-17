@@ -49,9 +49,13 @@ namespace sarsop{
        * note: the key is a pointer to the data in sparse vector
        * DONOT change the key before / after inserting in kdtree
        */
-      void get_key(float* k)
+      double* get_key()
       {
-        k = vec(b.p).data();
+        float* k = vec(b.p).data();
+        double* key = new double[b.p.size()];
+        for(int i=0;i< b.p.size();i++)
+          key[i] = k[i];
+        return key;
       }
       void print()
       {
@@ -76,7 +80,7 @@ namespace sarsop{
       Solver(Model& min)
       {
         model = &min;
-        belief_tree = kd_create(mode->nstates);
+        belief_tree = kd_create(model->nstates);
         BeliefNode* b0 = new BeliefNode(model->b0, NULL, -1, -1);
         insert_belief_node_into_tree(b0);
         root_node = b0;
@@ -92,10 +96,12 @@ namespace sarsop{
       }
       void insert_belief_node_into_tree(BeliefNode* bn)
       {
-        float* key;
-        bn->get_key(key);
-        kd_insertf(belief_tree, key, bn);
-        delete key;
+        double* key = bn->get_key();
+        if(key)
+          kd_insert(belief_tree, key, bn);
+        else
+          cout<<"belief: null key"<<endl;
+        delete[] key;
       }
       void print_alphas()
       {

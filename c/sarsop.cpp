@@ -22,8 +22,8 @@ void Solver::mdp_value_iteration()
       double max_value = -large_num;
       for(int j=0; j< m.nactions; j++)
       {
-        double tmp = m.discount * m.ptransition[j].col(i).transpose() * mdp_value_copy;
-        tmp = tmp + m.preward[j](i);
+        double tmp = m.discount * (mat(m.ptransition[j]).col(i).dot(mdp_value_copy));
+        tmp = tmp + m.preward[j].coeffRef(i);
         if (tmp > max_value)
           max_value = tmp;
       }
@@ -31,10 +31,8 @@ void Solver::mdp_value_iteration()
         is_converged = false;
       mdp_value(i) = max_value;
     }
-    //print_vec(mdp_value);
   }
-  //cout<<"mdp_value: ";
-  //print_vec(mdp_value);
+  cout<<"mdp_value: "<<mdp_value.transpose()<<endl;
 }
 
 #if 0

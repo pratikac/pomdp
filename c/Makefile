@@ -12,8 +12,8 @@ OBJS = $(C_OBJS) $(CPP_OBJS)
 INCS = -I /home/pratik/code/utils -I /home/pratik/apps
 LIBS = 
 
-CFLAGS = -Wall -g -pg -O3
-LDFLAGS = -g -pg 
+CFLAGS = -Wall -g -pg
+LDFLAGS =
 
 all: $(BIN)
 
