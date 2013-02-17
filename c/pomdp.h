@@ -122,7 +122,6 @@ namespace pomdp{
           newb.p = ptransition[aid] * b.p;
         if( (oid != -1) && (aid != -1))
         {
-          // FIX-ME!!
           vec t1 = vec(newb.p);
           t1 = (t1.array() * mat(pobservation[aid]).col(oid).array()).matrix();
           newb.p = t1.sparseView();

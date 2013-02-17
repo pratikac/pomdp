@@ -9,7 +9,7 @@ void Solver::mdp_value_iteration()
 {
   Model& m = *model;
 
-  vec mdp_value_copy(mdp_value);
+  vec mdp_value_copy = mdp_value;
   double epsilon = 1e-2;
   bool is_converged = false;
   while(!is_converged)
@@ -22,18 +22,14 @@ void Solver::mdp_value_iteration()
       double max_value = -large_num;
       for(int j=0; j< m.nactions; j++)
       {
-        double tmp = 0;
-        for(int k=0; k< m.nstates; k++)
-        {
-          tmp = tmp + m.ptransition[j][k][i]*m.discount*mdp_value_copy[k];
-        }
-        tmp = tmp + m.preward[j][i]; 
+        double tmp = m.discount * m.ptransition[j].col(i).transpose() * mdp_value_copy;
+        tmp = tmp + m.preward[j](i);
         if (tmp > max_value)
           max_value = tmp;
       }
       if( fabs(max_value - mdp_value_copy[i]) > epsilon)
         is_converged = false;
-      mdp_value[i] = max_value;
+      mdp_value(i) = max_value;
     }
     //print_vec(mdp_value);
   }
@@ -41,6 +37,7 @@ void Solver::mdp_value_iteration()
   //print_vec(mdp_value);
 }
 
+#if 0
 /*! calculates one single alpha plane for the best fixed action policy (HSVI2 paper)
 */
 void Solver::fixed_action_alpha_iteration()
@@ -434,3 +431,4 @@ void Solver::solve(double target_epsilon)
     epsilon = epsilon/2.0;
   }
 }
+#endif

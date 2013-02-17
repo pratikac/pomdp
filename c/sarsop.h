@@ -9,6 +9,8 @@ using namespace pomdp;
 
 namespace sarsop{
 
+  const float large_num = 1e20;
+
   /*! node of a belief_tree, stores belief, pointers to parent, children, 
    * action-observation that result in the children edges, number of children
    * value function upper bound and lower bound
@@ -43,15 +45,18 @@ namespace sarsop{
         value_lower_bound = -large_num;
         value_prediction_optimal = large_num;
       }
-      void get_key(double* k)
+      /*! get key for belief of a node
+       * note: the key is a pointer to the data in sparse vector
+       * DONOT change the key before / after inserting in kdtree
+       */
+      void get_key(float* k)
       {
-        for(int i=0; i< b.dim; i++)
-          k[i] = b.p[i];
+        k = vec(b.p).data();
       }
       void print()
       {
         //cout<<"par: "; print_vec(parent->b.p);
-        cout<<"belief prob: "; print_vec(b.p);
+        cout<<"belief prob: "<< b.p<<endl;
         //cout<<"bounds: "<<value_upper_bound<<" "<<value_prediction_optimal<<" "<<value_lower_bound<<endl;
       }
   };
@@ -71,12 +76,12 @@ namespace sarsop{
       Solver(Model& min)
       {
         model = &min;
-        belief_tree = kd_create(model->b0.dim);
+        belief_tree = kd_create(mode->nstates);
         BeliefNode* b0 = new BeliefNode(model->b0, NULL, -1, -1);
         insert_belief_node_into_tree(b0);
         root_node = b0;
 
-        mdp_value = vec(model->nstates, 0);
+        mdp_value = vec::Zero(model->nstates);
       }
       ~Solver()
       {
@@ -87,21 +92,21 @@ namespace sarsop{
       }
       void insert_belief_node_into_tree(BeliefNode* bn)
       {
-        double* key = new double[bn->b.dim];
+        float* key;
         bn->get_key(key);
-        kd_insert(belief_tree, key, bn);
+        kd_insertf(belief_tree, key, bn);
         delete key;
       }
       void print_alphas()
       {
         for(unsigned int i=0; i<alphas.size(); i++)
         {
-          cout<<alphas[i].actionid<<": ";
-          print_vec(alphas[i].gradient);
+          cout<<alphas[i].actionid<<": "<<alphas[i].gradient<<endl;
         }
       }
 
       void mdp_value_iteration();
+      /*
       void fixed_action_alpha_iteration();
 
       double get_predicted_optimal_reward(Belief& b);
@@ -120,6 +125,7 @@ namespace sarsop{
       void initialize();
       void solve(double target_epsilon);
       bool check_termination_condition(double ep);
+      */
   };
 
   class Simulator

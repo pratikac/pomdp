@@ -46,15 +46,20 @@ void test1(){
     x.coeffRef(r) += 100;
   }
   //cout<<A<<endl<<A.col(1).transpose()*x<<endl;
-  cout<< vec(x).array().matrix()<<endl;
+  float* key = vec(x).data();
+  for(int i=0; i<10; i++)
+    cout<<key[i]<<" ";
+  cout<<endl;
 }
 
 int main()
 {
+  /*
   Model m = create_model();    
   //m.print();
   test_model(m);
+  */
   
-  //test1();
+  test1();
   return 0;
 }
