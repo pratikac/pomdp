@@ -10,6 +10,8 @@ using namespace pomdp;
 namespace sarsop{
 
   const float large_num = 1e20;
+#define UPPER_BOUND (true)
+#define LOWER_BOUND (false)
 
   /*! node of a belief_tree, stores belief, pointers to parent, children, 
    * action-observation that result in the children edges, number of children
@@ -25,7 +27,7 @@ namespace sarsop{
       vector< pair<int, int> > aoid;
       int nchildren;
 
-      double value_upper_bound, value_lower_bound, value_prediction_optimal;
+      float value_upper_bound, value_lower_bound, value_prediction_optimal;
 
       BeliefNode(Belief& bin, BeliefNode* par, int aid, int oid)
       {
@@ -112,26 +114,25 @@ namespace sarsop{
       }
 
       void mdp_value_iteration();
-      /*
       void fixed_action_alpha_iteration();
-
-      double get_predicted_optimal_reward(Belief& b);
-      double get_lower_bound_reward(Belief& b);
-      double get_upper_bound_reward(Belief& b);
-      double get_bound_child(Belief& b, bool is_lower, int& aid);
-      double get_poga_mult_bound(Belief& b, int aid, int oid, double& lower_bound, double& upper_bound);
-      void sample(double target_epsilon);
-      void sample_beliefs(BeliefNode* bn, double L, double U, double epsilon, int level);
-
+      
       void backup(BeliefNode* bn);
+
+      float get_predicted_optimal_reward(Belief& b);
+      float get_lower_bound_reward(Belief& b);
+      float get_upper_bound_reward(Belief& b);
+      float get_bound_child(Belief& b, bool is_lower, int& aid);
+      float get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_bound, float& upper_bound);
+      void sample(float target_epsilon);
+      void sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level);
+
 
       int check_alpha_dominated(Alpha& a1, Alpha& a2);
       int prune(bool only_last);
 
       void initialize();
-      void solve(double target_epsilon);
-      bool check_termination_condition(double ep);
-      */
+      void solve(float target_epsilon);
+      bool check_termination_condition(float ep);
   };
 
   class Simulator

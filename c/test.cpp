@@ -49,27 +49,29 @@ void test1(){
   }
   //cout<<A<<endl<<A.col(1).transpose()*x<<endl;
   /*
-  float* key = vec(x).data();
-  for(int i=0; i<10; i++)
-    cout<<key[i]<<" ";
-  cout<<endl;
-  */
-  cout<< x.size() << endl;
+     float* key = vec(x).data();
+     for(int i=0; i<10; i++)
+     cout<<key[i]<<" ";
+     cout<<endl;
+     */
+  mat A1 = mat::Identity(10,10);
+  vec Ad = A1.diagonal();
+  //cout<<Ad<<endl;
 }
 
 int main()
 {
   /*
-  Model m = create_model();    
+     Model m = create_model();    
   //m.print();
   test_model(m);
   */
-  
+
   test1();
 
   Model m = create_model();    
   Solver s(m);
   s.mdp_value_iteration();
-  
+
   return 0;
 }

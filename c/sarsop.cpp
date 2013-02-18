@@ -10,7 +10,7 @@ void Solver::mdp_value_iteration()
   Model& m = *model;
 
   vec mdp_value_copy = mdp_value;
-  double epsilon = 1e-2;
+  float epsilon = 1e-2;
   bool is_converged = false;
   while(!is_converged)
   {
@@ -19,11 +19,11 @@ void Solver::mdp_value_iteration()
     is_converged = true;
     for(int i=0; i< m.nstates; i++)
     {
-      double max_value = -large_num;
+      float max_value = -large_num;
       for(int j=0; j< m.nactions; j++)
       {
-        double tmp = m.discount * (mat(m.ptransition[j]).col(i).dot(mdp_value_copy));
-        tmp = tmp + m.preward[j].coeffRef(i);
+        float tmp = m.discount * (mat(m.ptransition[j]).col(i).dot(mdp_value_copy));
+        tmp = tmp + m.preward[j](i);
         if (tmp > max_value)
           max_value = tmp;
       }
@@ -35,7 +35,6 @@ void Solver::mdp_value_iteration()
   cout<<"mdp_value: "<<mdp_value.transpose()<<endl;
 }
 
-#if 0
 /*! calculates one single alpha plane for the best fixed action policy (HSVI2 paper)
 */
 void Solver::fixed_action_alpha_iteration()
@@ -43,24 +42,24 @@ void Solver::fixed_action_alpha_iteration()
   Model& m = *model;
 
   Alpha alpha;
-  alpha.gradient = vec(m.nstates,0);
+  alpha.gradient = vec(m.nstates);
 
   int fixed_aid = -1;
-  double min_reward = large_num;
+  float min_reward = large_num;
   for(int j=0; j< m.nactions; j++)
   {
     for(int i=0; i < m.nstates; i++)
     {
-      if(min_reward > m.preward[j][i])
+      if(min_reward > m.preward[j].coeffRef(i))
       {
-        min_reward = m.preward[j][i];
+        min_reward = m.preward[j].coeffRef(i);
         fixed_aid = j;
       }
     }
   }
   alpha.actionid = fixed_aid;
   for(int i=0; i< m.nstates; i++)
-    alpha.gradient[i] = min_reward/(1.0 - m.discount);
+    alpha.gradient(i) = min_reward/(1.0 - m.discount);
 
   alphas.push_back(alpha);
   print_alphas();
@@ -94,86 +93,75 @@ void Solver::fixed_action_alpha_iteration()
   //print_alphas();
 }
 
+/*! performs Bellman backup upstream (until root) of the argument belief node
+ * @param[in] BeliefNode* bn : belief node to perform backup on
+ */
 void Solver::backup(BeliefNode* bn)
 {
   Model& m = *model;
   int na = m.nactions;
   int no = m.nobservations;
   int ns = m.nstates;
+  Belief& b = bn->b;
+  mat alpha_ao_id = mat(na, no);
 
-  BeliefNode* curr = bn;
-  while(curr->parent != NULL)
+  for(int i=0; i<na; i++)
   {
-    Belief b = curr->b;
-    matrix_i alpha_ao = matrix_i(na, vec_i(no));
-
-    for(int i=0; i<na; i++)
+    for(int j=0; j<no; j++)
     {
-      for(int j=0; j<no; j++)
+      int max_alpha_id = -1;
+      float max_val = -large_num;
+      for(unsigned int k=0; k < alphas.size(); k++)
       {
-        int max_alpha_id = -1;
-        double max_val = -large_num;
-        for(unsigned int k=0; k < alphas.size(); k++)
+        Belief tmp_belief = m.next_belief(b, i, j);
+        float tmp = alphas[k].get_value(tmp_belief);
+        if(tmp > max_val)
         {
-          Belief tmp_belief = m.next_belief(b, i, j);
-          double tmp = alphas[k].get_value(tmp_belief);
-          if(tmp > max_val)
-          {
-            max_val = tmp;
-            max_alpha_id = k;
-          }
+          max_val = tmp;
+          max_alpha_id = k;
         }
-        alpha_ao[i][j] = max_alpha_id;
       }
+      alpha_ao_id(i,j) = (float)max_alpha_id;
     }
-    //print_mat(alpha_id);
-    //getchar();
-
-    Alpha new_alpha, tmp_alpha;
-    tmp_alpha.gradient = vec(m.nstates, 0);
-    double max_val = -large_num;
-    for(int i=0; i<na; i++)
-    {
-      tmp_alpha.actionid = i;
-      for(int j=0; j<ns; j++)
-      {
-        double tmp = 0;
-        for(int k=0; k<ns; k++)
-        {
-          for(int l=0; l<no; l++)
-          {
-            tmp = tmp + (m.ptransition[i][k][j]*m.pobservation[i][l][k]*(alphas[alpha_ao[i][l]].gradient[k]));
-          }
-        }
-        tmp_alpha.gradient[j] = m.preward[i][j] + m.discount*tmp;
-      }
-      double tmp_alpha_val = tmp_alpha.get_value(b);
-      if( tmp_alpha_val > max_val)
-        new_alpha = tmp_alpha;
-    }
-
-    alphas.push_back(new_alpha);
-    prune(true);
-
-    curr = curr->parent;
   }
+
+  Alpha new_alpha, tmp_alpha;
+  float max_val = -large_num;
+  for(int i=0; i<na; i++)
+  {
+    mat alpha_ao(ns, no);
+    for(int j=0; j<no; j++)
+      alpha_ao.col(j) = alphas[alpha_ao_id(i,j)].gradient;
+    // FIXME
+    vec tmp = (m.pobservation[i].transpose() * alpha_ao).diagonal();
+    tmp_alpha.gradient = m.preward[i] + m.ptransition[i]*tmp;
+    tmp_alpha.actionid = i;
+
+    float tmp_alpha_val = tmp_alpha.get_value(b);
+    if( tmp_alpha_val > max_val)
+      new_alpha = tmp_alpha;
+  }
+
+  alphas.push_back(new_alpha);
+  cout<<"Inserted: "<<new_alpha.actionid<<" "<<new_alpha.gradient.transpose()<<endl;
+  //prune(true);
 }
 
 /*! predict optimal reward using binning of beliefs
 */
-double Solver::get_predicted_optimal_reward(Belief& b)
+float Solver::get_predicted_optimal_reward(Belief& b)
 {
   return get_lower_bound_reward(b);
 }
 
 /*! lower bound using alpha vectors
 */
-double Solver::get_lower_bound_reward(Belief& b)
+float Solver::get_lower_bound_reward(Belief& b)
 {
-  double max_value = -large_num;
+  float max_value = -large_num;
   for(unsigned int i=0; i< alphas.size(); i++)
   {
-    double tmp = alphas[i].get_value(b);
+    float tmp = alphas[i].get_value(b);
     if(tmp > max_value)
       max_value = tmp;
   }
@@ -182,11 +170,11 @@ double Solver::get_lower_bound_reward(Belief& b)
 
 /*! upper bound from the mdp
 */
-double Solver::get_upper_bound_reward(Belief& b)
+float Solver::get_upper_bound_reward(Belief& b)
 {
-  return dot(b.p, mdp_value);
+  return b.p.dot(mdp_value);
   /*
-     double tmp = 0;
+     float tmp = 0;
      for(int i=0; i< model->nstates; i++)
      {
      tmp = tmp + b.p[i]*mdp_value[i];
@@ -195,27 +183,27 @@ double Solver::get_upper_bound_reward(Belief& b)
      */
 }
 
-double Solver::get_bound_child(Belief& b, bool is_lower, int& aid)
+float Solver::get_bound_child(Belief& b, bool is_lower, int& aid)
 {
   Model& m = *model;
 
-  double max_val = -large_num;
+  float max_val = -large_num;
   for(int i=0; i< m.nactions; i++)
   {
-    double poga_mult_bound = 0;
+    float poga_mult_bound = 0;
     for(int j=0; j< m.nobservations; j++)
     {
-      double v_next_belief = 0;
+      float v_next_belief = 0;
       Belief new_belief_tmp = m.next_belief(b, i, j);
       if(is_lower == true)
         v_next_belief = get_lower_bound_reward(new_belief_tmp);
       else
         v_next_belief = get_upper_bound_reward(new_belief_tmp);
 
-      double p_o_given_b = m.get_p_o_given_b(b, i, j);
+      float p_o_given_b = m.get_p_o_given_b(b, i, j);
       poga_mult_bound = poga_mult_bound + (p_o_given_b*v_next_belief);
     }
-    double tmp = m.get_expected_step_reward(b, i) + m.discount*poga_mult_bound;
+    float tmp = m.get_expected_step_reward(b, i) + m.discount*poga_mult_bound;
     if( tmp > max_val)
     {
       aid = i;
@@ -229,14 +217,14 @@ double Solver::get_bound_child(Belief& b, bool is_lower, int& aid)
  *  p(o | b,a) * V_upper( new_belief(b, a, o) )
  *  depending upon is_lower
  */
-double Solver::get_poga_mult_bound(Belief& b, int aid, int oid, double& lower_bound, double& upper_bound)
+float Solver::get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_bound, float& upper_bound)
 {
   Model& m = *model;
   //cout<<"aid: "<<aid<<" oid: "<<oid<<endl;
 
   Belief nb = m.next_belief(b, aid, oid);
   //nb.print();
-  double poga = m.get_p_o_given_b(b, aid, oid);
+  float poga = m.get_p_o_given_b(b, aid, oid);
   //cout<<"poga: "<<poga<<endl;
 
   lower_bound = poga*get_lower_bound_reward(nb);
@@ -245,91 +233,12 @@ double Solver::get_poga_mult_bound(Belief& b, int aid, int oid, double& lower_bo
   return 0;
 }
 
-void Solver::sample(double epsilon)
+void Solver::sample(float epsilon)
 {
-  double L =  root_node->value_lower_bound;
-  double U = L + epsilon;
+  float L =  root_node->value_lower_bound;
+  float U = L + epsilon;
 
   sample_beliefs(root_node, L, U, epsilon, 1);
-}
-
-#define lower   true
-#define upper   false
-void Solver::sample_beliefs(BeliefNode* bn, double L, double U, double epsilon, int level)
-{
-  Model& m = *model;
-  Belief& b = bn->b;
-
-  double vhat = bn->value_prediction_optimal;
-  double vupper = bn->value_upper_bound;
-  double vlower = bn->value_lower_bound;
-  //cout<<"vupper: "<<vupper<<" vhat: "<<vhat<<" vlower: "<<vlower<<endl;
-
-  //cout<<"L: "<<L<<" U: "<<U<<" "<< "vlower + term: "<<vlower+ (double)0.5*epsilon*pow(m.discount, -level)<< endl;
-  if( (vhat <= L) && (vupper < max(U, vlower+ (double)0.5*epsilon*pow(m.discount, -level))) )
-  {
-    //cout<<"termination criterion reached"<<endl;
-    return;
-  }
-  else
-  {
-    int tmp_aid = -1;
-    double Qlower = get_bound_child(b, lower, tmp_aid);
-    double L1 = max(Qlower, L);
-    double U1 = max(U, Qlower + pow(m.discount, -level)*epsilon);
-    //cout<<"Qlower: "<<Qlower <<" L1: "<<L1<<" U1: "<<U1<<endl;
-
-    int new_action = -1;
-    get_bound_child(b, upper, new_action);
-    //Belief new_belief = m.next_belief(b, new_action, -1);
-
-    vector<double> poga_mult_lower_bounds(m.nobservations,0); 
-    vector<double> poga_mult_upper_bounds(m.nobservations,0);
-    int new_observation = -1;
-    double max_diff_poga_mult_bound = -large_num;
-    for(int i=0; i<m.nobservations; i++)
-    {
-      get_poga_mult_bound(b, new_action, i, poga_mult_lower_bounds[i], poga_mult_upper_bounds[i]);
-
-      //cout<<"i: "<<i<<" poga bounds: "<< poga_mult_lower_bounds[i] <<" "<< poga_mult_upper_bounds[i]<<endl;
-      if( (poga_mult_upper_bounds[i] - poga_mult_lower_bounds[i]) > max_diff_poga_mult_bound)
-      {
-        max_diff_poga_mult_bound = (poga_mult_upper_bounds[i] - poga_mult_lower_bounds[i]);
-        new_observation = i;
-      }
-    }
-    //cout<<"new_action: "<<new_action<<" new observation: "<< new_observation<< endl;
-    double sum_tmp_lower = 0, sum_tmp_upper=0;
-    for(int i=0; i< m.nobservations; i++)
-    {
-      if(i != new_observation)
-        sum_tmp_lower = sum_tmp_lower + poga_mult_lower_bounds[i];
-      if(i != new_observation)
-        sum_tmp_upper = sum_tmp_upper + poga_mult_upper_bounds[i];
-    }
-
-    double expected_reward_new_action = m.get_expected_step_reward(b, new_action);
-    double Lt = ((L1 - expected_reward_new_action)/m.discount - sum_tmp_lower)/m.get_p_o_given_b(b, new_action, new_observation);
-    double Ut = ((U1 - expected_reward_new_action)/m.discount - sum_tmp_upper)/m.get_p_o_given_b(b, new_action, new_observation);
-
-    Belief new_belief = m.next_belief(b, new_action, new_observation);
-
-    BeliefNode* newbn = new BeliefNode(new_belief, bn, new_action, new_observation);
-    belief_tree_nodes.push_back(newbn);
-    insert_belief_node_into_tree(newbn);
-
-    newbn->value_prediction_optimal = get_predicted_optimal_reward(newbn->b);
-    newbn->value_upper_bound = get_upper_bound_reward(newbn->b);
-    newbn->value_lower_bound = get_lower_bound_reward(newbn->b);
-
-    //newbn->print();
-    //cout<<"Lt: "<< Lt<<" Ut: "<<Ut << endl;
-    //getchar();
-
-    backup(newbn);
-
-    sample_beliefs(newbn, Lt, Ut, epsilon, level+1);
-  }
 }
 
 
@@ -388,7 +297,8 @@ int Solver::prune(bool only_last)
   return 0;
 }
 
-bool Solver::check_termination_condition(double ep)
+
+bool Solver::check_termination_condition(float ep)
 {
   if( (root_node->value_upper_bound - root_node->value_lower_bound) > ep)
     return false;
@@ -408,9 +318,9 @@ void Solver::initialize()
   cout<<"root_node: "<<endl; root_node->print(); cout<<endl;
 }
 
-void Solver::solve(double target_epsilon)
+void Solver::solve(float target_epsilon)
 {
-  double epsilon = 10;
+  float epsilon = 10;
   bool is_converged = false;
   int iteration = 0;
   cout<<"start solver"<<endl;
@@ -429,4 +339,79 @@ void Solver::solve(double target_epsilon)
     epsilon = epsilon/2.0;
   }
 }
-#endif
+void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level)
+{
+  Model& m = *model;
+  Belief& b = bn->b;
+
+  float vhat = bn->value_prediction_optimal;
+  float vupper = bn->value_upper_bound;
+  float vlower = bn->value_lower_bound;
+  //cout<<"vupper: "<<vupper<<" vhat: "<<vhat<<" vlower: "<<vlower<<endl;
+
+  //cout<<"L: "<<L<<" U: "<<U<<" "<< "vlower + term: "<<vlower+ (float)0.5*epsilon*pow(m.discount, -level)<< endl;
+  if( (vhat <= L) && (vupper < max(U, vlower+ (float)0.5*epsilon*pow(m.discount, -level))) )
+  {
+    cout<<"stop sampling: termination criterion reached"<<endl;
+    return;
+  }
+  else
+  {
+    int tmp_aid = -1;
+    float Qlower = get_bound_child(b, LOWER_BOUND, tmp_aid);
+    float L1 = max(Qlower, L);
+    float U1 = max(U, Qlower + pow(m.discount, -level)*epsilon);
+    //cout<<"Qlower: "<<Qlower <<" L1: "<<L1<<" U1: "<<U1<<endl;
+
+    int new_action = -1;
+    get_bound_child(b, UPPER_BOUND, new_action);
+    //Belief new_belief = m.next_belief(b, new_action, -1);
+
+    vector<float> poga_mult_lower_bounds(m.nobservations,0); 
+    vector<float> poga_mult_upper_bounds(m.nobservations,0);
+    int new_observation = -1;
+    float max_diff_poga_mult_bound = -large_num;
+    for(int i=0; i<m.nobservations; i++)
+    {
+      get_poga_mult_bound(b, new_action, i, poga_mult_lower_bounds[i], poga_mult_upper_bounds[i]);
+
+      //cout<<"i: "<<i<<" poga bounds: "<< poga_mult_lower_bounds[i] <<" "<< poga_mult_upper_bounds[i]<<endl;
+      if( (poga_mult_upper_bounds[i] - poga_mult_lower_bounds[i]) > max_diff_poga_mult_bound)
+      {
+        max_diff_poga_mult_bound = (poga_mult_upper_bounds[i] - poga_mult_lower_bounds[i]);
+        new_observation = i;
+      }
+    }
+    //cout<<"new_action: "<<new_action<<" new observation: "<< new_observation<< endl;
+    float sum_tmp_lower = 0, sum_tmp_upper=0;
+    for(int i=0; i< m.nobservations; i++)
+    {
+      if(i != new_observation)
+        sum_tmp_lower = sum_tmp_lower + poga_mult_lower_bounds[i];
+      if(i != new_observation)
+        sum_tmp_upper = sum_tmp_upper + poga_mult_upper_bounds[i];
+    }
+
+    float expected_reward_new_action = m.get_expected_step_reward(b, new_action);
+    float Lt = ((L1 - expected_reward_new_action)/m.discount - sum_tmp_lower)/m.get_p_o_given_b(b, new_action, new_observation);
+    float Ut = ((U1 - expected_reward_new_action)/m.discount - sum_tmp_upper)/m.get_p_o_given_b(b, new_action, new_observation);
+
+    Belief new_belief = m.next_belief(b, new_action, new_observation);
+
+    BeliefNode* newbn = new BeliefNode(new_belief, bn, new_action, new_observation);
+    belief_tree_nodes.push_back(newbn);
+    insert_belief_node_into_tree(newbn);
+
+    newbn->value_prediction_optimal = get_predicted_optimal_reward(newbn->b);
+    newbn->value_upper_bound = get_upper_bound_reward(newbn->b);
+    newbn->value_lower_bound = get_lower_bound_reward(newbn->b);
+
+    //newbn->print();
+    //cout<<"Lt: "<< Lt<<" Ut: "<<Ut << endl;
+    //getchar();
+
+    backup(newbn);
+
+    sample_beliefs(newbn, Lt, Ut, epsilon, level+1);
+  }
+}

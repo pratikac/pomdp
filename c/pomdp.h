@@ -9,13 +9,13 @@ using namespace std;
 
 namespace pomdp{
 
-  typedef vector< spmat > ttrans;
-  typedef vector< spmat > tobs;
-  typedef vector< spvec > treward;
+  typedef vector< mat > ttrans;
+  typedef vector< mat > tobs;
+  typedef vector< vec > treward;
 
   class Belief{
     public:
-      spvec p;
+      vec p;
       void normalize(){
         p = p/p.sum();
       }
@@ -30,7 +30,7 @@ namespace pomdp{
   class Alpha{
     public:
       int actionid;
-      spvec gradient;
+      vec gradient;
 
       Alpha(){
       };
@@ -38,16 +38,16 @@ namespace pomdp{
        * @param[in] aid Action Id: index of optimal action associated with alpha vector
        * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
        */
-      Alpha(int aid, spvec& gradin)
+      Alpha(int aid, vec& gradin)
       {
         actionid = aid;
         gradient = gradin;
       }
       /*! return value function as dot product of alpha with belief
        * @param[in] b belief at which value is calculated
-       * \return double value dot(gradient, b)
+       * \return float value dot(gradient, b)
        */
-      double get_value(Belief& b)
+      float get_value(Belief& b)
       {
         return gradient.dot(b.p);
       }
@@ -77,7 +77,7 @@ namespace pomdp{
       treward preward;
       Belief b0;
 
-      Model(int ns,int na, int no, ttrans& tin, tobs& oin, double din, treward& rin, Belief& bin)
+      Model(int ns,int na, int no, ttrans& tin, tobs& oin, float din, treward& rin, Belief& bin)
       {
         nstates = ns;
         nactions = na;
@@ -129,12 +129,16 @@ namespace pomdp{
         }
         return newb;
       }
-
-      double get_expected_step_reward(Belief& b, int aid)
+      /*! returns \sum_s R(s,a) b(s)
+       * @param[in] Belief& b : belief at which action is taken
+       * @param[in] int aid : action id of the action
+       * @param[out] float reward
+      */
+      float get_expected_step_reward(Belief& b, int aid)
       {
         return preward[aid].dot(b.p);
       }
-      double get_p_o_given_b(Belief& b, int aid, int oid)
+      float get_p_o_given_b(Belief& b, int aid, int oid)
       {
         return pobservation[aid].col(oid).dot(b.p);
       }

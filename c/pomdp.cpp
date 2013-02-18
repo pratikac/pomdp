@@ -10,23 +10,23 @@ using namespace pomdp;
  */
 Model create_model()
 {
-  ttrans P = ttrans(3, spmat(2,2));
-  tobs Q = tobs(3, spmat(2,2));
-  treward R = treward(3, spvec(2));
+  ttrans P = ttrans(3, mat(2,2));
+  tobs Q = tobs(3, mat(2,2));
+  treward R = treward(3, vec(2));
 
   // a1 = listen
-  P[0].insert(0,0) = 1; P[0].insert(1,0) = 0.;
-  P[0].insert(0,1) = 0; P[0].insert(1,1) = 1.;
+  P[0](0,0) = 1; P[0](1,0) = 0.;
+  P[0](0,1) = 0; P[0](1,1) = 1.;
 
   // a2 = open left door
-  P[1].insert(0,0) = 0.5; P[1].insert(1,0) = 0.5;
-  P[1].insert(0,1) = 0.5; P[1].insert(1,1) = 0.5;
+  P[1](0,0) = 0.5; P[1](1,0) = 0.5;
+  P[1](0,1) = 0.5; P[1](1,1) = 0.5;
   // a3 = open right door
   P[2] = P[1];
 
   // a1 = listen
-  Q[0].insert(0,0) = 0.85; Q[0].insert(0,1) = 0.15;
-  Q[0].insert(1,0) = 0.15; Q[0].insert(1,1) = 0.85;
+  Q[0](0,0) = 0.85; Q[0](0,1) = 0.15;
+  Q[0](1,0) = 0.15; Q[0](1,1) = 0.85;
 
   // a2 = open left door
   Q[1] = P[1];
@@ -34,11 +34,11 @@ Model create_model()
   Q[2] = P[1];
 
   // reward function
-  R[0].insert(0) = -1; R[0].insert(1) = -1;
-  R[1].insert(0) = -100; R[1].insert(1) = 10;
-  R[2].insert(0) = 10; R[2].insert(1) = -100;
+  R[0](0) = -1; R[0](1) = -1;
+  R[1](0) = -100; R[1](1) = 10;
+  R[2](0) = 10; R[2](1) = -100;
 
-  spvec vb0(2); vb0.insert(0)=0.5; vb0.insert(1)=0.5;
+  vec vb0(2); vb0(0)=0.5; vb0(1)=0.5;
   Belief b0;
   b0.p = vb0; 
   Model m(2, 3, 2, P, Q, 0.95, R, b0);
