@@ -87,7 +87,7 @@ void Solver::fixed_action_alpha_iteration()
      }
      }
      }
-     prune(fixed_action_alphas);
+     prune_alphas(fixed_action_alphas);
      */
   //cout<<"fixed_action_initialize: "<<endl;
   //print_alphas();
@@ -143,15 +143,36 @@ void Solver::backup(BeliefNode* bn)
   }
 
   alphas.push_back(new_alpha);
-  cout<<"Inserted: "<<new_alpha.actionid<<" "<<new_alpha.gradient.transpose()<<endl;
-  //prune(true);
+  cout<<"Inserted: "<<new_alpha.actionid<<" "<<new_alpha.gradient.transpose()<<" alpha.size: "<< alphas.size()<<endl;
 }
 
 /*! predict optimal reward using binning of beliefs
 */
 float Solver::get_predicted_optimal_reward(Belief& b)
 {
-  return get_lower_bound_reward(b);
+  double* key = new double[2];
+  key[0] = b.entropy();
+  key[1] = get_mdp_upper_bound_reward(b);
+  struct kdres* res = kd_nearest(belief_tree, key);
+  float mean_val = 0;
+  float toret = 0;
+  if(kd_res_end(res))
+  {
+    toret = key[1];
+  }
+  else
+  {
+    while(!kd_res_end(res))
+    {
+      BeliefNode* bn = (BeliefNode*) kd_res_item_data(res);
+      mean_val += bn->value_lower_bound;
+      kd_res_next(res);
+    }
+    toret = mean_val/(float)kd_res_size(res);
+  }
+  delete[] key;
+  kd_res_free(res);
+  return toret;
 }
 
 /*! lower bound using alpha vectors
@@ -170,7 +191,7 @@ float Solver::get_lower_bound_reward(Belief& b)
 
 /*! upper bound from the mdp
 */
-float Solver::get_upper_bound_reward(Belief& b)
+float Solver::get_mdp_upper_bound_reward(Belief& b)
 {
   return b.p.dot(mdp_value);
   /*
@@ -198,7 +219,7 @@ float Solver::get_bound_child(Belief& b, bool is_lower, int& aid)
       if(is_lower == true)
         v_next_belief = get_lower_bound_reward(new_belief_tmp);
       else
-        v_next_belief = get_upper_bound_reward(new_belief_tmp);
+        v_next_belief = get_mdp_upper_bound_reward(new_belief_tmp);
 
       float p_o_given_b = m.get_p_o_given_b(b, i, j);
       poga_mult_bound = poga_mult_bound + (p_o_given_b*v_next_belief);
@@ -228,7 +249,7 @@ float Solver::get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_boun
   //cout<<"poga: "<<poga<<endl;
 
   lower_bound = poga*get_lower_bound_reward(nb);
-  upper_bound = poga*get_upper_bound_reward(nb);
+  upper_bound = poga*get_mdp_upper_bound_reward(nb);
 
   return 0;
 }
@@ -254,7 +275,7 @@ int Solver::check_alpha_dominated(Alpha& a1, Alpha& a2)
   for(unsigned int i=0; i< belief_tree_nodes.size(); i++)
   {
     BeliefNode* bn = belief_tree_nodes[i];
-    if( a1.get_value(bn->b) > a2.get_value(bn->b))
+    if( a1.get_value(bn->b) >= a2.get_value(bn->b))
       dominated_nodes++;
     else
       dominated_nodes--;
@@ -263,14 +284,14 @@ int Solver::check_alpha_dominated(Alpha& a1, Alpha& a2)
     return 1;
   else if(dominated_nodes == -nnodes)
     return 2;
-
-  return 0;
+  else
+    return 0;
 }
 /*! prunes alpha vectors O(n^2)
  * only_last flag checks only whether last vector can be removed
  * \return number of planes pruned
  */
-int Solver::prune(bool only_last)
+int Solver::prune_alphas(bool only_last)
 {
   if(only_last)
   {
@@ -279,7 +300,7 @@ int Solver::prune(bool only_last)
     for(int i=na; i>=0; i++)
     {
       int ret_val = check_alpha_dominated(alphas[i], alpha_last);
-      //cout<<"ret_val: "<<ret_val<<endl;
+      cout<<"ret_val: "<<ret_val<<endl;
       if(ret_val == 1)
       {
         alphas.pop_back();
@@ -297,7 +318,6 @@ int Solver::prune(bool only_last)
   return 0;
 }
 
-
 bool Solver::check_termination_condition(float ep)
 {
   if( (root_node->value_upper_bound - root_node->value_lower_bound) > ep)
@@ -312,7 +332,7 @@ void Solver::initialize()
   fixed_action_alpha_iteration();
 
   root_node->value_lower_bound = get_lower_bound_reward(root_node->b);
-  root_node->value_upper_bound = get_upper_bound_reward(root_node->b);
+  root_node->value_upper_bound = get_mdp_upper_bound_reward(root_node->b);
   root_node->value_prediction_optimal = get_predicted_optimal_reward(root_node->b);
 
   cout<<"root_node: "<<endl; root_node->print(); cout<<endl;
@@ -329,12 +349,12 @@ void Solver::solve(float target_epsilon)
     cout<<"iteration: "<< ++iteration << endl;
     sample(epsilon);
 
-    //int how_many = prune(false);
+    //cout<<"pruned: "<< prune_alphas(true) << endl;
 
     is_converged = check_termination_condition(target_epsilon);
 
     print_alphas();
-    //getchar();
+    getchar();
 
     epsilon = epsilon/2.0;
   }
@@ -347,9 +367,9 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
   float vhat = bn->value_prediction_optimal;
   float vupper = bn->value_upper_bound;
   float vlower = bn->value_lower_bound;
-  //cout<<"vupper: "<<vupper<<" vhat: "<<vhat<<" vlower: "<<vlower<<endl;
+  cout<<"vupper: "<<vupper<<" vhat: "<<vhat<<" vlower: "<<vlower<<endl;
 
-  //cout<<"L: "<<L<<" U: "<<U<<" "<< "vlower + term: "<<vlower+ (float)0.5*epsilon*pow(m.discount, -level)<< endl;
+  cout<<"L: "<<L<<" U: "<<U<<" "<< "vlower + term: "<<vlower+ (float)0.5*epsilon*pow(m.discount, -level)<< endl;
   if( (vhat <= L) && (vupper < max(U, vlower+ (float)0.5*epsilon*pow(m.discount, -level))) )
   {
     cout<<"stop sampling: termination criterion reached"<<endl;
@@ -361,7 +381,7 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
     float Qlower = get_bound_child(b, LOWER_BOUND, tmp_aid);
     float L1 = max(Qlower, L);
     float U1 = max(U, Qlower + pow(m.discount, -level)*epsilon);
-    //cout<<"Qlower: "<<Qlower <<" L1: "<<L1<<" U1: "<<U1<<endl;
+    cout<<"Qlower: "<<Qlower <<" L1: "<<L1<<" U1: "<<U1<<endl;
 
     int new_action = -1;
     get_bound_child(b, UPPER_BOUND, new_action);
@@ -403,11 +423,11 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
     insert_belief_node_into_tree(newbn);
 
     newbn->value_prediction_optimal = get_predicted_optimal_reward(newbn->b);
-    newbn->value_upper_bound = get_upper_bound_reward(newbn->b);
+    newbn->value_upper_bound = get_mdp_upper_bound_reward(newbn->b);
     newbn->value_lower_bound = get_lower_bound_reward(newbn->b);
 
-    //newbn->print();
-    //cout<<"Lt: "<< Lt<<" Ut: "<<Ut << endl;
+    newbn->print();
+    cout<<"Lt: "<< Lt<<" Ut: "<<Ut << endl;
     //getchar();
 
     backup(newbn);

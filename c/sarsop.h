@@ -47,25 +47,20 @@ namespace sarsop{
         value_lower_bound = -large_num;
         value_prediction_optimal = large_num;
       }
-      /*! get key for belief of a node
-       * note: the key is a pointer to the data in sparse vector
-       * DONOT change the key before / after inserting in kdtree
-       */
-      double* get_key()
-      {
-        float* k = vec(b.p).data();
-        double* key = new double[b.p.size()];
-        for(int i=0;i< b.p.size();i++)
-          key[i] = k[i];
-        return key;
-      }
       void print()
       {
         //cout<<"par: "; print_vec(parent->b.p);
-        cout<<"belief prob: "<< b.p<<endl;
+        cout<<"belief prob: "<< b.p.transpose()<<endl;
         //cout<<"bounds: "<<value_upper_bound<<" "<<value_prediction_optimal<<" "<<value_lower_bound<<endl;
       }
   };
+  
+  typedef struct Belief_feature
+  {
+    float entropy;
+    float initial_upper_bound;
+  }Belief_feature;
+
   class Solver
   {
     public:
@@ -73,8 +68,13 @@ namespace sarsop{
 
       vector<BeliefNode*> belief_tree_nodes;
       BeliefNode* root_node;
+      /*! kdtree to store beliefs
+       * the features used as keys are:
+       *  - entropy
+       *  - initial_upper_bound of value
+       */
       struct kdtree* belief_tree;
-
+      
       vec mdp_value;
       vector<Alpha> alphas;
 
@@ -82,7 +82,7 @@ namespace sarsop{
       Solver(Model& min)
       {
         model = &min;
-        belief_tree = kd_create(model->nstates);
+        belief_tree = kd_create(2);
         BeliefNode* b0 = new BeliefNode(model->b0, NULL, -1, -1);
         insert_belief_node_into_tree(b0);
         root_node = b0;
@@ -96,20 +96,34 @@ namespace sarsop{
           delete belief_tree_nodes[i];
         belief_tree_nodes.clear();
       }
+      /*! get key for belief of a node
+       * note: the key is a pointer to the data in sparse vector
+       * DONOT change the key before / after inserting in kdtree
+       */
+      int get_key(BeliefNode* bn, double* key)
+      {
+        key[0] = bn->b.entropy();
+        key[1] = get_mdp_upper_bound_reward(bn->b);
+        return 0;  
+        /* 
+        float* k = vec(b.p).data();
+        double* key = new double[b.p.size()];
+        for(int i=0;i< b.p.size();i++)
+          key[i] = k[i];
+          */
+      }
       void insert_belief_node_into_tree(BeliefNode* bn)
       {
-        double* key = bn->get_key();
-        if(key)
-          kd_insert(belief_tree, key, bn);
-        else
-          cout<<"belief: null key"<<endl;
-        delete[] key;
+        double* key = new double[2];
+        get_key(bn, key);
+        kd_insert(belief_tree, key, bn);
       }
       void print_alphas()
       {
+        cout<<"Alphas: "<<endl;
         for(unsigned int i=0; i<alphas.size(); i++)
         {
-          cout<<alphas[i].actionid<<": "<<alphas[i].gradient<<endl;
+          cout<<alphas[i].actionid<<": "<<alphas[i].gradient.transpose()<<endl;
         }
       }
 
@@ -120,7 +134,7 @@ namespace sarsop{
 
       float get_predicted_optimal_reward(Belief& b);
       float get_lower_bound_reward(Belief& b);
-      float get_upper_bound_reward(Belief& b);
+      float get_mdp_upper_bound_reward(Belief& b);
       float get_bound_child(Belief& b, bool is_lower, int& aid);
       float get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_bound, float& upper_bound);
       void sample(float target_epsilon);
@@ -128,7 +142,7 @@ namespace sarsop{
 
 
       int check_alpha_dominated(Alpha& a1, Alpha& a2);
-      int prune(bool only_last);
+      int prune_alphas(bool only_last);
 
       void initialize();
       void solve(float target_epsilon);

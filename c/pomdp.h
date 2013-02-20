@@ -20,7 +20,11 @@ namespace pomdp{
         p = p/p.sum();
       }
       void print(){
-        cout<<p<<endl;
+        cout<<p.transpose()<<endl;
+      }
+      float entropy()
+      {
+        return -p.dot(p.array().log().matrix());
       }
   };
 

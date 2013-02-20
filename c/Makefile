@@ -9,7 +9,7 @@ C_OBJS = $(C_SRCS:.c=.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 OBJS = $(C_OBJS) $(CPP_OBJS)
 
-INCS = -I /home/pratik/code/utils -I /home/pratik/apps
+INCS = -I /home/pratik/code/utils -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported
 LIBS = 
 
 CFLAGS = -Wall -g -pg

@@ -56,7 +56,9 @@ void test1(){
      */
   mat A1 = mat::Identity(10,10);
   vec Ad = A1.diagonal();
-  //cout<<Ad<<endl;
+
+  vec v1 = vec::Random(10);
+  //cout<<"entropy: "<< v1.dot(v1.array().sin().matrix()) <<endl;
 }
 
 int main()
@@ -69,9 +71,10 @@ int main()
 
   test1();
 
-  Model m = create_model();    
-  Solver s(m);
-  s.mdp_value_iteration();
+  //Model m = create_model();    
+  //Solver s(m);
+  //s.initialize();
+  //s.solve(0.1);
 
   return 0;
 }
