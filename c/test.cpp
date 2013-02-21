@@ -69,12 +69,11 @@ int main()
   test_model(m);
   */
 
-  test1();
+  //test1();
 
-  //Model m = create_model();    
-  //Solver s(m);
-  //s.initialize();
-  //s.solve(0.1);
+  Model m = create_model();    
+  Solver s(m);
+  s.solve(0.1);
 
   return 0;
 }

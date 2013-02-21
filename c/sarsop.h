@@ -56,7 +56,7 @@ namespace sarsop{
       void print()
       {
         //cout<<"par: "; print_vec(parent->b.p);
-        cout<<"belief prob: "<< b.p.transpose()<<endl;
+        cout<<"belief: "<< b.p.transpose()<<endl;
         //cout<<"bounds: "<<value_upper_bound<<" "<<value_prediction_optimal<<" "<<value_lower_bound<<endl;
       }
   };
@@ -90,10 +90,18 @@ namespace sarsop{
         model = &min;
         belief_tree = kd_create(2);
         BeliefNode* b0 = new BeliefNode(model->b0, NULL, -1, -1);
-        insert_belief_node_into_tree(b0);
         root_node = b0;
-
+        
         mdp_value = vec::Zero(model->nstates);
+        mdp_value_iteration();
+        fixed_action_alpha_iteration();
+
+        root_node->value_lower_bound = get_lower_bound_reward(root_node->b);
+        root_node->value_upper_bound = get_mdp_upper_bound_reward(root_node->b);
+        insert_belief_node_into_tree(b0);
+        cout<<"root_node - "; root_node->print();
+
+        root_node->value_prediction_optimal = get_predicted_optimal_reward(root_node->b);
       }
       ~Solver()
       {
@@ -128,7 +136,7 @@ namespace sarsop{
         cout<<"Alphas: "<<endl;
         for(unsigned int i=0; i<alphas.size(); i++)
         {
-          cout<<alphas[i].actionid<<": "<<alphas[i].gradient.transpose()<<endl;
+          cout<<'\t'<<alphas[i].actionid<<": "<<alphas[i].gradient.transpose()<<endl;
         }
       }
 
@@ -153,7 +161,6 @@ namespace sarsop{
       int check_alpha_dominated(Alpha& a1, Alpha& a2);
       int prune_alphas(bool only_last);
 
-      void initialize();
       void solve(float target_epsilon);
       bool check_termination_condition(float ep);
   };
