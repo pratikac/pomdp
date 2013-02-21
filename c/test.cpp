@@ -61,6 +61,22 @@ void test1(){
   //cout<<"entropy: "<< v1.dot(v1.array().sin().matrix()) <<endl;
 }
 
+int test2()
+{
+  vector<int*> pvec;
+  for(int i=0; i<10; i++)
+  {
+    int* t = new int;
+    *t = i;
+    pvec.push_back(t);
+  }
+  for(auto i : pvec)
+  {
+    cout<< *i<<endl;
+    delete i;
+  }
+}
+
 int main()
 {
   /*
@@ -70,10 +86,11 @@ int main()
   */
 
   //test1();
+  test2();
 
-  Model m = create_model();    
-  Solver s(m);
-  s.solve(0.1);
+  //Model m = create_model();    
+  //Solver s(m);
+  //s.solve(0.1);
 
   return 0;
 }

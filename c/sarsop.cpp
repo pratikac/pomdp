@@ -286,44 +286,53 @@ int Solver::prune_alphas(bool only_last)
   return 0;
 }
 
-/*! deletes all beliefnodes starting from root
+/*! deletes all beliefnodes below bn
  */
-int Solver::trash_belief_tree(BeliefNode* root)
+int Solver::trash_belief_tree(BeliefNode* bn)
 {
+  vector<BeliefNode*> children = bn->children;
+  belief_tree_nodes.erase(bn->index);
+  delete bn;
+  for(unsigned int i=0; i< children.size(); i++)
+  {
+    trash_belief_tree(children[i]);
+  }
   return 0;
 }
 
 /*! prunes belief tree based on upper and lower bounds
  */
-int Solver::prune_beliefs()
+int Solver::prune_beliefs(BeliefNode* bn)
 {
-  for(auto i = belief_tree_nodes.rbegin(); i != belief_tree_nodes.rend(); i++)
+  for(int j=0; j< model->nactions; j++)
   {
-    BeliefNode* bn = *i;
-    for(int j=0; j<m.nactions; j++)
+    int aid = j;
+    float Ql = get_bound_child(bn->b, LOWER_BOUND, aid);
+    float Qu = get_bound_child(bn->b, UPPER_BOUND, aid);
+    if(Ql > Qu)
     {
-      int aid = j;
-      float Ql = get_bound_child(bn->b, LOWER_BOUND, aid);
-      float Qu = get_bound_child(bn->b, UPPER_BOUND, aid);
-      if(Ql > Qu)
+      vector<int> index_of_deleted;
+      for(unsigned int it=0; it< bn->aoid.size(); it++)
       {
-        while(1)
+        if(bn->aoid[it].first == aid)
         {
-          // prune the whole subtree for children with actionid = aid
-          auto it = find_if(bn->aoid.begin(), bn->aoid.end(), \
-              [=]const pair<int, int> &p {return p.first == aid;});
-          if(it != bn->aoid.end())
-          {
-            int index = it - bn->aoid.begin();
-            BeliefNode* child = bn->children[index];
-            // trash tree
-            trash_belief_tree(child);
-          }
-          else
-            break;
+          int index = it;
+          BeliefNode* child = bn->children[index];
+
+          index_of_deleted.push_back(index);
+          trash_belief_tree(child);
         }
       }
+      for(auto it : index_of_deleted)
+      {
+        bn->children.erase(bn->children.begin() + it);
+        bn->aoid.erase(bn->aoid.begin() + it);
+      }
     }
+  }
+  for(unsigned int i=0; i< bn->children.size(); i++)
+  {
+    prune_beliefs(bn->children[i]);
   }
   return 0;
 }
@@ -365,10 +374,11 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
   float vhat = bn->value_prediction_optimal;
   float vupper = bn->value_upper_bound;
   float vlower = bn->value_lower_bound;
+  float terminal_U = vlower+ (float)0.5*epsilon*pow(m.discount, -level);
   cout<<"vupper: "<<vupper<<" vhat: "<<vhat<<" vlower: "<<vlower<<endl;
 
-  cout<<"L: "<<L<<" U: "<<U<<" "<< "vlower + term: "<<vlower+ (float)0.5*epsilon*pow(m.discount, -level)<< endl;
-  if( (vhat <= L) && (vupper < max(U, vlower+ (float)0.5*epsilon*pow(m.discount, -level))) )
+  cout<<"L: "<<L<<" U: "<<U<<" "<< "vlower + term: "<<terminal_U<< endl;
+  if( (vhat <= L) && (vupper < max(U, terminal_U)) )
   {
     cout<<"stop sampling: termination criterion reached"<<endl;
     return;
@@ -378,7 +388,7 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
     int tmp_aid = -1;
     float Qlower = get_bound_child(b, LOWER_BOUND, tmp_aid);
     float L1 = max(Qlower, L);
-    float U1 = max(U, Qlower + pow(m.discount, -level)*epsilon);
+    float U1 = max(U, Qlower + (float)pow(m.discount, -level)*epsilon);
     cout<<"Qlower: "<<Qlower <<" L1: "<<L1<<" U1: "<<U1<<endl;
 
     int new_action = -1;
@@ -416,9 +426,8 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
 
     Belief new_belief = m.next_belief(b, new_action, new_observation);
 
-    BeliefNode* newbn = new BeliefNode(new_belief, bn, new_action, new_observation);
-    belief_tree_nodes.push_back(newbn);
-    insert_belief_node_into_tree(newbn);
+    BeliefNode* newbn = new BeliefNode(new_belief, bn, new_action, new_observation, num_beliefs);
+    insert_belief_node(newbn);
 
     newbn->value_prediction_optimal = get_predicted_optimal_reward(newbn);
     newbn->value_upper_bound = get_mdp_upper_bound_reward(newbn->b);
