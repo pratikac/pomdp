@@ -72,7 +72,8 @@ namespace sarsop{
     public:
       Model* model;
 
-      vector<BeliefNode*> belief_tree_nodes;
+      int num_beliefs;
+      map<int, BeliefNode*> belief_tree_nodes;
       BeliefNode* root_node;
       /*! kdtree to store beliefs
        * the features used as keys are:
@@ -91,6 +92,7 @@ namespace sarsop{
         belief_tree = kd_create(2);
         BeliefNode* b0 = new BeliefNode(model->b0, NULL, -1, -1);
         root_node = b0;
+        num_beliefs = 0;
         
         mdp_value = vec::Zero(model->nstates);
         mdp_value_iteration();
@@ -100,14 +102,20 @@ namespace sarsop{
         root_node->value_upper_bound = get_mdp_upper_bound_reward(root_node->b);
         insert_belief_node_into_tree(b0);
         cout<<"root_node - "; root_node->print();
-
-        root_node->value_prediction_optimal = get_predicted_optimal_reward(root_node->b);
+        
+        root_node->value_prediction_optimal = get_predicted_optimal_reward(root_node);
+        
+        belief_tree_nodes[num_beliefs] = root_node;
+        num_beliefs++;
       }
       ~Solver()
       {
         kd_free(belief_tree);
-        for(unsigned int i=0; i<belief_tree_nodes.size(); i++)
-          delete belief_tree_nodes[i];
+        for(auto i=belief_tree_nodes.begin(); i != belief_tree_nodes.end(); i++)
+        {
+          BeliefNode* bt = i->second;
+          delete bt;
+        }
         belief_tree_nodes.clear();
       }
       /*! get key for belief of a node
@@ -128,6 +136,9 @@ namespace sarsop{
       }
       void insert_belief_node_into_tree(BeliefNode* bn)
       {
+        belief_tree_nodes[num_beliefs] = bn;
+        num_beliefs++;
+
         get_key(bn, bn->key);
         kd_insert(belief_tree, bn->key, bn);
       }
@@ -145,7 +156,7 @@ namespace sarsop{
       
       void backup(BeliefNode* bn);
 
-      float get_predicted_optimal_reward(Belief& b);
+      float get_predicted_optimal_reward(BeliefNode* bn);
       float get_lower_bound_reward(Belief& b);
       /*! upper bound from the mdp
       */
@@ -160,6 +171,8 @@ namespace sarsop{
 
       int check_alpha_dominated(Alpha& a1, Alpha& a2);
       int prune_alphas(bool only_last);
+      int trash_belief_tree(BeliefNode* root);
+      int prune_beliefs();
 
       void solve(float target_epsilon);
       bool check_termination_condition(float ep);

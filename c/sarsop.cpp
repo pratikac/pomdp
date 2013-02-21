@@ -117,15 +117,15 @@ void Solver::backup(BeliefNode* bn)
 
 /*! predict optimal reward using binning of beliefs
 */
-float Solver::get_predicted_optimal_reward(Belief& b)
+float Solver::get_predicted_optimal_reward(BeliefNode* bn)
 {
   double* key = new double[2];
-  key[0] = b.entropy();
-  key[1] = get_mdp_upper_bound_reward(b);
+  key[0] = bn->b.entropy();
+  key[1] = get_mdp_upper_bound_reward(bn->b);
   struct kdres* res = kd_nearest(belief_tree, key);
   float mean_val = 0;
   float toret = 0;
-  if(!kd_res_size(res))
+  if(kd_res_size(res) < 2)
   {
     toret = key[1];
   }
@@ -133,8 +133,11 @@ float Solver::get_predicted_optimal_reward(Belief& b)
   {
     while(!kd_res_end(res))
     {
-      BeliefNode* bn = (BeliefNode*) kd_res_item_data(res);
-      mean_val += bn->value_lower_bound;
+      BeliefNode* bn2 = (BeliefNode*) kd_res_item_data(res);
+      if(bn != bn2)
+      {
+        mean_val += bn2->value_lower_bound;
+      }
       kd_res_next(res);
     }
     toret = mean_val/(float)kd_res_size(res);
@@ -283,6 +286,48 @@ int Solver::prune_alphas(bool only_last)
   return 0;
 }
 
+/*! deletes all beliefnodes starting from root
+ */
+int Solver::trash_belief_tree(BeliefNode* root)
+{
+  return 0;
+}
+
+/*! prunes belief tree based on upper and lower bounds
+ */
+int Solver::prune_beliefs()
+{
+  for(auto i = belief_tree_nodes.rbegin(); i != belief_tree_nodes.rend(); i++)
+  {
+    BeliefNode* bn = *i;
+    for(int j=0; j<m.nactions; j++)
+    {
+      int aid = j;
+      float Ql = get_bound_child(bn->b, LOWER_BOUND, aid);
+      float Qu = get_bound_child(bn->b, UPPER_BOUND, aid);
+      if(Ql > Qu)
+      {
+        while(1)
+        {
+          // prune the whole subtree for children with actionid = aid
+          auto it = find_if(bn->aoid.begin(), bn->aoid.end(), \
+              [=]const pair<int, int> &p {return p.first == aid;});
+          if(it != bn->aoid.end())
+          {
+            int index = it - bn->aoid.begin();
+            BeliefNode* child = bn->children[index];
+            // trash tree
+            trash_belief_tree(child);
+          }
+          else
+            break;
+        }
+      }
+    }
+  }
+  return 0;
+}
+
 bool Solver::check_termination_condition(float ep)
 {
   if( (root_node->value_upper_bound - root_node->value_lower_bound) > ep)
@@ -375,7 +420,7 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
     belief_tree_nodes.push_back(newbn);
     insert_belief_node_into_tree(newbn);
 
-    newbn->value_prediction_optimal = get_predicted_optimal_reward(newbn->b);
+    newbn->value_prediction_optimal = get_predicted_optimal_reward(newbn);
     newbn->value_upper_bound = get_mdp_upper_bound_reward(newbn->b);
     newbn->value_lower_bound = get_lower_bound_reward(newbn->b);
 
@@ -383,8 +428,12 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
     cout<<"Lt: "<< Lt<<" Ut: "<<Ut << endl;
     //getchar();
 
-    backup(newbn);
-
+    BeliefNode* curr = newbn;
+    while(curr)
+    {
+      backup(newbn);
+      curr = curr->parent;
+    }
     sample_beliefs(newbn, Lt, Ut, epsilon, level+1);
   }
 }

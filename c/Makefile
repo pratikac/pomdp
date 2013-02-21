@@ -12,7 +12,7 @@ OBJS = $(C_OBJS) $(CPP_OBJS)
 INCS = -I /home/pratik/code/utils -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported
 LIBS = 
 
-CFLAGS = -Wall -g -pg
+CFLAGS = -Wall -g -pg -std=c++11
 LDFLAGS =
 
 all: $(BIN)
