@@ -21,6 +21,7 @@ namespace sarsop{
   {
     public:
       Belief b;
+      double key[2];
 
       BeliefNode* parent;
       vector<BeliefNode*> children;
@@ -46,6 +47,11 @@ namespace sarsop{
         value_upper_bound = large_num;
         value_lower_bound = -large_num;
         value_prediction_optimal = large_num;
+      }
+      float get_distance(BeliefNode* b2)
+      {
+        float t1 = SQ(key[0]-b2->key[0]) + SQ(key[1]-b2->key[1]);
+        return sqrt(t1);
       }
       void print()
       {
@@ -114,9 +120,8 @@ namespace sarsop{
       }
       void insert_belief_node_into_tree(BeliefNode* bn)
       {
-        double* key = new double[2];
-        get_key(bn, key);
-        kd_insert(belief_tree, key, bn);
+        get_key(bn, bn->key);
+        kd_insert(belief_tree, bn->key, bn);
       }
       void print_alphas()
       {
@@ -134,8 +139,12 @@ namespace sarsop{
 
       float get_predicted_optimal_reward(Belief& b);
       float get_lower_bound_reward(Belief& b);
-      float get_mdp_upper_bound_reward(Belief& b);
-      float get_bound_child(Belief& b, bool is_lower, int& aid);
+      /*! upper bound from the mdp
+      */
+      inline float get_mdp_upper_bound_reward(Belief& b){
+        return b.p.dot(mdp_value);
+      }
+      float get_bound_child(Belief& b, bool is_lower_bound, int& aid);
       float get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_bound, float& upper_bound);
       void sample(float target_epsilon);
       void sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level);

@@ -176,6 +176,8 @@ float Solver::get_predicted_optimal_reward(Belief& b)
 }
 
 /*! lower bound using alpha vectors
+ * @param[in] : Belief& b
+ * @param[out] ; value at belief b calculating using alpha vectors
 */
 float Solver::get_lower_bound_reward(Belief& b)
 {
@@ -189,22 +191,13 @@ float Solver::get_lower_bound_reward(Belief& b)
   return max_value;
 }
 
-/*! upper bound from the mdp
-*/
-float Solver::get_mdp_upper_bound_reward(Belief& b)
-{
-  return b.p.dot(mdp_value);
-  /*
-     float tmp = 0;
-     for(int i=0; i< model->nstates; i++)
-     {
-     tmp = tmp + b.p[i]*mdp_value[i];
-     }
-     return tmp;
-     */
-}
-
-float Solver::get_bound_child(Belief& b, bool is_lower, int& aid)
+/*! get upper / lower bound by expanding for one step
+ * @param[in] : Belief& b
+ * @param[in] : bool is_lower : upper bound / lower bound
+ * @param[in] : action id (used only if calculating using a specific action
+ * @param[out] : maximum value
+ */
+float Solver::get_bound_child(Belief& b, bool is_lower_bound, int& aid)
 {
   Model& m = *model;
 
@@ -216,7 +209,7 @@ float Solver::get_bound_child(Belief& b, bool is_lower, int& aid)
     {
       float v_next_belief = 0;
       Belief new_belief_tmp = m.next_belief(b, i, j);
-      if(is_lower == true)
+      if(is_lower_bound == true)
         v_next_belief = get_lower_bound_reward(new_belief_tmp);
       else
         v_next_belief = get_mdp_upper_bound_reward(new_belief_tmp);
@@ -254,16 +247,19 @@ float Solver::get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_boun
   return 0;
 }
 
+/*! samples beliefs
+ * @param[in] : float epsilon difference between lower bound \
+ * and upper bound at the root after backup is propagated upwards
+ */
 void Solver::sample(float epsilon)
 {
   float L =  root_node->value_lower_bound;
   float U = L + epsilon;
-
   sample_beliefs(root_node, L, U, epsilon, 1);
 }
 
 
-/*! returns
+/*! \return
  *  0: no dominance
  *  1: a1 dominates
  *  2: a2 dominates
