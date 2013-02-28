@@ -72,9 +72,10 @@ int test2()
   }
   for(auto i : pvec)
   {
-    cout<< *i<<endl;
+    cout<< *i<<" ";
     delete i;
   }
+  cout<<endl;
 }
 
 int main()
@@ -86,11 +87,11 @@ int main()
   */
 
   //test1();
-  test2();
+  //test2();
 
-  //Model m = create_model();    
-  //Solver s(m);
-  //s.solve(0.1);
+  Model m = create_model();    
+  Solver s(m);
+  s.solve(0.1);
 
   return 0;
 }

@@ -101,7 +101,7 @@ void Solver::backup(BeliefNode* bn)
     mat alpha_ao(ns, no);
     for(int j=0; j<no; j++)
       alpha_ao.col(j) = alphas[alpha_ao_id(i,j)].gradient;
-    // FIXME
+    // FIXME -- is this correct?
     vec tmp = (m.pobservation[i].transpose() * alpha_ao).diagonal();
     tmp_alpha.gradient = m.preward[i] + m.ptransition[i]*tmp;
     tmp_alpha.actionid = i;
@@ -113,6 +113,17 @@ void Solver::backup(BeliefNode* bn)
 
   alphas.push_back(new_alpha);
   cout<<"Inserted: "<<new_alpha.actionid<<" "<<new_alpha.gradient.transpose()<<" alpha.size: "<< alphas.size()<<endl;
+  
+  prune_alphas(true);
+
+}
+
+void Solver::backup_until_root(BeliefNode* bn)
+{
+  backup(bn);
+  if(bn->parent)
+    backup_until_root(bn->parent);
+  return;
 }
 
 /*! predict optimal reward using binning of beliefs
@@ -223,11 +234,11 @@ float Solver::get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_boun
  * @param[in] : float epsilon difference between lower bound \
  * and upper bound at the root after backup is propagated upwards
  */
-void Solver::sample(float epsilon)
+BeliefNode* Solver::sample(float epsilon)
 {
   float L =  root_node->value_lower_bound;
   float U = L + epsilon;
-  sample_beliefs(root_node, L, U, epsilon, 1);
+  return sample_beliefs(root_node, L, U, epsilon, 1);
 }
 
 
@@ -240,9 +251,9 @@ int Solver::check_alpha_dominated(Alpha& a1, Alpha& a2)
 {
   int nnodes = belief_tree_nodes.size();
   int dominated_nodes = 0;
-  for(unsigned int i=0; i< belief_tree_nodes.size(); i++)
+  for(auto it : belief_tree_nodes)
   {
-    BeliefNode* bn = belief_tree_nodes[i];
+    BeliefNode* bn = it.second;
     if( a1.get_value(bn->b) >= a2.get_value(bn->b))
       dominated_nodes++;
     else
@@ -268,7 +279,7 @@ int Solver::prune_alphas(bool only_last)
     for(int i=na; i>=0; i++)
     {
       int ret_val = check_alpha_dominated(alphas[i], alpha_last);
-      cout<<"ret_val: "<<ret_val<<endl;
+      //cout<<"ret_val: "<<ret_val<<endl;
       if(ret_val == 1)
       {
         alphas.pop_back();
@@ -323,10 +334,11 @@ int Solver::prune_beliefs(BeliefNode* bn)
           trash_belief_tree(child);
         }
       }
-      for(auto it : index_of_deleted)
+      for(unsigned int it=0; it< index_of_deleted.size(); it++)
       {
-        bn->children.erase(bn->children.begin() + it);
-        bn->aoid.erase(bn->aoid.begin() + it);
+        int index = index_of_deleted[it];
+        bn->children.erase(bn->children.begin() + index);
+        bn->aoid.erase(bn->aoid.begin() + index);
       }
     }
   }
@@ -345,6 +357,9 @@ bool Solver::check_termination_condition(float ep)
     return true;
 }
 
+/*! main solver function
+ * adds new beliefs until gap at root becomes less than epsilon
+ */
 void Solver::solve(float target_epsilon)
 {
   float epsilon = 10;
@@ -354,19 +369,24 @@ void Solver::solve(float target_epsilon)
   while(!is_converged)
   {
     cout<<"iteration: "<< ++iteration << endl;
-    sample(epsilon);
-
-    cout<<"pruned: "<< prune_alphas(true) << endl;
+    /// 1. sample beliefs
+    BeliefNode* leaf_node = sample(epsilon);
+    
+    // 2. backup
+    backup_until_root(leaf_node);
 
     is_converged = check_termination_condition(target_epsilon);
-
     print_alphas();
     getchar();
 
     epsilon = epsilon/2.0;
+    
+    /// 3. prune beliefs periodically
+    //if(iteration%25 == 0)
+      //prune_beliefs(root_node);
   }
 }
-void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level)
+BeliefNode* Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level)
 {
   Model& m = *model;
   Belief& b = bn->b;
@@ -381,7 +401,7 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
   if( (vhat <= L) && (vupper < max(U, terminal_U)) )
   {
     cout<<"stop sampling: termination criterion reached"<<endl;
-    return;
+    return bn;
   }
   else
   {
@@ -437,12 +457,6 @@ void Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int
     cout<<"Lt: "<< Lt<<" Ut: "<<Ut << endl;
     //getchar();
 
-    BeliefNode* curr = newbn;
-    while(curr)
-    {
-      backup(newbn);
-      curr = curr->parent;
-    }
-    sample_beliefs(newbn, Lt, Ut, epsilon, level+1);
+    return sample_beliefs(newbn, Lt, Ut, epsilon, level+1);
   }
 }

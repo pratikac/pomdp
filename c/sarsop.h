@@ -157,6 +157,7 @@ namespace sarsop{
       void fixed_action_alpha_iteration();
       
       void backup(BeliefNode* bn);
+      void backup_until_root(BeliefNode* bn);
 
       float get_predicted_optimal_reward(BeliefNode* bn);
       float get_lower_bound_reward(Belief& b);
@@ -167,8 +168,8 @@ namespace sarsop{
       }
       float get_bound_child(Belief& b, bool is_lower_bound, int& aid);
       float get_poga_mult_bound(Belief& b, int aid, int oid, float& lower_bound, float& upper_bound);
-      void sample(float target_epsilon);
-      void sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level);
+      BeliefNode* sample(float target_epsilon);
+      BeliefNode* sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level);
 
 
       int check_alpha_dominated(Alpha& a1, Alpha& a2);
