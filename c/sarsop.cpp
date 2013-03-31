@@ -22,7 +22,7 @@ void Solver::mdp_value_iteration()
       float max_value = -large_num;
       for(int j=0; j< m.nactions; j++)
       {
-        float tmp = m.discount * (mat(m.ptransition[j]).col(i).dot(mdp_value_copy));
+        float tmp = m.discount * (mat(m.ptransition[j]).row(i).dot(mdp_value_copy));
         tmp = tmp + m.preward[j](i);
         if (tmp > max_value)
           max_value = tmp;
@@ -113,7 +113,7 @@ void Solver::backup(BeliefNode* bn)
 
   alphas.push_back(new_alpha);
   cout<<"Inserted: "<<new_alpha.actionid<<" "<<new_alpha.gradient.transpose()<<" alpha.size: "<< alphas.size()<<endl;
-  
+
   prune_alphas(true);
 
 }
@@ -161,7 +161,7 @@ float Solver::get_predicted_optimal_reward(BeliefNode* bn)
 /*! lower bound using alpha vectors
  * @param[in] : Belief& b
  * @param[out] ; value at belief b calculating using alpha vectors
-*/
+ */
 float Solver::get_lower_bound_reward(Belief& b)
 {
   float max_value = -large_num;
@@ -298,7 +298,7 @@ int Solver::prune_alphas(bool only_last)
 }
 
 /*! deletes all beliefnodes below bn
- */
+*/
 int Solver::trash_belief_tree(BeliefNode* bn)
 {
   vector<BeliefNode*> children = bn->children;
@@ -312,7 +312,7 @@ int Solver::trash_belief_tree(BeliefNode* bn)
 }
 
 /*! prunes belief tree based on upper and lower bounds
- */
+*/
 int Solver::prune_beliefs(BeliefNode* bn)
 {
   for(int j=0; j< model->nactions; j++)
@@ -371,7 +371,7 @@ void Solver::solve(float target_epsilon)
     cout<<"iteration: "<< ++iteration << endl;
     /// 1. sample beliefs
     BeliefNode* leaf_node = sample(epsilon);
-    
+
     // 2. backup
     backup_until_root(leaf_node);
 
@@ -380,10 +380,10 @@ void Solver::solve(float target_epsilon)
     getchar();
 
     epsilon = epsilon/2.0;
-    
+
     /// 3. prune beliefs periodically
     //if(iteration%25 == 0)
-      //prune_beliefs(root_node);
+    //prune_beliefs(root_node);
   }
 }
 BeliefNode* Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsilon, int level)
@@ -438,7 +438,7 @@ BeliefNode* Solver::sample_beliefs(BeliefNode* bn, float L, float U, float epsil
         sum_tmp_lower = sum_tmp_lower + poga_mult_lower_bounds[i];
       if(i != new_observation)
         sum_tmp_upper = sum_tmp_upper + poga_mult_upper_bounds[i];
-   }
+    }
 
     float expected_reward_new_action = m.get_expected_step_reward(b, new_action);
     float Lt = ((L1 - expected_reward_new_action)/m.discount - sum_tmp_lower)/m.get_p_o_given_b(b, new_action, new_observation);

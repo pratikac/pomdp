@@ -58,7 +58,7 @@ namespace pomdp{
   };
 
   /*! A POMDP model
-   */
+  */
   class Model
   {
     public:
@@ -119,7 +119,7 @@ namespace pomdp{
       {
         Belief newb;
         newb.p = b.p;
-        
+
         //cout<<b.p<<endl;
 
         if(aid != -1)
@@ -137,7 +137,7 @@ namespace pomdp{
        * @param[in] Belief& b : belief at which action is taken
        * @param[in] int aid : action id of the action
        * @param[out] float reward
-      */
+       */
       float get_expected_step_reward(Belief& b, int aid)
       {
         return preward[aid].dot(b.p);

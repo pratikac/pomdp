@@ -106,16 +106,13 @@ namespace sarsop{
         cout<<"root_node - "; root_node->print();
         
         root_node->value_prediction_optimal = get_predicted_optimal_reward(root_node);
-        
-        belief_tree_nodes[num_beliefs] = root_node;
-        num_beliefs++;
       }
       ~Solver()
       {
         kd_free(belief_tree);
-        for(auto i=belief_tree_nodes.begin(); i != belief_tree_nodes.end(); i++)
+        for(auto& i : belief_tree_nodes)
         {
-          BeliefNode* bt = i->second;
+          BeliefNode* bt = i.second;
           delete bt;
         }
         belief_tree_nodes.clear();

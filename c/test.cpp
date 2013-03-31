@@ -89,9 +89,9 @@ int main()
   //test1();
   //test2();
 
-  Model m = create_model();    
+  Model m = create_model(); 
   Solver s(m);
-  s.solve(0.1);
+  //s.solve(0.1);
 
   return 0;
 }
