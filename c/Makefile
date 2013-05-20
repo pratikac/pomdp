@@ -1,18 +1,19 @@
-CC = gcc
-CPP = g++
+CC = gcc-4.7
+CPP = g++-4.7
 
 BIN = ./test
 C_SRCS = kdtree.c 
-CPP_SRCS = pomdp.cpp test.cpp sarsop.cpp
+CPP_SRCS = test.cpp
 
 C_OBJS = $(C_SRCS:.c=.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 OBJS = $(C_OBJS) $(CPP_OBJS)
 
-INCS = -I /home/pratik/code/utils -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported
+INCS = -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported
 LIBS = 
 
-CFLAGS = -Wall -g -O0 -pg -std=c++11
+CFLAGS = -Wall -g -O0 -ggdb
+CPPFLAGS = -Wall -g -O0 -ggdb -std=c++11
 LDFLAGS =
 
 all: $(BIN)
@@ -27,10 +28,10 @@ $(BIN): $(OBJS)
 
 %.o: %.cpp
 	@echo "  [CC]    $@"
-	@$(CPP) $(CFLAGS) $(INCS) -c $< -o $@
+	@$(CPP) $(CPPFLAGS) $(INCS) -c $< -o $@
 
 clean:
-	rm -rf $(BIN) $(C_OBJS) $(CPP_OBJS) gmon.out
+	rm -rf $(BIN) $(C_OBJS) $(CPP_OBJS)
 
 ctags:
 	ctags -R $(C_SRCS) $(CPP_SRCS) *.h

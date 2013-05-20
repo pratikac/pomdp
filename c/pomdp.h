@@ -7,149 +7,212 @@
 #include "linalg.h"
 using namespace std;
 
-namespace pomdp{
+typedef vector<mat> pt_t;
+typedef vector<mat> po_t;
+typedef vector<vec> pr_t;
 
-  typedef vector< mat > ttrans;
-  typedef vector< mat > tobs;
-  typedef vector< vec > treward;
+/*! beliefs
+*/
+class belief_t{
+  public:
+    vec p;
+  
+    belief_t(){}
+    belief_t(const belief_t& b_in) : p(b_in.p){}
 
-  class Belief{
-    public:
-      vec p;
-      void normalize(){
-        p = p/p.sum();
-      }
-      void print(){
-        cout<<p.transpose()<<endl;
-      }
-      float entropy()
-      {
-        return -p.dot(p.array().log().matrix());
-      }
-  };
+    void normalize()
+    {
+      p.normalize();
+    }
+    void print(const char* prefix="b") const
+    {
+      cout<<prefix<<": "<<p.transpose()<<endl;
+    }
 
-  /*! Implements alpha vectors
-   * that are gradients of the value function
-   */
-  class Alpha{
-    public:
-      int actionid;
-      vec gradient;
+    float distance(const belief_t& b) const
+    {
+      vec tmp = p-b.p;
+      return tmp.norm();
+    }
 
-      Alpha(){
-      };
-      /*! Constructor
-       * @param[in] aid Action Id: index of optimal action associated with alpha vector
-       * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
-       */
-      Alpha(int aid, vec& gradin)
-      {
-        actionid = aid;
-        gradient = gradin;
-      }
-      /*! return value function as dot product of alpha with belief
-       * @param[in] b belief at which value is calculated
-       * \return float value dot(gradient, b)
-       */
-      float get_value(Belief& b)
-      {
-        return gradient.dot(b.p);
-      }
-  };
-
-  /*! A POMDP model
-  */
-  class Model
-  {
-    public:
-      int nstates;
-      int nactions;
-      int nobservations;
-      float discount;
-
-      /*! transition matrix
-       * A x S_1 x S_2 : P(s_2 | s_1, a)
-       */
-      ttrans ptransition;
-      /*! observation matrix
-       * A x O x S : P(o | s, a)
-       */
-      tobs pobservation;
-      /*! reward matrix
-       * A x S : reward for taking control a at state s
-       */
-      treward preward;
-      Belief b0;
-
-      Model(int ns,int na, int no, ttrans& tin, tobs& oin, float din, treward& rin, Belief& bin)
-      {
-        nstates = ns;
-        nactions = na;
-        nobservations = no;
-        discount = din;
-        b0 = bin;
-
-        ptransition = tin;
-        pobservation = oin;
-        preward = rin;
-      };
-      void print()
-      {
-        cout<<"states: "<<nstates<<endl;
-        cout<<"actions: "<<nactions<<endl;
-        cout<<"transition_probabilities: "<<endl;
-        for(int i=0; i<nactions; i++)
-        {
-          cout<<"action_id: "<<i<<"-"<<ptransition[i]<<endl;
-        }
-        cout<<"observation_probabilities: "<<endl;
-        for(int i=0; i<nactions; i++)
-        {
-          cout<<"action_id: "<<i<<"-"<<pobservation[i]<<endl;
-        }
-
-        cout<<"initial_belief: "<<b0.p<<endl;
-        cout<<"discount: "<<discount<<endl;
-        cout<<"reward_function: "<<endl;
-        for(int i=0; i<nactions; i++)
-          cout<<"action_id: "<<i<<"-"<<preward[i]<<endl;
-      }
-
-      Belief next_belief(Belief& b, int aid=-1, int oid=-1)
-      {
-        Belief newb;
-        newb.p = b.p;
-
-        //cout<<b.p<<endl;
-
-        if(aid != -1)
-          newb.p = ptransition[aid] * b.p;
-        if( (oid != -1) && (aid != -1))
-        {
-          vec t1 = vec(newb.p);
-          t1 = (t1.array() * mat(pobservation[aid]).col(oid).array()).matrix();
-          newb.p = t1.sparseView();
-          newb.normalize();
-        }
-        return newb;
-      }
-      /*! returns \sum_s R(s,a) b(s)
-       * @param[in] Belief& b : belief at which action is taken
-       * @param[in] int aid : action id of the action
-       * @param[out] float reward
-       */
-      float get_expected_step_reward(Belief& b, int aid)
-      {
-        return preward[aid].dot(b.p);
-      }
-      float get_p_o_given_b(Belief& b, int aid, int oid)
-      {
-        return pobservation[aid].col(oid).dot(b.p);
-      }
-  };
+    float entropy(){
+      return -p.dot(p.array().log().matrix());
+    }
 };
 
-pomdp::Model create_model();
-void test_model(pomdp::Model& m);
+/*! implements alpha vectors
+ * that are gradients of the value function
+ */
+class alpha_t{
+  public:
+    int aid;
+    vec grad;
+
+    alpha_t(){
+    };
+    /*! Constructor
+     * @param[in] aid Action Id: index of optimal action associated with alpha vector
+     * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
+     */
+    alpha_t(int aid_in, vec& grad_in)
+    {
+      aid = aid_in;
+      grad = grad_in;
+    }
+    /*! return value function as dot product of alpha with belief
+     * @param[in] b belief at which value is calculated
+     * \return float value dot(gradient, b)
+     */
+    float get_value(belief_t& b)
+    {
+      return grad.dot(b.p);
+    }
+};
+
+/*! A POMDP model
+*/
+class model_t
+{
+  public:
+    int ns;
+    int na;
+    int no;
+
+    /*! transition matrix
+     * A x S_1 x S_2 : P(s_2 | s_1, a)
+     */
+    pt_t pt;
+    /*! observation matrix
+     * A x O x S : P(o | s, a)
+     */
+    po_t po;
+
+    float discount;
+
+    /*! reward matrix
+     * A x S : reward for taking control a at state s
+     */
+    pr_t pr;
+    belief_t b0;
+    
+    model_t(){
+    }
+    
+    model_t(int ns_in,int na_in, int no_in, pt_t& pt_in, po_t& po_in, float d_in,
+        pr_t& pr_in, belief_t& b0_in)
+      : ns(ns_in), na(na_in), no(no_in), pt(pt_in), po(po_in), discount(d_in),
+      pr(pr_in), b0(b0_in){
+    }
+
+    void print()
+    {
+      cout<<"states: "<<ns<<endl;
+      cout<<"actions: "<<na<<endl;
+      cout<<"transition_probabilities: "<<endl;
+      for(int i=0; i<na; i++)
+      {
+        cout<<"action_id: "<<i<<"-"<<pt[i]<<endl;
+      }
+      cout<<"observation_probabilities: "<<endl;
+      for(int i=0; i<na; i++)
+      {
+        cout<<"action_id: "<<i<<"-"<<po[i]<<endl;
+      }
+
+      cout<<"initial_belief: "<<b0.p<<endl;
+      cout<<"discount: "<<discount<<endl;
+      cout<<"reward_function: "<<endl;
+      for(int i=0; i<na; i++)
+        cout<<"action_id: "<<i<<"-"<<pr[i]<<endl;
+    }
+
+    belief_t next_belief(belief_t& b, int aid=-1, int oid=-1)
+    {
+      belief_t newb(b);
+
+      //cout<<b.p<<endl;
+
+      if(aid != -1)
+        newb.p = pt[aid] * b.p;
+      if( (oid != -1) && (aid != -1))
+      {
+        newb.p = newb.p.array() * po[aid].col(oid).array();
+        newb.normalize();
+      }
+      return newb;
+    }
+    /*! returns \sum_s R(s,a) b(s)
+     * @param[in] belief_t& b : belief at which action is taken
+     * @param[in] int aid : action id of the action
+     * @param[out] float reward
+     */
+    float get_expected_step_reward(belief_t& b, int aid)
+    {
+      return pr[aid].dot(b.p);
+    }
+    float get_p_o_given_b(belief_t& b, int aid, int oid)
+    {
+      return po[aid].col(oid).dot(b.p);
+    }
+};
+
+/*! simple MDP model
+ * Tiger door problem (tony cassandra, technical report)
+ * s1 = tiger_left, s2 = tiger_right
+ * a1 = listen, a2 = open_left, a3 = open_right
+ * o1 = left, o2 = right
+ */
+model_t create_example()
+{
+  pt_t P = pt_t(3, mat(2,2));
+  po_t Q = po_t(3, mat(2,2));
+  pr_t R = pr_t(3, vec(2));
+
+  // a1 = listen
+  P[0](0,0) = 1; P[0](1,0) = 0.;
+  P[0](0,1) = 0; P[0](1,1) = 1.;
+
+  // a2 = open left door
+  P[1](0,0) = 0.5; P[1](1,0) = 0.5;
+  P[1](0,1) = 0.5; P[1](1,1) = 0.5;
+  // a3 = open right door
+  P[2] = P[1];
+
+  // a1 = listen
+  Q[0](0,0) = 0.85; Q[0](0,1) = 0.15;
+  Q[0](1,0) = 0.15; Q[0](1,1) = 0.85;
+
+  // a2 = open left door
+  Q[1] = P[1];
+  // a2 = open right door
+  Q[2] = P[1];
+
+  // reward function
+  R[0](0) = -1; R[0](1) = -1;
+  R[1](0) = -100; R[1](1) = 10;
+  R[2](0) = 10; R[2](1) = -100;
+
+  vec vb0(2); vb0(0)=0.5; vb0(1)=0.5;
+  belief_t b0;
+  b0.p = vb0; 
+  model_t m(2, 3, 2, P, Q, 0.95, R, b0);
+
+  //m.print();
+
+  return m;
+}
+
+void test_model(model_t& m)
+{
+  // next_belief_testing
+  belief_t b1 = m.next_belief(m.b0, 0, 1);
+  b1.print("b1");
+
+  belief_t b2 = m.next_belief(m.b0, 0, -1);
+  b2.print("b2");
+
+  b2 = m.next_belief(b2, -1, 1);
+  b2.print("b2");
+}
 
 #endif

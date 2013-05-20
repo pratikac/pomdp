@@ -1,12 +1,8 @@
 #include <iostream>
-#include "linalg.h"
 #include "utils.h"
-#include "pomdp.h"
-#include "sarsop.h"
+#include "pbvi.h"
 
 using namespace std;
-using namespace pomdp;
-using namespace sarsop;
 
 void test_eigen_sparse()
 {
@@ -76,22 +72,20 @@ int test2()
     delete i;
   }
   cout<<endl;
+  return 0;
 }
 
 int main()
 {
-  /*
-     Model m = create_model();    
-  //m.print();
-  test_model(m);
-  */
-
-  //test1();
-  //test2();
-
-  Model m = create_model(); 
-  Solver s(m);
-  s.solve(0.1);
+  model_t m = create_example();
+  belief_t b0 = m.b0;
+  pbvi_t pbvi(b0, &m);
+  
+  for(int i=0; i<10; i++)
+    pbvi.sample_belief_nodes();
+    //cout<<i<<" "<<pbvi.sample_belief_nodes()<<endl;
+  
+  pbvi.belief_tree->print(pbvi.belief_tree->root);
 
   return 0;
 }

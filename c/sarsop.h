@@ -59,7 +59,7 @@ namespace sarsop{
         //cout<<"bounds: "<<value_upper_bound<<" "<<value_prediction_optimal<<" "<<value_lower_bound<<endl;
       }
   };
-  
+
   typedef struct Belief_feature
   {
     float entropy;
@@ -83,7 +83,7 @@ namespace sarsop{
        *  - initial_upper_bound of value
        */
       struct kdtree* belief_tree;
-      
+
       vec mdp_value;
       vector<Alpha> alphas;
 
@@ -95,7 +95,7 @@ namespace sarsop{
         BeliefNode* b0 = new BeliefNode(model->b0, NULL, -1, -1, 0);
         root_node = b0;
         num_beliefs = 0;
-        
+
         mdp_value = vec::Zero(model->nstates);
         mdp_value_iteration();
         fixed_action_alpha_iteration();
@@ -104,7 +104,7 @@ namespace sarsop{
         root_node->value_upper_bound = get_mdp_upper_bound_reward(root_node->b);
         insert_belief_node(b0);
         cout<<"root_node - "; root_node->print();
-        
+
         root_node->value_prediction_optimal = get_predicted_optimal_reward(root_node);
       }
       ~Solver()
@@ -127,11 +127,11 @@ namespace sarsop{
         key[1] = get_mdp_upper_bound_reward(bn->b);
         return 0;  
         /* 
-        float* k = vec(b.p).data();
-        double* key = new double[b.p.size()];
-        for(int i=0;i< b.p.size();i++)
-          key[i] = k[i];
-          */
+           float* k = vec(b.p).data();
+           double* key = new double[b.p.size()];
+           for(int i=0;i< b.p.size();i++)
+           key[i] = k[i];
+           */
       }
       void insert_belief_node(BeliefNode* bn)
       {
@@ -152,7 +152,7 @@ namespace sarsop{
 
       void mdp_value_iteration();
       void fixed_action_alpha_iteration();
-      
+
       void backup(BeliefNode* bn);
       void backup_until_root(BeliefNode* bn);
 
