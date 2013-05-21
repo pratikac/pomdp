@@ -5,6 +5,7 @@
 #include <vector>
 #include <cmath>
 #include "linalg.h"
+#include <string.h>
 using namespace std;
 
 typedef vector<mat> pt_t;
@@ -22,24 +23,23 @@ class belief_t{
 
     void normalize()
     {
-      p.normalize();
+      p = p/p.sum();
     }
-    void print(const char* prefix="b") const
+    void print(string prefix="") const
     {
-      cout<<prefix<<": "<<p.transpose()<<endl;
+      cout<<prefix<<"["<<p.transpose()<<"]"<<endl;
     }
 
     float distance(const belief_t& b) const
     {
       vec tmp = p-b.p;
-      return tmp.norm();
+      return tmp.array().abs().sum();
     }
 
     float entropy(){
       return -p.dot(p.array().log().matrix());
     }
 };
-
 /*! implements alpha vectors
  * that are gradients of the value function
  */

@@ -81,7 +81,7 @@ int main()
   belief_t b0 = m.b0;
   pbvi_t pbvi(b0, &m);
   
-  for(int i=0; i<10; i++)
+  for(int i=0; i<25; i++)
     pbvi.sample_belief_nodes();
     //cout<<i<<" "<<pbvi.sample_belief_nodes()<<endl;
   

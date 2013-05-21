@@ -5,6 +5,7 @@
 #include "linalg.h"
 #include "pomdp.h"
 #include "float.h"
+#include <string.h>
 
 class edge_t;
 class belief_node_t;
@@ -74,11 +75,12 @@ class belief_tree_t{
       return 0;
     }
 
-    void print(belief_node_t* bn, char* prefix="")
+    void print(belief_node_t* bn, string prefix="")
     {
       bn->b.print(prefix);
-      for(auto& bnc : bn->children)
-        print(bnc->end, strcat(prefix, "\t"));
+      prefix += "\t";
+      for(auto& bne : bn->children)
+        print(bne->end, prefix);
     }
 };
 

@@ -6,6 +6,7 @@
 
 #include "pomdp.h"
 #include "belief_tree.h"
+#include <dequeue>
 
 #define RANDF   (rand()/(RAND_MAX+1.0))
 
@@ -19,6 +20,8 @@ class pbvi_t{
     kdtree_t* feature_tree;
     float insert_distance;
 
+    set<alpha_t> alpha_vectors;
+
     pbvi_t(belief_t& b_root, model_t* model_in)
     {
       belief_tree = new belief_tree_t(b_root);
@@ -26,7 +29,7 @@ class pbvi_t{
       feature_tree = kd_create(model->ns);
       insert_into_feature_tree(belief_tree->root);
 
-      insert_distance = 0.0001;
+      insert_distance = 0;
     }
 
     ~pbvi_t()
@@ -96,6 +99,65 @@ class pbvi_t{
       for(auto& p : nodes_to_insert)
         insert_into_belief_tree(p.first, p.second);
       return nodes_to_insert.size();
+    }
+
+    int find_greater_alpha(alpha_t& a1, alpha_t& a2)
+    {
+      int tmp = 0;
+      for(auto& bn : belief_tree->nodes)
+      {
+        float t1 = a1.get_value(bn->b);
+        float t2 = a2.get_value(bn->b);
+        if(t1 > t2)  
+          tmp++;
+        else if(t2 > t1)
+          tmp--;
+      }
+      if(tmp == belief_tree->nodes.size())
+        return 1;
+      else if(tmp == -belief_tree->nodes.size())
+        return -1;
+      else
+        return 0;
+    }
+    
+    int backup(belief_node_t* bn)
+    {
+      int ns = model->ns;
+      int no = model->no;
+      int na = model->na;
+
+      alpha_t* alpha_a_o[ns][no] = {nullptr};
+      for(int a=0; a < na; a++)
+      {
+        for(int o=0; o< no; o++)
+        {
+          float max_val = -FLT_MAX;
+          belief_t nb = model->next_belief(bn->b, a, o);
+          for(auto& av : alpha_vectors)
+          {
+            float t1 = av.get_value(nb);
+            if(t1 > max_val)
+            {
+              max_val = t1;
+              alpha_a_o[a][o] = &av;
+            }
+          }
+        }
+      }
+      
+      alpha_t new_alpha[na];
+      for(int a=0; a< na; a++)
+      {
+        new_alpha[a] = model->pr[a] + model->discount* 
+      }
+      
+      return 0;
+    }
+
+    int backup_belief_nodes()
+    {
+      return 0;
     }
 };
 
