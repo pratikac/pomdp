@@ -25,9 +25,12 @@ class belief_t{
     {
       p = p/p.sum();
     }
-    void print(string prefix="") const
+    void print(string prefix="", float val=-FLT_MAX/2) const
     {
-      cout<<prefix<<"["<<p.transpose()<<"]"<<endl;
+      if(val > -FLT_MAX/2)
+        cout<<prefix<<"["<<p.transpose()<<"]:"<<val<<endl;
+      else 
+        cout<<prefix<<"["<<p.transpose()<<"]"<<endl;
     }
 
     float distance(const belief_t& b) const
@@ -63,9 +66,14 @@ class alpha_t{
      * @param[in] b belief at which value is calculated
      * \return float value dot(gradient, b)
      */
-    float get_value(belief_t& b)
+    float get_value(belief_t& b) const
     {
       return grad.dot(b.p);
+    }
+
+    void print(string prefix="") const
+    {
+      cout<<"aid: "<<aid<<"-["<<grad.transpose()<<"]"<<endl;
     }
 };
 

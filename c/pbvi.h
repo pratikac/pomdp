@@ -6,7 +6,6 @@
 
 #include "pomdp.h"
 #include "belief_tree.h"
-#include <dequeue>
 
 #define RANDF   (rand()/(RAND_MAX+1.0))
 
@@ -20,7 +19,7 @@ class pbvi_t{
     kdtree_t* feature_tree;
     float insert_distance;
 
-    set<alpha_t> alpha_vectors;
+    vector<alpha_t> alpha_vectors;
 
     pbvi_t(belief_t& b_root, model_t* model_in)
     {
@@ -28,8 +27,23 @@ class pbvi_t{
       model = model_in;
       feature_tree = kd_create(model->ns);
       insert_into_feature_tree(belief_tree->root);
-
       insert_distance = 0;
+    
+      // create first alpha vector by blind policy
+      float max_val = -FLT_MAX;
+      int best_action = -1;
+      for(int a=0; a<model->na; a++)
+      {
+         float t1 = model->pr[a].minCoeff();
+         if(t1 > max_val)
+         {
+           max_val = t1;
+           best_action = a;
+         }
+      }
+      vec tmp = vec::Constant(model->ns, max_val/(1.0 - model->discount));
+      alpha_t first_alpha(best_action, tmp);
+      alpha_vectors.push_back(first_alpha);
     }
 
     ~pbvi_t()
@@ -103,7 +117,7 @@ class pbvi_t{
 
     int find_greater_alpha(alpha_t& a1, alpha_t& a2)
     {
-      int tmp = 0;
+      size_t tmp = 0;
       for(auto& bn : belief_tree->nodes)
       {
         float t1 = a1.get_value(bn->b);
@@ -121,13 +135,24 @@ class pbvi_t{
         return 0;
     }
     
+    int insert_alpha(alpha_t& a)
+    {
+      for(auto& av : alpha_vectors)
+      {
+        if( (a.grad - av.grad).norm() < 0.1)
+          return 1;
+      }
+      alpha_vectors.push_back(a);
+      return 0;
+    }
+
     int backup(belief_node_t* bn)
     {
       int ns = model->ns;
       int no = model->no;
       int na = model->na;
 
-      alpha_t* alpha_a_o[ns][no] = {nullptr};
+      alpha_t* alpha_a_o[ns][no];
       for(int a=0; a < na; a++)
       {
         for(int o=0; o< no; o++)
@@ -145,19 +170,53 @@ class pbvi_t{
           }
         }
       }
-      
-      alpha_t new_alpha[na];
+     
+      alpha_t new_alpha;
+      float max_val = -FLT_MAX;
       for(int a=0; a< na; a++)
       {
-        new_alpha[a] = model->pr[a] + model->discount* 
+        mat t0(ns, no);
+        for(int o=0; o<no; o++)
+          t0.col(o) = alpha_a_o[a][o]->grad;
+
+        vec t1 = (model->po[a].transpose() * t0.transpose()). diagonal();
+        t1 = model->pr[a] + model->discount*model->pt[a]*t1;
+        alpha_t t2(a, t1);
+        float t3 = t2.get_value(bn->b);
+
+        if(t3 > max_val)
+        {
+          max_val = t3;
+          new_alpha = t2;
+        }
       }
+      insert_alpha(new_alpha);
       
+      // calculate bound
+      max_val = -FLT_MAX;
+      for(auto& av : alpha_vectors)
+      {
+        float t1 = av.get_value(bn->b);
+        if(t1 > max_val)
+        {
+          max_val = t1;
+          bn->value_lower_bound = t1;
+        }
+      }
       return 0;
     }
 
     int backup_belief_nodes()
     {
+      for(auto& bn : belief_tree->nodes)
+        backup(bn);
       return 0;
+    }
+
+    void print_alpha_vectors()
+    {
+      for(auto& av : alpha_vectors)
+        av.print();
     }
 };
 

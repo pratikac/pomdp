@@ -27,10 +27,6 @@ class belief_node_t{
       b = b_in;
       parent = par;
     }
-    
-    void print_tree()
-    {
-    }
 };
 
 class edge_t{
@@ -77,7 +73,7 @@ class belief_tree_t{
 
     void print(belief_node_t* bn, string prefix="")
     {
-      bn->b.print(prefix);
+      bn->b.print(prefix, bn->value_lower_bound);
       prefix += "\t";
       for(auto& bne : bn->children)
         print(bne->end, prefix);
