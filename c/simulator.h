@@ -46,8 +46,14 @@ class simulator_t{
       return 0;
     }
 
-    float simulate_trajectory(int steps)
+    float simulate_trajectory(int steps, vector<int>& state_trajectory, vector<int>& action_trajectory,
+        vector<int>& obs_trajectory, vector<belief_t>& belief_trajectory)
     {
+      state_trajectory.clear();
+      action_trajectory.clear();
+      obs_trajectory.clear();
+      belief_trajectory.clear();
+
       belief_t b = m->b0;
       float rew=0;
       int len = 0, aid=-1, oid=-1;
@@ -55,6 +61,11 @@ class simulator_t{
       for(int i=0; i< steps; i++)
       {
         simulate_one_step(sid, aid, oid, b, rew, len);
+        
+        state_trajectory.push_back(sid);
+        action_trajectory.push_back(aid);
+        obs_trajectory.push_back(oid);
+        belief_trajectory.push_back(b);
       }
       return rew;
     }
