@@ -1,6 +1,7 @@
 #include <iostream>
 #include "utils.h"
 #include "pbvi.h"
+#include "simulator.h"
 
 using namespace std;
 

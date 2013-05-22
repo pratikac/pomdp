@@ -6,7 +6,6 @@
 
 #include "pomdp.h"
 #include "belief_tree.h"
-#include <dequeue>
 
 #define RANDF   (rand()/(RAND_MAX+1.0))
 
@@ -159,6 +158,7 @@ class pbvi_t{
     {
       return 0;
     }
+
 };
 
 
