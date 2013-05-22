@@ -13,7 +13,7 @@ INCS = -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported
 LIBS = 
 
 CFLAGS = -Wall -g -O3 -ggdb
-CPPFLAGS = -Wall -g -O3 -ggdb -std=c++11
+CPPFLAGS = -Wall -g -O0 -ggdb -std=c++11
 LDFLAGS =
 
 all: $(BIN)

@@ -10,10 +10,10 @@ class simulator_t{
     vector<alpha_t*> alpha_vectors;
     model_t* m;
 
-    simulator_t(model_t* model_in, vector<alpha_t>& alpha_vectors_in)
+    simulator_t(model_t* model_in, vector<alpha_t*>& alpha_vectors_in)
     {
       for(auto& av : alpha_vectors_in)
-        alpha_vectors.push_back(&av);
+        alpha_vectors.push_back(av);
       m = model_in;
     }
 

@@ -52,17 +52,26 @@ class alpha_t{
   public:
     int aid;
     vec grad;
+    bool mark;
 
-    alpha_t(){
+    alpha_t(): mark(0){
     };
     /*! Constructor
      * @param[in] aid Action Id: index of optimal action associated with alpha vector
      * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
      */
-    alpha_t(int aid_in, vec& grad_in)
+    alpha_t(int aid_in, vec& grad_in) : mark(0)
     {
       aid = aid_in;
       grad = grad_in;
+    }
+
+    const alpha_t operator-(const alpha_t& a2) const
+    {
+      alpha_t toret = *this;
+      toret.grad -= a2.grad;
+      toret.aid = -1;
+      return toret;
     }
     /*! return value function as dot product of alpha with belief
      * @param[in] b belief at which value is calculated

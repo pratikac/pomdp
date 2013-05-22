@@ -20,7 +20,7 @@ class pbvi_t{
     kdtree_t* feature_tree;
     float insert_distance;
 
-    vector<alpha_t> alpha_vectors;
+    vector<alpha_t*> alpha_vectors;
 
     pbvi_t(belief_t& b_root, model_t* model_in)
     {
@@ -43,7 +43,7 @@ class pbvi_t{
          }
       }
       vec tmp = vec::Constant(model->ns, max_val/(1.0 - model->discount));
-      alpha_t first_alpha(best_action, tmp);
+      alpha_t* first_alpha = new alpha_t(best_action, tmp);
       alpha_vectors.push_back(first_alpha);
     }
 
@@ -53,6 +53,8 @@ class pbvi_t{
         kd_free(feature_tree);
       if(belief_tree)
         delete belief_tree;
+      for(auto& pav : alpha_vectors)
+        delete pav;
     }
     
     float* get_key(belief_node_t* bn)
@@ -116,17 +118,21 @@ class pbvi_t{
       return nodes_to_insert.size();
     }
 
-    int find_greater_alpha(alpha_t& a1, alpha_t& a2)
+    int find_greater_alpha(const alpha_t& a1, const alpha_t& a2)
     {
       size_t tmp = 0;
+      vec gd = a1.grad - a2.grad;
+      float pt1 = 0, t1=0, e=0.01;
       for(auto& bn : belief_tree->nodes)
       {
-        float t1 = a1.get_value(bn->b);
-        float t2 = a2.get_value(bn->b);
-        if(t1 > t2)  
+        t1 = gd.dot(bn->b.p);
+        if(t1>e)
           tmp++;
-        else if(t2 > t1)
+        else if(t1 < e)
           tmp--;
+        if( ((t1 > e) && (pt1 <e)) || ((t1 <e) && (pt1 >e)) )
+          break;
+        pt1 = t1;
       }
       if(tmp == belief_tree->nodes.size())
         return 1;
@@ -136,17 +142,42 @@ class pbvi_t{
         return 0;
     }
     
-    int insert_alpha(alpha_t& a)
+    int insert_alpha(alpha_t* a)
     {
-      for(auto& av : alpha_vectors)
+      // 1. don't push if too similar to any alpha vector
+      for(auto& pav : alpha_vectors)
       {
-        if( (a.grad - av.grad).norm() < 0.1)
+        if( (a->grad - pav->grad).norm() < 0.01)
           return 1;
       }
+      // 2. prune set
+      set<alpha_t*> surviving_vectors;
+      int broke_out = 0;
+#if 0
+      for(auto& pav : alpha_vectors)
+      {
+        int res = find_greater_alpha(*a, *pav);
+        if(res == -1)
+        {
+          delete a;
+          broke_out = 1;
+          break;
+        }
+        else if(res == 1)
+          surviving_vectors.insert(a);
+        else if(res == 0)
+        {
+          surviving_vectors.insert(pav);
+          surviving_vectors.insert(a);
+        }
+      }
+      alpha_vectors = vector<alpha_t*>(surviving_vectors.begin(), surviving_vectors.end());
+#else
       alpha_vectors.push_back(a);
-      return 0;
+#endif
+      return broke_out;
     }
-
+    
     int backup(belief_node_t* bn)
     {
       int ns = model->ns;
@@ -160,19 +191,19 @@ class pbvi_t{
         {
           float max_val = -FLT_MAX;
           belief_t nb = model->next_belief(bn->b, a, o);
-          for(auto& av : alpha_vectors)
+          for(auto& pav : alpha_vectors)
           {
-            float t1 = av.get_value(nb);
+            float t1 = pav->get_value(nb);
             if(t1 > max_val)
             {
               max_val = t1;
-              alpha_a_o[a][o] = &av;
+              alpha_a_o[a][o] = pav;
             }
           }
         }
       }
      
-      alpha_t new_alpha;
+      alpha_t* new_alpha = new alpha_t();
       float max_val = -FLT_MAX;
       for(int a=0; a< na; a++)
       {
@@ -188,7 +219,7 @@ class pbvi_t{
         if(t3 > max_val)
         {
           max_val = t3;
-          new_alpha = t2;
+          *new_alpha = t2;
         }
       }
       insert_alpha(new_alpha);
@@ -197,7 +228,7 @@ class pbvi_t{
       max_val = -FLT_MAX;
       for(auto& av : alpha_vectors)
       {
-        float t1 = av.get_value(bn->b);
+        float t1 = av->get_value(bn->b);
         if(t1 > max_val)
         {
           max_val = t1;
@@ -217,7 +248,7 @@ class pbvi_t{
     void print_alpha_vectors()
     {
       for(auto& av : alpha_vectors)
-        av.print();
+        av->print();
     }
 
     float simulate(int steps)
