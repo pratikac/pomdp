@@ -8,6 +8,8 @@
 #include <string.h>
 using namespace std;
 
+#define RANDF   (rand()/(RAND_MAX+1.0))
+
 typedef vector<mat> pt_t;
 typedef vector<mat> po_t;
 typedef vector<vec> pr_t;
@@ -133,6 +135,27 @@ class model_t
       for(int i=0; i<na; i++)
         cout<<"action_id: "<<i<<"-"<<pr[i]<<endl;
     }
+    
+    int multinomial_sampling(const vec& arr)
+    {
+      int len = arr.size();
+      vector<float> t2(len,0);
+      t2[0] = *(arr.data());
+      float r = RANDF;
+      for(int i=1; i< len; i++)
+      {
+        t2[i] = t2[i-1] + arr(i);
+        if(t2[i] > r)
+          return i;
+      }
+      return len-1;
+    }
+    
+    int next_state(const int& sid, const int& aid)
+    {
+      vec t1 = pt[aid].row(sid).transpose();
+      return multinomial_sampling(t1);
+    }
 
     belief_t next_belief(belief_t& b, int aid=-1, int oid=-1)
     {
@@ -154,13 +177,31 @@ class model_t
      * @param[in] int aid : action id of the action
      * @param[out] float reward
      */
-    float get_expected_step_reward(belief_t& b, int aid)
+    float get_expected_step_reward(const belief_t& b, const int& aid)
     {
       return pr[aid].dot(b.p);
     }
-    float get_p_o_given_b(belief_t& b, int aid, int oid)
+    
+    float get_step_reward(const int& sid, const int& aid)
+    {
+      return pr[aid](sid);
+    }
+
+    float get_p_o_given_b(const belief_t& b, const int& aid, const int& oid)
     {
       return po[aid].col(oid).dot(b.p);
+    }
+    
+    int sample_state(const belief_t& b)
+    {
+      return multinomial_sampling(b.p);
+    }
+
+    int sample_observation(const belief_t& b, const int& aid)
+    {
+      int sid = sample_state(b); 
+      vec t3 = po[aid].row(sid).transpose();
+      return multinomial_sampling(t3);
     }
 };
 
