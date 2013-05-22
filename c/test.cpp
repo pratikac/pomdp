@@ -81,21 +81,26 @@ int main()
   model_t m = create_example();
   belief_t b0 = m.b0;
   pbvi_t pbvi(b0, &m);
- 
+  
+  tt timer;
+  timer.tic();
   for(int i=0; i<25; i++)
   {
     pbvi.sample_belief_nodes();
     for(int j=0; j< 10; j++)
       pbvi.backup_belief_nodes();
+
+    //pbvi.print_alpha_vectors();
   }
+  cout<<timer.toc()<<"[s]"<<endl;
 
   pbvi.belief_tree->print(pbvi.belief_tree->root);
-  //pbvi.print_alpha_vectors();
   
+  /*
   vec sim_stats(20);
   for(int i=0; i<20; i++)
     sim_stats(i) = pbvi.simulate(300);
   cout<<"mean: "<< sim_stats.mean() << endl;
-
+  */
   return 0;
 }

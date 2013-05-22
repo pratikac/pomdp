@@ -121,8 +121,11 @@ class pbvi_t{
     int find_greater_alpha(const alpha_t& a1, const alpha_t& a2)
     {
       size_t tmp = 0;
+      if(a1.grad.size() != a2.grad.size())
+        cout<<a1.grad.size()<<","<<a2.grad.size()<<endl;
+
       vec gd = a1.grad - a2.grad;
-      float pt1 = 0, t1=0, e=0.01;
+      float t1=0, e=0.01;
       for(auto& bn : belief_tree->nodes)
       {
         t1 = gd.dot(bn->b.p);
@@ -130,9 +133,6 @@ class pbvi_t{
           tmp++;
         else if(t1 < e)
           tmp--;
-        if( ((t1 > e) && (pt1 <e)) || ((t1 <e) && (pt1 >e)) )
-          break;
-        pt1 = t1;
       }
       if(tmp == belief_tree->nodes.size())
         return 1;
@@ -153,7 +153,7 @@ class pbvi_t{
       // 2. prune set
       set<alpha_t*> surviving_vectors;
       int broke_out = 0;
-#if 0
+#if 1
       for(auto& pav : alpha_vectors)
       {
         int res = find_greater_alpha(*a, *pav);
@@ -171,7 +171,8 @@ class pbvi_t{
           surviving_vectors.insert(a);
         }
       }
-      alpha_vectors = vector<alpha_t*>(surviving_vectors.begin(), surviving_vectors.end());
+      if(!broke_out)
+        alpha_vectors = vector<alpha_t*>(surviving_vectors.begin(), surviving_vectors.end());
 #else
       alpha_vectors.push_back(a);
 #endif
@@ -222,6 +223,7 @@ class pbvi_t{
           *new_alpha = t2;
         }
       }
+      //cout<<"inserted: "<<insert_alpha(new_alpha)<<endl;
       insert_alpha(new_alpha);
       
       // calculate bound
