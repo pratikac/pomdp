@@ -138,13 +138,15 @@ class model_t
     
     int multinomial_sampling(const vec& arr)
     {
-      int len = arr.size();
-      vector<float> t2(len,0);
-      t2[0] = *(arr.data());
       float r = RANDF;
+      int len = arr.size();
+      vector<float> t2;
+      t2.assign(arr.data(), arr.data()+len);
+      if(t2[0] > r)
+        return 0;
       for(int i=1; i< len; i++)
       {
-        t2[i] = t2[i-1] + arr(i);
+        t2[i] += t2[i-1];
         if(t2[i] > r)
           return i;
       }
@@ -200,8 +202,14 @@ class model_t
     int sample_observation(const belief_t& b, const int& aid)
     {
       int sid = sample_state(b); 
-      vec t3 = po[aid].row(sid).transpose();
-      return multinomial_sampling(t3);
+      vec t1 = po[aid].row(sid).transpose();
+      return multinomial_sampling(t1);
+    }
+    
+    int sample_observation(const int& sid, const int& aid)
+    {
+      vec t1 = po[aid].row(sid).transpose();
+      return multinomial_sampling(t1);
     }
 };
 

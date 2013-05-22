@@ -91,6 +91,11 @@ int main()
 
   pbvi.belief_tree->print(pbvi.belief_tree->root);
   //pbvi.print_alpha_vectors();
+  
+  vec sim_stats(20);
+  for(int i=0; i<20; i++)
+    sim_stats(i) = pbvi.simulate(300);
+  cout<<"mean: "<< sim_stats.mean() << endl;
 
   return 0;
 }

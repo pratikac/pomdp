@@ -10,11 +10,11 @@ class simulator_t{
     vector<alpha_t*> alpha_vectors;
     model_t* m;
 
-    simulator_t(model_t& model_in, vector<alpha_t>& alpha_vectors_in)
+    simulator_t(model_t* model_in, vector<alpha_t>& alpha_vectors_in)
     {
       for(auto& av : alpha_vectors_in)
         alpha_vectors.push_back(&av);
-      m = &model_in;
+      m = model_in;
     }
 
     int find_best_action(belief_t& b)
@@ -36,17 +36,28 @@ class simulator_t{
     int simulate_one_step(int& sid, int& aid, int& oid, belief_t& b, float& rew, int& len)
     {
       aid = find_best_action(b);
-      oid = m->sample_observation(b, aid);
-      
       rew += pow(m->discount, len)*m->get_step_reward(sid, aid);
       len++;
       
       sid = m->next_state(sid, aid); 
+      oid = m->sample_observation(sid, aid);
+      
       b = m->next_belief(b, aid, oid);
       return 0;
     }
+  
+    float simulate_trajectory(int steps)
+    {
+      belief_t b = m->b0;
+      float rew=0;
+      int len = 0, aid=-1, oid=-1;
+      int sid = m->sample_state(b);
+      for(int i=0; i< steps; i++)
+        simulate_one_step(sid, aid, oid, b, rew, len);
+      return rew;
+    }
 
-    float simulate_trajectory(int steps, vector<int>& state_trajectory, vector<int>& action_trajectory,
+    float simulate_trajectory(int steps, vector<int>& state_trajectory, vector<int>& action_trajectory, 
         vector<int>& obs_trajectory, vector<belief_t>& belief_trajectory)
     {
       state_trajectory.clear();
@@ -61,7 +72,7 @@ class simulator_t{
       for(int i=0; i< steps; i++)
       {
         simulate_one_step(sid, aid, oid, b, rew, len);
-        
+
         state_trajectory.push_back(sid);
         action_trajectory.push_back(aid);
         obs_trajectory.push_back(oid);

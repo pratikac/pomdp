@@ -6,6 +6,7 @@
 
 #include "pomdp.h"
 #include "belief_tree.h"
+#include "simulator.h"
 
 #define RANDF   (rand()/(RAND_MAX+1.0))
 
@@ -217,6 +218,12 @@ class pbvi_t{
     {
       for(auto& av : alpha_vectors)
         av.print();
+    }
+
+    float simulate(int steps)
+    {
+      simulator_t sim(model, alpha_vectors);
+      return sim.simulate_trajectory(steps);
     }
 };
 
