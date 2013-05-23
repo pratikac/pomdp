@@ -122,7 +122,6 @@ class model_t
       : ns(ns_in), na(na_in), no(no_in), pt(pt_in), po(po_in), discount(d_in),
       pr(pr_in), b0(b0_in){
     }
-
     void print()
     {
       cout<<"states: "<<ns<<endl;
