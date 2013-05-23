@@ -1,36 +1,37 @@
 %{
+/*
+  *****
+  Copyright 1994-1997, Brown University
+  Copyright 1998, 1999, Anthony R. Cassandra
 
+                           All Rights Reserved
+                           
+  Permission to use, copy, modify, and distribute this software and its
+  documentation for any purpose other than its incorporation into a
+  commercial product is hereby granted without fee, provided that the
+  above copyright notice appear in all copies and that both that
+  copyright notice and this permission notice appear in supporting
+  documentation.
+  
+  ANTHONY CASSANDRA DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+  INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR ANY
+  PARTICULAR PURPOSE.  IN NO EVENT SHALL ANTHONY CASSANDRA BE LIABLE FOR
+  ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+  WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+  ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+  *****
+
+*/
 #include <stdio.h>
 
-#include "pomdp.h"
+#include "mdp-common.h"
 #include "parse_err.h"
+#include "mdp.h"
 #include "parse_hash.h"
 #include "parse_constant.h"
-
-/* Use this type for a variable that indicated whether we have a 
-   POMDP or an MDP.
-*/
-typedef enum {  UNKNOWN_problem_type, 
-		MDP_problem_type, 
-		POMDP_problem_type 
-	      } Problem_Type;
-
-/* Use this to determine if the problems values are rewards or costs.
-   */
-#define NUM_VALUE_TYPES          2
-typedef enum {REWARD_value_type, COST_value_type } Value_Type;
-#define VALUE_TYPE_STRINGS       { \
-                                   "cost", \
-                                   "reward" \
-                                 }
-
-#define DEFAULT_DISCOUNT_FACTOR               1.0
-
-#define DEFAULT_VALUE_TYPE                    REWARD_value_type
-
-#define INVALID_STATE                         -1
-#define INVALID_OBS                           -1
-#define INVALID_ACTION                        -1
+#include "sparse-matrix.h"
+#include "imm-reward.h"
 
 #define YACCtrace(X)       /*   printf(X);fflush(stdout)    */ 
 
@@ -88,18 +89,9 @@ int minObs, maxObs;
     We allocate this memory once we know how big they must be and we
     will free all of this when we convert it to its final sparse format.
     */
-
-// cassandra's variables
-char *value_type_str[];
-Problem_Type gProblemType;
-Value_Type gValueType;
-
-/* We will use this flag to indicate whether the problem has negative
-   rewards or not.  It starts off FALSE and becomes TRUE if any
-   negative reward is found. */
-double gMinimumImmediateReward;
-
-model_t model;
+I_Matrix *IP;   /* For transition matrices. */
+I_Matrix *IR;   /* For observation matrices. */
+I_Matrix **IW;  /* For reward matrices */
 
 /* These variables are used by the parser only, to keep some state
    information. 
@@ -226,8 +218,8 @@ discount_param  : DISCOUNTTOK COLONTOK number
 		  /* range 0 to 1, so it is an error to specify */
 		  /* anything outside this range. */
 
-                   model->discount = $3;
-                   if(( model->discount < 0.0 ) || ( model->discount > 1.0 ))
+                   gDiscount = $3;
+                   if(( gDiscount < 0.0 ) || ( gDiscount > 1.0 ))
                       ERR_enter("Parser<ytab>:", currentLineNumber,
                                 BAD_DISCOUNT_VAL, "");
                    discountDefined = 1;
@@ -281,18 +273,18 @@ state_tail	: INTTOK
 		  /*  For the number of states, we can just have a */
 		  /*  number indicating how many there are, or ... */
 
-                   model.ns = $1->theValue.theInt;
-                   if( model.ns < 1 ) {
+                   gNumStates = $1->theValue.theInt;
+                   if( gNumStates < 1 ) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_NUM_STATES, "");
-                      model.ns = 1;
+                      gNumStates = 1;
                    }
 
  		   /* Since we use some temporary storage to hold the
 		      integer as we parse, we free the memory when we
 		      are done with the value */
 
-                   free( $1 );
+                   XFREE( $1 );
 		}
 		| ident_list
                 /* ... we can list the states by name or number */
@@ -316,18 +308,18 @@ action_tail	: INTTOK
 		  /*  For the number of actions, we can just have a */
 		  /*  number indicating how many there are, or ... */
 
-                   model.na = $1->theValue.theInt;
-                   if( model.na < 1 ) {
+                   gNumActions = $1->theValue.theInt;
+                   if( gNumActions < 1 ) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_NUM_ACTIONS, "" );
-                      model.na = 1;
+                      gNumActions = 1;
                    }
 		   
 		   /* Since we use some temporary storage to hold the
 		      integer as we parse, we free the memory when we
 		      are done with the value */
 
-                   free( $1 );
+                   XFREE( $1 );
 		}
 		| ident_list
                 /* ... we can list the actions by name or number */
@@ -351,18 +343,18 @@ obs_param_tail	: INTTOK
 		  /*  For the number of observation, we can just have a */
 		  /*  number indicating how many there are, or ... */
 
-                   model.no = $1->theValue.theInt;
-                   if( model.no < 1 ) {
+                   gNumObservations = $1->theValue.theInt;
+                   if( gNumObservations < 1 ) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_NUM_OBS, "" );
-                      model.no = 1;
+                      gNumObservations = 1;
                    }
 
 		   /* Since we use some temporary storage to hold the
 		      integer as we parse, we free the memory when we
 		      are done with the value */
 
-                   free( $1 );
+                   XFREE( $1 );
 		}
 		| ident_list
                 /* ... we can list the observations by name or number */
@@ -405,7 +397,7 @@ start_state     :  STARTTOK COLONTOK
                    int num;
 
 		   num = H_lookup( $3->theValue.theString, nt_state );
-		   if(( num < 0 ) || (num >= model.ns )) {
+		   if(( num < 0 ) || (num >= gNumStates )) {
 		     ERR_enter("Parser<ytab>:", currentLineNumber, 
 					BAD_STATE_STR, $3->theValue.theString );
 		   }
@@ -413,11 +405,11 @@ start_state     :  STARTTOK COLONTOK
 		     if( gProblemType == MDP_problem_type )
 		       gInitialState = num;
 		     else
-		       model->b0.p(num) = 1.0;
+		       gInitialBelief[num] = 1.0;
 		   }
 
-		   free( $3->theValue.theString );
-		   free( $3 );
+		   XFREE( $3->theValue.theString );
+		   XFREE( $3 );
                 }
 
 	        | STARTTOK INCLUDETOK COLONTOK
@@ -605,20 +597,20 @@ num_matrix 	: num_matrix number
 state		: INTTOK
                 {
                    if(( $1->theValue.theInt < 0 ) 
-                      || ($1->theValue.theInt >= model.ns )) {
+                      || ($1->theValue.theInt >= gNumStates )) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_STATE_VAL, "");
                       $$ = 0;
                    }
                    else
                       $$ = $1->theValue.theInt;
-                   free( $1 );
+                   XFREE( $1 );
                 }
 		| STRINGTOK
                 {
                    int num;
                    num = H_lookup( $1->theValue.theString, nt_state );
-                   if (( num < 0 ) || (num >= model.ns )) {
+                   if (( num < 0 ) || (num >= gNumStates )) {
 				 ERR_enter("Parser<ytab>:", currentLineNumber, 
 						 BAD_STATE_STR, $1->theValue.theString );
 				 $$ = 0;
@@ -626,8 +618,8 @@ state		: INTTOK
                    else
 				 $$ = num;
 
-                   free( $1->theValue.theString );
-                   free( $1 );
+                   XFREE( $1->theValue.theString );
+                   XFREE( $1 );
                 }
 		| ASTERICKTOK
                 {
@@ -638,20 +630,20 @@ action		: INTTOK
                 {
                    $$ = $1->theValue.theInt;
                    if(( $1->theValue.theInt < 0 ) 
-                      || ($1->theValue.theInt >= model.na )) {
+                      || ($1->theValue.theInt >= gNumActions )) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_ACTION_VAL, "" );
                       $$ = 0;
                    }
                    else
                       $$ = $1->theValue.theInt;
-                   free( $1 );
+                   XFREE( $1 );
                 }
 		| STRINGTOK
                 {
                    int num;
                    num = H_lookup( $1->theValue.theString, nt_action );
-                   if(( num < 0 ) || (num >= model.na )) {
+                   if(( num < 0 ) || (num >= gNumActions )) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_ACTION_STR, $1->theValue.theString );
                       $$ = 0;
@@ -659,8 +651,8 @@ action		: INTTOK
                    else
                       $$ = num;
 
-                   free( $1->theValue.theString );
-                   free( $1 );
+                   XFREE( $1->theValue.theString );
+                   XFREE( $1 );
                 }
 		| ASTERICKTOK
                 {
@@ -670,20 +662,20 @@ action		: INTTOK
 obs		: INTTOK
                 {
                    if(( $1->theValue.theInt < 0 ) 
-                      || ($1->theValue.theInt >= model.no )) {
+                      || ($1->theValue.theInt >= gNumObservations )) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_OBS_VAL, "");
                       $$ = 0;
                    }
                    else
                       $$ = $1->theValue.theInt;
-                   free( $1 );
+                   XFREE( $1 );
                 }
 		| STRINGTOK
                 {
                    int num;
                    num = H_lookup( $1->theValue.theString, nt_observation );
-                   if(( num < 0 ) || (num >= model.no )) { 
+                   if(( num < 0 ) || (num >= gNumObservations )) { 
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_OBS_STR, $1->theValue.theString);
                       $$ = 0;
@@ -691,8 +683,8 @@ obs		: INTTOK
                    else
                       $$ = num;
 
-                   free( $1->theValue.theString );
-                   free( $1 );
+                   XFREE( $1->theValue.theString );
+                   XFREE( $1 );
                }
 		| ASTERICKTOK
                 {
@@ -715,7 +707,7 @@ prob		: INTTOK
 		    if(( $$ < 0 ) || ($$ > 1 ))
 		      ERR_enter("Parser<ytab>:", currentLineNumber, 
 				BAD_PROB_VAL, "");
-		  free( $1 );
+		  XFREE( $1 );
 		}
 		| FLOATTOK
 		{
@@ -727,7 +719,7 @@ prob		: INTTOK
 		    if(( $$ < 0.0 ) || ($$ > 1.0 ))
 			 ERR_enter("Parser<ytab>:", currentLineNumber, 
 					 BAD_PROB_VAL, "" );
-		  free( $1 );
+		  XFREE( $1 );
 		}
 ;
 number          : optional_sign INTTOK
@@ -736,7 +728,7 @@ number          : optional_sign INTTOK
                       $$ = $2->theValue.theInt * -1.0;
                    else
                       $$ = $2->theValue.theInt;
-                   free( $2 );
+                   XFREE( $2 );
                 }
                 | optional_sign FLOATTOK
                 {
@@ -744,7 +736,7 @@ number          : optional_sign INTTOK
                       $$ = $2->theValue.theFloat * -1.0;
                    else
                       $$ = $2->theValue.theFloat;
-                   free( $2 );
+                   XFREE( $2 );
                 }
 ;
 optional_sign	: PLUSTOK
@@ -792,31 +784,31 @@ checkMatrix() {
 
    switch( curMatrixContext ) {
    case mc_trans_row:
-      if( curCol < model.ns )
+      if( curCol < gNumStates )
          ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
                    TOO_FEW_ENTRIES, "");
       break;
    case mc_trans_all:
-      if((curRow < (model.ns-1) )
-	 || ((curRow == (model.ns-1))
-	     && ( curCol < model.ns ))) 
+      if((curRow < (gNumStates-1) )
+	 || ((curRow == (gNumStates-1))
+	     && ( curCol < gNumStates ))) 
 	ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
                    TOO_FEW_ENTRIES, "" );
       break;
    case mc_obs_row:
-      if( curCol < model.no )
+      if( curCol < gNumObservations )
          ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
                    TOO_FEW_ENTRIES, "");
       break;
    case mc_obs_all:
-      if((curRow < (model.ns-1) )
-	 || ((curRow == (model.ns-1))
-	     && ( curCol < model.no ))) 
+      if((curRow < (gNumStates-1) )
+	 || ((curRow == (gNumStates-1))
+	     && ( curCol < gNumObservations ))) 
          ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
                    TOO_FEW_ENTRIES, "" );
       break;
    case mc_start_belief:
-      if( curCol < model.ns )
+      if( curCol < gNumStates )
 	ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
 		  TOO_FEW_ENTRIES, "");
       break;
@@ -828,21 +820,21 @@ checkMatrix() {
 
     case mc_reward_row:
       if( gProblemType == POMDP_problem_type )
-	if( curCol < model.no )
+	if( curCol < gNumObservations )
 	  ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
 		    TOO_FEW_ENTRIES, "");
       break;
 
     case mc_reward_all:
       if( gProblemType == POMDP_problem_type ) {
-	if((curRow < (model.ns-1) )
-	   || ((curRow == (model.ns-1))
-	       && ( curCol < model.no ))) 
+	if((curRow < (gNumStates-1) )
+	   || ((curRow == (gNumStates-1))
+	       && ( curCol < gNumObservations ))) 
 	  ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
 		    TOO_FEW_ENTRIES, "" );
       }
       else
-	if( curCol < model.ns )
+	if( curCol < gNumStates )
 	  ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
 		    TOO_FEW_ENTRIES, "");
       
@@ -852,9 +844,9 @@ checkMatrix() {
       break;
 
     case mc_reward_mdp_only:
-      if((curRow < (model.ns-1) )
-	 || ((curRow == (model.ns-1))
-	     && ( curCol < model.ns ))) 
+      if((curRow < (gNumStates-1) )
+	 || ((curRow == (gNumStates-1))
+	     && ( curCol < gNumStates ))) 
 	ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
 		  TOO_FEW_ENTRIES, "" );
       break;
@@ -900,8 +892,8 @@ enterString( Constant_Block *block ) {
       ERR_enter("Parser<enterString>:", currentLineNumber, 
                 DUPLICATE_STRING, block->theValue.theString );
 
-   free( block->theValue.theString );
-   free( block );
+   XFREE( block->theValue.theString );
+   XFREE( block );
 }  /* enterString */
 /******************************************************************************/
 void 
@@ -911,31 +903,31 @@ enterUniformMatrix( ) {
 
    switch( curMatrixContext ) {
    case mc_trans_row:
-      prob = 1.0/model.ns;
+      prob = 1.0/gNumStates;
       for( a = minA; a <= maxA; a++ )
          for( i = minI; i <= maxI; i++ )
-            for( j = 0; j < model.ns; j++ )
+            for( j = 0; j < gNumStates; j++ )
 	       addEntryToIMatrix( IP[a], i, j, prob );
       break;
    case mc_trans_all:
-      prob = 1.0/model.ns;
+      prob = 1.0/gNumStates;
       for( a = minA; a <= maxA; a++ )
-         for( i = 0; i < model.ns; i++ )
-            for( j = 0; j < model.ns; j++ )
+         for( i = 0; i < gNumStates; i++ )
+            for( j = 0; j < gNumStates; j++ )
  	       addEntryToIMatrix( IP[a], i, j, prob );
       break;
    case mc_obs_row:
-      prob = 1.0/model.no;
+      prob = 1.0/gNumObservations;
       for( a = minA; a <= maxA; a++ )
          for( j = minJ; j <= maxJ; j++ )
-            for( obs = 0; obs < model.no; obs++ )
+            for( obs = 0; obs < gNumObservations; obs++ )
  	       addEntryToIMatrix( IR[a], j, obs, prob );
       break;
    case mc_obs_all:
-      prob = 1.0/model.no;
+      prob = 1.0/gNumObservations;
       for( a = minA; a <= maxA; a++ )
-         for( j = 0; j < model.ns; j++ )
-            for( obs = 0; obs < model.no; obs++ )
+         for( j = 0; j < gNumStates; j++ )
+            for( obs = 0; obs < gNumObservations; obs++ )
  	       addEntryToIMatrix( IR[a], j, obs, prob );
       break;
    case mc_start_belief:
@@ -960,8 +952,8 @@ enterIdentityMatrix( ) {
    switch( curMatrixContext ) {
    case mc_trans_all:
       for( a = minA; a <= maxA; a++ )
-         for( i = 0; i < model.ns; i++ )
-            for( j = 0; j < model.ns; j++ )
+         for( i = 0; i < gNumStates; i++ )
+            for( j = 0; j < gNumStates; j++ )
                if( i == j )
 		 addEntryToIMatrix( IP[a], i, j, 1.0 );
                else
@@ -987,8 +979,8 @@ enterResetMatrix( ) {
   if( gProblemType == POMDP_problem_type )
     for( a = minA; a <= maxA; a++ )
       for( i = minI; i <= maxI; i++ )
-	for( j = 0; j < model.ns; j++ )
-	  addEntryToIMatrix( IP[a], i, j, model->b0.p(j) );
+	for( j = 0; j < gNumStates; j++ )
+	  addEntryToIMatrix( IP[a], i, j, gInitialBelief[j] );
   
   else  /* It is an MDP */
     for( a = minA; a <= maxA; a++ )
@@ -1017,7 +1009,7 @@ enterMatrix( double value ) {
 	      addEntryToIMatrix( IP[a], i, j, value );
       break;
    case mc_trans_row:
-      if( curCol < model.ns ) {
+      if( curCol < gNumStates ) {
          for( a = minA; a <= maxA; a++ )
             for( i = minI; i <= maxI; i++ )
 	      addEntryToIMatrix( IP[a], i, curCol, value );
@@ -1028,12 +1020,12 @@ enterMatrix( double value ) {
 
       break;
    case mc_trans_all:
-      if( curCol >= model.ns ) {
+      if( curCol >= gNumStates ) {
          curRow++;
          curCol = 0;;
       }
 
-      if( curRow < model.ns ) {
+      if( curRow < gNumStates ) {
          for( a = minA; a <= maxA; a++ )
 	   addEntryToIMatrix( IP[a], curRow, curCol, value );
          curCol++;
@@ -1058,7 +1050,7 @@ enterMatrix( double value ) {
       if( gProblemType == POMDP_problem_type )
 	/* We ignore this if it is an MDP */
 
-	if( curCol < model.no ) {
+	if( curCol < gNumObservations ) {
 
 	  for( a = minA; a <= maxA; a++ )
             for( j = minJ; j <= maxJ; j++ )
@@ -1072,7 +1064,7 @@ enterMatrix( double value ) {
       break;
 
    case mc_obs_all:
-      if( curCol >= model.no ) {
+      if( curCol >= gNumObservations ) {
          curRow++;
          curCol = 0;
       }
@@ -1080,7 +1072,7 @@ enterMatrix( double value ) {
       if( gProblemType == POMDP_problem_type )
 	/* We ignore this if it is an MDP */
 
-	if( curRow < model.ns ) {
+	if( curRow < gNumStates ) {
 	  for( a = minA; a <= maxA; a++ )
 	    addEntryToIMatrix( IR[a], curRow, curCol, value );
 	  
@@ -1115,7 +1107,7 @@ enterMatrix( double value ) {
 	/* This is a special case for POMDPs, since we need a special 
 	   representation for immediate rewards for POMDP's */
    
-	if( curCol < model.no ) {
+	if( curCol < gNumObservations ) {
 	  enterImmReward( 0, 0, curCol, value );
 	  curCol++;
 	}
@@ -1142,11 +1134,11 @@ enterMatrix( double value ) {
 	 representation for immediate rewards for POMDP's */
 
       if( gProblemType == POMDP_problem_type ) {
-	if( curCol >= model.no ) {
+	if( curCol >= gNumObservations ) {
 	  curRow++;
 	  curCol = 0;
 	}
-	if( curRow < model.ns ) {
+	if( curRow < gNumStates ) {
 	  enterImmReward( 0, curRow, curCol, value );
 	  curCol++;
 	}
@@ -1159,7 +1151,7 @@ enterMatrix( double value ) {
 	 row of rewards. */
 
       else  /* MDP */
-	if( curCol < model.ns ) {
+	if( curCol < gNumStates ) {
 	  enterImmReward( 0, curCol, 0, value );
 	  curCol++;
 	}
@@ -1176,11 +1168,11 @@ enterMatrix( double value ) {
 
     case mc_reward_mdp_only:
       if( gProblemType == MDP_problem_type ) {
-	if( curCol >= model.ns ) {
+	if( curCol >= gNumStates ) {
 	  curRow++;
 	  curCol = 0;
 	}
-	if( curRow < model.ns ) {
+	if( curRow < gNumStates ) {
 	  enterImmReward( curRow, curCol, 0, value );
 	  curCol++;
 	}
@@ -1211,8 +1203,8 @@ enterMatrix( double value ) {
       /* an entry for each state, so we keep the curCol variable */
       /* updated.  */
 
-      if( curCol < model.ns ) {
-	model->b0.p(curCol) = value;
+      if( curCol < gNumStates ) {
+	gInitialBelief[curCol] = value;
 	curCol++;
       }
       else
@@ -1266,8 +1258,8 @@ setMatrixContext( Matrix_Context context,
      /* is all done we can then just normalize the belief state */
 
      if( gProblemType == POMDP_problem_type )
-       for( state = 0; state < model.ns; state++ )
-	 model->b0.p(state) = 0.0;
+       for( state = 0; state < gNumStates; state++ )
+	 gInitialBelief[state] = 0.0;
 
      else  /* It is an MDP which is not valid */
        ERR_enter("Parser<setMatrixContext>:", currentLineNumber, 
@@ -1283,8 +1275,8 @@ setMatrixContext( Matrix_Context context,
      /* is all done we can then just normalize the belief state */
 
      if( gProblemType == POMDP_problem_type )
-       for( state = 0; state < model.ns; state++ )
-	 model->b0.p(state) = 1.0;
+       for( state = 0; state < gNumStates; state++ )
+	 gInitialBelief[state] = 1.0;
 
      else  /* It is an MDP which is not valid */
        ERR_enter("Parser<setMatrixContext>:", currentLineNumber, 
@@ -1349,28 +1341,28 @@ setMatrixContext( Matrix_Context context,
      */
    if( a < 0 ) {
       minA = 0;
-      maxA = model.na - 1;
+      maxA = gNumActions - 1;
    }
    else
       minA = maxA = a;
 
    if( i < 0 ) {
       minI = 0;
-      maxI = model.ns - 1;
+      maxI = gNumStates - 1;
    }
    else
       minI = maxI = i;
 
    if( j < 0 ) {
       minJ = 0;
-      maxJ = model.ns - 1;
+      maxJ = gNumStates - 1;
    }
    else
       minJ = maxJ = j;
 
    if( obs < 0 ) {
       minObs = 0;
-      maxObs = model.no - 1;
+      maxObs = gNumObservations - 1;
    }
    else
       minObs = maxObs = obs;
@@ -1390,10 +1382,10 @@ enterStartState( int i ) {
 
   switch( curMatrixContext ) {
   case mc_start_include:
-    model->b0.p(i) = 1.0;
+    gInitialBelief[i] = 1.0;
     break;
   case mc_start_exclude:
-    model->b0.p(i) = 0.0;
+    gInitialBelief[i] = 0.0;
     break;
   default:
     ERR_enter("Parser<enterStartState>:", currentLineNumber, 
@@ -1410,13 +1402,14 @@ setStartStateUniform() {
   if( gProblemType != POMDP_problem_type )
     return;
 
-  prob = 1.0/(float)model.ns;
-  for( i = 0; i < model.ns; i++ )
-    model->b0.p(i) = prob;
+  prob = 1.0/gNumStates;
+  for( i = 0; i < gNumStates; i++ )
+    gInitialBelief[i] = prob;
 
 }  /*  setStartStateUniform*/
 /******************************************************************************/
-void endStartStates(){
+void 
+endStartStates() {
 /*
    There are a few cases where the matrix context will not be
    set at this point.  When there is a list of probabilities
@@ -1425,44 +1418,43 @@ void endStartStates(){
   int i;
   double prob;
 
-if( gProblemType == MDP_problem_type ) {
+  if( gProblemType == MDP_problem_type ) {
     curMatrixContext = mc_none;  /* just to be sure */
     return;
   }
-
-switch( curMatrixContext ) {
+    
+  switch( curMatrixContext ) {
   case mc_start_include:
   case mc_start_exclude:
-    /* At this point model->b0.p should be a vector of 1.0's and 0.0's
+    /* At this point gInitialBelief should be a vector of 1.0's and 0.0's
        being set as each is either included or excluded.  Now we need to
        normalized them to make it a true probability distribution */
     prob = 0.0;
-    for( i = 0; i < model.ns; i++ )
-      prob += model->b0.p(i);
+    for( i = 0; i < gNumStates; i++ )
+      prob += gInitialBelief[i];
     if( prob <= 0.0 ) {
       ERR_enter("Parser<endStartStates>:", currentLineNumber, 
                 BAD_START_PROB_SUM, "" );
       return;
     }
-    for( i = 0; i < model.ns; i++ )
-      model->b0.p(i) /= prob;
+    for( i = 0; i < gNumStates; i++ )
+      gInitialBelief[i] /= prob;
     break;
 
-default:  /* Make sure we have a valid prob. distribution */
-       prob = 0.0;
-    for( i = 0; i < model.ns; i++ ) 
-      prob += model->b0.p(i);
+  default:  /* Make sure we have a valid prob. distribution */
+    prob = 0.0;
+    for( i = 0; i < gNumStates; i++ ) 
+      prob += gInitialBelief[i];
     if((prob < ( 1.0 - EPSILON)) || (prob > (1.0 + EPSILON))) {
       ERR_enter("Parser<endStartStates>:", NO_LINE, 
-    BAD_START_PROB_SUM, "" );
+		BAD_START_PROB_SUM, "" );
     }
     break;
   }  /* switch */
 
-curMatrixContext = mc_none;
+  curMatrixContext = mc_none;
 
-}
-
+}  /* endStartStates */
 /******************************************************************************/
 void 
 verifyPreamble() {
@@ -1482,17 +1474,17 @@ verifyPreamble() {
    if( statesDefined == 0 ) {
       ERR_enter("Parser<verifyPreamble>:", currentLineNumber, 
                 MISSING_STATES, "" );
-      model.ns = 1;
+      gNumStates = 1;
    }
    if( actionsDefined == 0 ) {
       ERR_enter("Parser<verifyPreamble>:", currentLineNumber, 
                 MISSING_ACTIONS, "" );
-      model.na = 1;
+      gNumActions = 1;
    }
 
    /* If we do not see this, them we must be parsing an MDP */
    if( observationsDefined == 0 ) {
-     model.no = 0;
+     gNumObservations = 0;
      gProblemType = MDP_problem_type;
    }
 
@@ -1500,7 +1492,6 @@ verifyPreamble() {
      gProblemType = POMDP_problem_type;
 
 }  /* verifyPreamble */
-
 /******************************************************************************/
 void 
 checkProbs() {
@@ -1509,8 +1500,8 @@ checkProbs() {
    char str[40];
 
    
-   for( a = 0; a < model.na; a++ )
-      for( i = 0; i < model.ns; i++ ) {
+   for( a = 0; a < gNumActions; a++ )
+      for( i = 0; i < gNumStates; i++ ) {
 	 sum = sumIMatrixRowValues( IP[a], i );
          if((sum < ( 1.0 - EPSILON)) || (sum > (1.0 + EPSILON))) {
             sprintf( str, "action=%d, state=%d (%.5lf)", a, i, sum );
@@ -1520,8 +1511,8 @@ checkProbs() {
       } /* for i */
 
    if( gProblemType == POMDP_problem_type )
-     for( a = 0; a < model.na; a++ )
-       for( j = 0; j < model.ns; j++ ) {
+     for( a = 0; a < gNumActions; a++ )
+       for( j = 0; j < gNumStates; j++ ) {
 	 sum = sumIMatrixRowValues( IR[a], j );
          if((sum < ( 1.0 - EPSILON)) || (sum > (1.0 + EPSILON))) {
 	   sprintf( str, "action=%d, state=%d (%.5lf)", a, j, sum );
@@ -1603,4 +1594,3 @@ yywrap()
 {
    return 1;
 }
-/************************************************************************/

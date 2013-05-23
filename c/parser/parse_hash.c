@@ -37,7 +37,7 @@ Node *Hash_Table;
 void 
 H_create() {
 
-   Hash_Table = (Node *) calloc( HASH_TABLE_SIZE , sizeof( *Hash_Table ));
+   Hash_Table = (Node *) XCALLOC( HASH_TABLE_SIZE , sizeof( *Hash_Table ));
 
    /* Need these to start at zero! */
    gNumStates = gNumActions = gNumObservations = 0;
@@ -52,11 +52,11 @@ H_destroy() {
       while( Hash_Table[i] != NULL ) {
          temp = Hash_Table[i];
          Hash_Table[i] = temp->next;
-         free( temp->str );
-         free( temp );
+         XFREE( temp->str );
+         XFREE( temp );
       }  /* while */
   
-   free( Hash_Table );
+   XFREE( Hash_Table );
 }  /* H_destroy */
 /**********************************************************************/
 int 
@@ -123,10 +123,10 @@ H_enter( char *str, Mnemonic_Type type ) {
    }  /* while */
 
    /* create node and set fields */
-   temp = (Node) malloc( sizeof(*temp));
+   temp = (Node) XMALLOC( sizeof(*temp));
    temp->next = NULL;
    temp->type = type;
-   temp->str = (char *) malloc( (strlen( str )+1) * sizeof (char ));
+   temp->str = (char *) XMALLOC( (strlen( str )+1) * sizeof (char ));
    strcpy( temp->str, str );
 
    /* Set number and increment appropriate value */

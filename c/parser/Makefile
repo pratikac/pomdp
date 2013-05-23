@@ -1,0 +1,64 @@
+CC = gcc-4.7
+CPP = g++-4.7
+LEX = flex
+BISON = bison
+
+BIN = ./test_parser
+LEX_SRCS = scanner.l
+BISON_SRCS = pomdp_parser.y
+LEX_OBJS = $(LEX_SRCS:.l=.o)
+BISON_OBJS = $(BISON_SRCS:.y=.o)
+
+C_SRCS = imm_reward.c parse_err.c parse_hash.c parser.c
+CPP_SRCS = mdp.cpp test_parser.cpp
+
+C_OBJS = $(C_SRCS:.c=.o) $(LEX_OBJS) $(BISON_OBJS)
+CPP_OBJS = $(CPP_SRCS:.cpp=.o)
+OBJS = $(C_OBJS) $(CPP_OBJS)
+
+INCS = -I ../ -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported
+LIBS = 
+
+CFLAGS = -Wall -g -O3 -ggdb
+CPPFLAGS = -Wall -g -O3 -ggdb -std=c++11
+LDFLAGS =
+
+all: $(BIN)
+
+$(BIN): $(OBJS)
+	@echo "  [LD]    $@"
+	@$(CPP) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIBS)
+
+%.o: %.l
+	@echo "  [LEX]    $@"
+	@$(LEX) -o $@ $<
+	@$(CC) $(CFLAGS) $(INCS) -c $@ -o $(@:.c=.o)
+
+%.o: %.y
+	@echo "  [BISON]    $@"
+	@$(BISON) -v -d -y $< -o $@
+	@$(CC) $(CFLAGS) $(INCS) -c $@ -o $(@:.c=.o)
+
+%.o: %.c
+	@echo "  [CPP]   $@"
+	@$(CC) $(CFLAGS) $(INCS) -c $< -o $@
+
+%.o: %.cpp
+	@echo "  [CC]    $@"
+	@$(CPP) $(CPPFLAGS) $(INCS) -c $< -o $@
+
+clean:
+	rm -rf $(BIN) $(C_OBJS) $(CPP_OBJS)
+
+ctags:
+	ctags -R $(C_SRCS) $(CPP_SRCS) *.h
+
+depend:
+	makedepend -f deps $(INCS) -- $(CFLAGS) -- $(C_SRCS) -- $(CPP_SRCS)
+
+docs:
+	doxygen Doxyfile
+
+#.PHONY: $(LEX_OBJS) $(BISON_OBJS) clean
+
+include deps
