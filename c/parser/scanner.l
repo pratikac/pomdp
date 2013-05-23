@@ -36,7 +36,7 @@
 #include "parse_err.h"     /* Routines to keep track of parsing errors */
 #include "parse_hash.h"    /* Routines to hold temporary symbols and strings */
 #include "parse_constant.h"
-#include "parser.h"         /* token values */
+#include "pomdp_parser.hpp"         /* token values */
 
 #define NUM_LETTERS		26
 #define MAX_IDENT_LENGTH        32
@@ -211,8 +211,7 @@ IntLiteral {Digit}+
 
 .				{ 
                                   
-                                  ERR_enter("Scanner<yylex>",currentLineNumber,
-                                            ILL_CHAR_ERR, yytext);
+                                  //ERR_enter("Scanner<yylex>",currentLineNumber, ILL_CHAR_ERR, yytext);
                                 }
 
 

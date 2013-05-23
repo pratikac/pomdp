@@ -1,44 +1,31 @@
 CC = gcc-4.7
 CPP = g++-4.7
-LEX = flex
-BISON = bison
 
 BIN = ./test_parser
-LEX_SRCS = scanner.l
-BISON_SRCS = pomdp_parser.y
-LEX_OBJS = $(LEX_SRCS:.l=.o)
-BISON_OBJS = $(BISON_SRCS:.y=.o)
 
 C_SRCS = 
-CPP_SRCS = parser.cpp imm-reward.cpp parse_err.cpp parse_hash.cpp mdp.cpp test_parser.cpp
+CPP_SRCS = scanner.cpp parse_err.cpp pomdp_parser.cpp imm-reward.cpp parse_hash.cpp mdp.cpp test_parser.cpp
 
 C_OBJS = $(C_SRCS:.c=.o) 
-CPP_OBJS = $(CPP_SRCS:.cpp=.o) $(LEX_OBJS) $(BISON_OBJS)
+CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 OBJS = $(C_OBJS) $(CPP_OBJS)
 
 INCS = -I ../ -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported
 LIBS = 
 
 CFLAGS = -Wall -g -O3 -ggdb
-CPPFLAGS = -Wall -g -O3 -ggdb -std=c++11
+CPPFLAGS = -Wno-write-strings -Wall -g -O3 -ggdb -std=c++11 
 LDFLAGS =
 
 all: $(BIN)
 
 $(BIN): $(OBJS)
-	@echo "$(C_OBJS)"
 	@echo "  [LD]    $@"
 	@$(CPP) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIBS)
 
-%.o: %.l
-	@echo "  [LEX]    $(@:.o=.cpp)"
-	@$(LEX) -o $(@:.o=.cpp)
-	@$(CPP) $(CPPFLAGS) $(INCS) -c $(@:.o=.cpp) -o $@
-
-%.o: %.y
-	@echo "  [BISON]    $@"
-	@$(BISON) -v -d -y $< -o $@
-	@$(CPP) $(CPPFLAGS) $(INCS) -c $(@:.o=.cpp) -o $@
+parser:
+	@flex -o scanner.cpp scanner.l
+	@bison -y -v -d pomdp_parser.y -o pomdp_parser.cpp
 
 %.o: %.c
 	@echo "  [CPP]   $@"
@@ -49,7 +36,7 @@ $(BIN): $(OBJS)
 	@$(CPP) $(CPPFLAGS) $(INCS) -c $< -o $@
 
 clean:
-	rm -rf $(BIN) $(C_OBJS) $(CPP_OBJS) $(LEX_OBJS) $(BISON_OBJS)
+	rm -rf $(BIN) $(C_OBJS) $(CPP_OBJS)
 
 ctags:
 	ctags -R $(C_SRCS) $(CPP_SRCS) *.h
@@ -59,7 +46,5 @@ depend:
 
 docs:
 	doxygen Doxyfile
-
-#.PHONY: $(LEX_OBJS) $(BISON_OBJS) clean
 
 include deps

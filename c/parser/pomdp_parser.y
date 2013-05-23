@@ -4,16 +4,16 @@
   Copyright 1994-1997, Brown University
   Copyright 1998, 1999, Anthony R. Cassandra
 
-                           All Rights Reserved
-                           
-  Permission to use, copy, modify, and distribute this software and its
+All Rights Reserved
+
+Permission to use, copy, modify, and distribute this software and its
   documentation for any purpose other than its incorporation into a
   commercial product is hereby granted without fee, provided that the
   above copyright notice appear in all copies and that both that
   copyright notice and this permission notice appear in supporting
   documentation.
-  
-  ANTHONY CASSANDRA DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+
+ANTHONY CASSANDRA DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
   INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR ANY
   PARTICULAR PURPOSE.  IN NO EVENT SHALL ANTHONY CASSANDRA BE LIABLE FOR
   ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
@@ -26,8 +26,8 @@
 #include <stdio.h>
 
 #include "mdp-common.h"
-#include "parse_err.h"
 #include "mdp.h"
+#include "parse_err.h"
 #include "parse_hash.h"
 #include "parse_constant.h"
 #include "sparse-matrix.h"
@@ -141,69 +141,69 @@ int gTooManyEntries = 0;
 %%
 
 pomdp_file      : preamble 
+                { 
+        /* The preamble is a section of the file which */
+        /* must come first and whcih contains some global */
+        /* properties of the MDP that the file */
+        /* specifies. (e.g., number of states).  The */
+        /* observations are optional and its presence or */
+        /* absence is what first tells the parser whether */
+        /* it is parsing an MDP or a POMDP. */
+
+verifyPreamble();  /* make sure all things are */
+               /* defined */
+
+/* While we parse we use an intermediate */
+        /* representation which will be converted to the */
+        /* sparse representation when we are finished */
+        /* parsing.  After the preamble we are ready to */
+        /* start filling in values and we know how big the */
+        /* problem is, so we allocate the space for the */
+        /* intermediate forms */
+
+allocateIntermediateMDP();  
+      }
+
+start_state 
                   { 
-		    /* The preamble is a section of the file which */
-		    /* must come first and whcih contains some global */
-		    /* properties of the MDP that the file */
-		    /* specifies. (e.g., number of states).  The */
-		    /* observations are optional and its presence or */
-		    /* absence is what first tells the parser whether */
-		    /* it is parsing an MDP or a POMDP. */
+        /* Some type of algorithms want a place to start */
+        /* off the problem, especially when doing */
+        /* simulation type experiments.  This is an */
+        /* optional argument that allows specification of */
+        /* this.   In a POMDP this is a belief state, but */
+        /* in an MDP this is a single state.  If none is */
+        /* specified for a POMDP, then the uniform */
+        /* distribution over all states is used.  If none */
+        /* is specified for an MDP, then random states */
+        /* will be assumed. */
 
-		    verifyPreamble();  /* make sure all things are */
-				       /* defined */
+endStartStates(); 
+      }
 
-		    /* While we parse we use an intermediate */
-		    /* representation which will be converted to the */
-		    /* sparse representation when we are finished */
-		    /* parsing.  After the preamble we are ready to */
-		    /* start filling in values and we know how big the */
-		    /* problem is, so we allocate the space for the */
-		    /* intermediate forms */
-
-		    allocateIntermediateMDP();  
-		  }
- 
-                  start_state 
-                  { 
-		    /* Some type of algorithms want a place to start */
-		    /* off the problem, especially when doing */
-		    /* simulation type experiments.  This is an */
-		    /* optional argument that allows specification of */
-		    /* this.   In a POMDP this is a belief state, but */
-		    /* in an MDP this is a single state.  If none is */
-		    /* specified for a POMDP, then the uniform */
-		    /* distribution over all states is used.  If none */
-		    /* is specified for an MDP, then random states */
-		    /* will be assumed. */
-
-		    endStartStates(); 
-		  }
-
-                  param_list 
+param_list 
 
 /* might need this for yacc:    param_list EOFTOK  */
 
-                  {
-		    /* This is the very last thing we do while */
-		    /* parsing.  Even though the file may conform to */
-		    /* the syntax, the semantics of the problem */
-		    /* specification requires probability */
-		    /* distributions.  This routine will make sure */
-		    /* that the appropriate things sum to 1.0 to make */
-		    /* a valid probability distribution. This will */
-		    /* also generate the error message when */
-		    /* observation probabilities are specified in an */
-		    /* MDP problem, since this is illegal. */
+{
+        /* This is the very last thing we do while */
+        /* parsing.  Even though the file may conform to */
+        /* the syntax, the semantics of the problem */
+        /* specification requires probability */
+        /* distributions.  This routine will make sure */
+        /* that the appropriate things sum to 1.0 to make */
+        /* a valid probability distribution. This will */
+        /* also generate the error message when */
+        /* observation probabilities are specified in an */
+        /* MDP problem, since this is illegal. */
 
-                     checkProbs();
-		     YACCtrace("pomdp_file -> preamble params\n");
+checkProbs();
+         YACCtrace("pomdp_file -> preamble params\n");
                   }
 ;
 preamble        : preamble param_type 
-		{
-		   YACCtrace("preamble -> preamble param_type\n");
-		}
+                {
+       YACCtrace("preamble -> preamble param_type\n");
+    }
                 | /* empty */
 ;
 param_type      : discount_param
@@ -214,370 +214,370 @@ param_type      : discount_param
 ;
 discount_param  : DISCOUNTTOK COLONTOK number
                 {
-		  /* The discount factor only makes sense when in the */
-		  /* range 0 to 1, so it is an error to specify */
-		  /* anything outside this range. */
+      /* The discount factor only makes sense when in the */
+      /* range 0 to 1, so it is an error to specify */
+      /* anything outside this range. */
 
-                   gDiscount = $3;
+gDiscount = $3;
                    if(( gDiscount < 0.0 ) || ( gDiscount > 1.0 ))
                       ERR_enter("Parser<ytab>:", currentLineNumber,
                                 BAD_DISCOUNT_VAL, "");
                    discountDefined = 1;
-		   YACCtrace("discount_param -> DISCOUNTTOK COLONTOK number\n");
-	        }
+       YACCtrace("discount_param -> DISCOUNTTOK COLONTOK number\n");
+          }
 ;
 value_param	: VALUESTOK COLONTOK value_tail
-                {
+            {
                    valuesDefined = 1;
-		   YACCtrace("value_param -> VALUESTOK COLONTOK value_tail\n");
-	        }
+       YACCtrace("value_param -> VALUESTOK COLONTOK value_tail\n");
+          }
 ;
 value_tail	: REWARDTOK
 
-                /* Some people use the immediate values as if they are */
-		/* rewards and some use them as if they are costs.  We */
-		/* would like either to be specified so that users can */
-		/* specify the problem in the most natural terms for */
-		/* them. */
+/* Some people use the immediate values as if they are */
+    /* rewards and some use them as if they are costs.  We */
+    /* would like either to be specified so that users can */
+    /* specify the problem in the most natural terms for */
+    /* them. */
 
-		{
+{
                    gValueType = REWARD_value_type;
-		}
-		| COSTTOK
-		{
+    }
+    | COSTTOK
+    {
                    gValueType = COST_value_type;
-		}
+    }
 ;
 state_param	: STATETOK COLONTOK 
-                { 
-		  /* Since are able to enumerate the states and refer */
-		  /* to them by identifiers, we will need to set the */
-		  /* current state to indicate that we are parsing */
-		  /* states.  This is important, since we will parse */
-		  /* observatons and actions in exactly the same */
-		  /* manner with the same code.  */
- 
-		  curMnemonic = nt_state; 
+            { 
+      /* Since are able to enumerate the states and refer */
+      /* to them by identifiers, we will need to set the */
+      /* current state to indicate that we are parsing */
+      /* states.  This is important, since we will parse */
+      /* observatons and actions in exactly the same */
+      /* manner with the same code.  */
 
-		} 
+curMnemonic = nt_state; 
+
+} 
                 state_tail
-		{
+    {
                    statesDefined = 1;
                    curMnemonic = nt_unknown;
-		   YACCtrace("state_param -> STATETOK COLONTOK state_tail\n");
-		}
+       YACCtrace("state_param -> STATETOK COLONTOK state_tail\n");
+    }
 ;
 state_tail	: INTTOK
-		{
+           {
 
-		  /*  For the number of states, we can just have a */
-		  /*  number indicating how many there are, or ... */
+/*  For the number of states, we can just have a */
+      /*  number indicating how many there are, or ... */
 
-                   gNumStates = $1->theValue.theInt;
+gNumStates = $1->theValue.theInt;
                    if( gNumStates < 1 ) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_NUM_STATES, "");
                       gNumStates = 1;
                    }
 
- 		   /* Since we use some temporary storage to hold the
-		      integer as we parse, we free the memory when we
-		      are done with the value */
+/* Since we use some temporary storage to hold the
+          integer as we parse, we free the memory when we
+          are done with the value */
 
-                   XFREE( $1 );
-		}
-		| ident_list
+XFREE( $1 );
+    }
+    | ident_list
                 /* ... we can list the states by name or number */
 ;
 action_param	: ACTIONTOK COLONTOK 
-                {
-		  /* See state_param for explanation of this */
+             {
+      /* See state_param for explanation of this */
 
-		  curMnemonic = nt_action;  
-		} 
+curMnemonic = nt_action;  
+    } 
                 action_tail
-		{
+    {
                    actionsDefined = 1;
                    curMnemonic = nt_unknown;
-		   YACCtrace("action_param -> ACTIONTOK COLONTOK action_tail\n");
-		}
+       YACCtrace("action_param -> ACTIONTOK COLONTOK action_tail\n");
+    }
 ;
 action_tail	: INTTOK
-		{
+            {
 
-		  /*  For the number of actions, we can just have a */
-		  /*  number indicating how many there are, or ... */
+/*  For the number of actions, we can just have a */
+      /*  number indicating how many there are, or ... */
 
-                   gNumActions = $1->theValue.theInt;
+gNumActions = $1->theValue.theInt;
                    if( gNumActions < 1 ) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_NUM_ACTIONS, "" );
                       gNumActions = 1;
                    }
-		   
-		   /* Since we use some temporary storage to hold the
-		      integer as we parse, we free the memory when we
-		      are done with the value */
 
-                   XFREE( $1 );
-		}
-		| ident_list
+/* Since we use some temporary storage to hold the
+          integer as we parse, we free the memory when we
+          are done with the value */
+
+XFREE( $1 );
+    }
+    | ident_list
                 /* ... we can list the actions by name or number */
 ;
 obs_param	: OBSTOK COLONTOK 
-                { 
-		  /* See state_param for explanation of this */
+          { 
+      /* See state_param for explanation of this */
 
-		  curMnemonic = nt_observation; 
-		} 
+curMnemonic = nt_observation; 
+    } 
                 obs_param_tail
-		{
+    {
                    observationsDefined = 1;
                    curMnemonic = nt_unknown;
-		   YACCtrace("obs_param -> OBSTOK COLONTOK obs_param_tail\n");
-		}
+       YACCtrace("obs_param -> OBSTOK COLONTOK obs_param_tail\n");
+    }
 ;
 obs_param_tail	: INTTOK
-		{
+               {
 
-		  /*  For the number of observation, we can just have a */
-		  /*  number indicating how many there are, or ... */
+/*  For the number of observation, we can just have a */
+      /*  number indicating how many there are, or ... */
 
-                   gNumObservations = $1->theValue.theInt;
+gNumObservations = $1->theValue.theInt;
                    if( gNumObservations < 1 ) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
                                 BAD_NUM_OBS, "" );
                       gNumObservations = 1;
                    }
 
-		   /* Since we use some temporary storage to hold the
-		      integer as we parse, we free the memory when we
-		      are done with the value */
+/* Since we use some temporary storage to hold the
+          integer as we parse, we free the memory when we
+          are done with the value */
 
-                   XFREE( $1 );
-		}
-		| ident_list
+XFREE( $1 );
+    }
+    | ident_list
                 /* ... we can list the observations by name or number */
 ;
 start_state     :  STARTTOK COLONTOK
                 { 
-		  /* There are a number of different formats for the */
-		  /* start state.  This one is valid for either a */
-		  /* POMDP or an MDP.  With a POMDP it will expect a */
-		  /* list of probabilities, one for each state, */
-		  /* representing the initial belief state.  For an */
-		  /* MDP there can be only a single integer */
-		  /* representing the starting state. */
+      /* There are a number of different formats for the */
+      /* start state.  This one is valid for either a */
+      /* POMDP or an MDP.  With a POMDP it will expect a */
+      /* list of probabilities, one for each state, */
+      /* representing the initial belief state.  For an */
+      /* MDP there can be only a single integer */
+      /* representing the starting state. */
 
-		  if( gProblemType == POMDP_problem_type )
-		    setMatrixContext(mc_start_belief, 0, 0, 0, 0); 
-		  else
-		    setMatrixContext(mc_mdp_start, 0, 0, 0, 0); 
-		} 
+if( gProblemType == POMDP_problem_type )
+        setMatrixContext(mc_start_belief, 0, 0, 0, 0); 
+      else
+        setMatrixContext(mc_mdp_start, 0, 0, 0, 0); 
+    } 
                 u_matrix
 
-	        | STARTTOK COLONTOK STRINGTOK
+| STARTTOK COLONTOK STRINGTOK
 
-                /*  This case is only valid mainly for MDPs.  This is a */
-		/*  special case because we might like to refer to the */
-		/*  starting state by its mnemonic name.  We cannot */
-		/*  simply specify a 'state' type because then there */
-		/*  will be parsing conflict. This results because the */
-		/*  'u_matrix' and the 'state' could resolve to an */
-		/*  integer.  So, for an MDP, we check for a single */
-		/*  integer if it parses to a 'u_matrix' and use this */
-		/*  rule to handle the mnemonic name. In the case of a */
-		/*  POMDP this will act exactly like a 'start */
-		/*  include:' with a single state listed. For the */
-		/*  POMDP we asume that gInitialBelief is initialized */
-		/*  to be all zeroes, so that setting this one state */
-		/*  to one gives the desired results.  */
+/*  This case is only valid mainly for MDPs.  This is a */
+    /*  special case because we might like to refer to the */
+    /*  starting state by its mnemonic name.  We cannot */
+    /*  simply specify a 'state' type because then there */
+    /*  will be parsing conflict. This results because the */
+    /*  'u_matrix' and the 'state' could resolve to an */
+    /*  integer.  So, for an MDP, we check for a single */
+    /*  integer if it parses to a 'u_matrix' and use this */
+    /*  rule to handle the mnemonic name. In the case of a */
+    /*  POMDP this will act exactly like a 'start */
+    /*  include:' with a single state listed. For the */
+    /*  POMDP we asume that gInitialBelief is initialized */
+    /*  to be all zeroes, so that setting this one state */
+    /*  to one gives the desired results.  */
 
-                {
+{
                    int num;
 
-		   num = H_lookup( $3->theValue.theString, nt_state );
-		   if(( num < 0 ) || (num >= gNumStates )) {
-		     ERR_enter("Parser<ytab>:", currentLineNumber, 
-					BAD_STATE_STR, $3->theValue.theString );
-		   }
-		   else {
-		     if( gProblemType == MDP_problem_type )
-		       gInitialState = num;
-		     else
-		       gInitialBelief[num] = 1.0;
-		   }
+num = H_lookup( $3->theValue.theString, nt_state );
+       if(( num < 0 ) || (num >= gNumStates )) {
+         ERR_enter("Parser<ytab>:", currentLineNumber, 
+          BAD_STATE_STR, $3->theValue.theString );
+       }
+       else {
+         if( gProblemType == MDP_problem_type )
+           gInitialState = num;
+         else
+           gInitialBelief[num] = 1.0;
+       }
 
-		   XFREE( $3->theValue.theString );
-		   XFREE( $3 );
+XFREE( $3->theValue.theString );
+       XFREE( $3 );
                 }
 
-	        | STARTTOK INCLUDETOK COLONTOK
+| STARTTOK INCLUDETOK COLONTOK
                 { 
-		  setMatrixContext(mc_start_include, 0, 0, 0, 0); 
-		} 
+      setMatrixContext(mc_start_include, 0, 0, 0, 0); 
+    } 
                 start_state_list
 
-		| STARTTOK EXCLUDETOK COLONTOK
+| STARTTOK EXCLUDETOK COLONTOK
                 { 
-		  setMatrixContext(mc_start_exclude, 0, 0, 0, 0); 
-		}
+      setMatrixContext(mc_start_exclude, 0, 0, 0, 0); 
+    }
                 start_state_list
 
-		|  /* empty, start_state is optional and default to */
-		   /* either uniform for POMDPs or random for MDPs  */
+|  /* empty, start_state is optional and default to */
+       /* either uniform for POMDPs or random for MDPs  */
                 { 
-		  setStartStateUniform(); 
-		}
+      setStartStateUniform(); 
+    }
 ;
 start_state_list	: start_state_list state
-                {
-		  enterStartState( $2 );
+                 {
+      enterStartState( $2 );
                 }
-		| state
+    | state
                 {
-		  enterStartState( $1 );
+      enterStartState( $1 );
                 }
 ;
 param_list	: param_list param_spec
-		| /* empty */
+           | /* empty */
 ;
 param_spec	: trans_prob_spec
-		| obs_prob_spec 
+           | obs_prob_spec 
                   {
-		    /* If there are observation specifications defined,
-		       but no observations listed in the preamble, then
-		       this is an error, since regular MDPs don't have
-		       the concept of observations.  However, it could 
-		       be a POMDP that was just missing the preamble 
-		       part.  The way we handle this is to go ahead 
-		       and parse the observation specifications, but
-		       always check before we actually enter values in
-		       a matrix (see the enterMatrix() routine.)  This
-		       way we can determine if there are any problems 
-		       with the observation specifications.  We cannot
-		       add entries to the matrices since there will be
-		       no memory allocated for it.  We want to
-		       generate an error for this case, but don't want
-		       a separate error for each observation
-		       specification, so we define a variable that is
-		       just a flag for whether or not any observation
-		       specificiations have been defined.  After we
-		       are all done parsing we will check this flag
-		       and generate an error if needed.
-		       */
+        /* If there are observation specifications defined,
+           but no observations listed in the preamble, then
+           this is an error, since regular MDPs don't have
+           the concept of observations.  However, it could 
+           be a POMDP that was just missing the preamble 
+           part.  The way we handle this is to go ahead 
+           and parse the observation specifications, but
+           always check before we actually enter values in
+           a matrix (see the enterMatrix() routine.)  This
+           way we can determine if there are any problems 
+           with the observation specifications.  We cannot
+           add entries to the matrices since there will be
+           no memory allocated for it.  We want to
+           generate an error for this case, but don't want
+           a separate error for each observation
+           specification, so we define a variable that is
+           just a flag for whether or not any observation
+           specificiations have been defined.  After we
+           are all done parsing we will check this flag
+           and generate an error if needed.
+           */
 
-		      observationSpecDefined = 1;
-		  }
-		| reward_spec
+observationSpecDefined = 1;
+      }
+    | reward_spec
 ;
 trans_prob_spec	: TTOK COLONTOK trans_spec_tail
-		{
-		   YACCtrace("trans_prob_spec -> TTOK COLONTOK trans_spec_tail\n");
-		}
+                {
+       YACCtrace("trans_prob_spec -> TTOK COLONTOK trans_spec_tail\n");
+    }
 ;
 trans_spec_tail	:action COLONTOK state COLONTOK state 
-                        { setMatrixContext(mc_trans_single, $1, $3, $5, 0); } prob 
-		{
+                { setMatrixContext(mc_trans_single, $1, $3, $5, 0); } prob 
+    {
                    enterMatrix( $7 );
-		   YACCtrace("trans_spec_tail -> action COLONTOK state COLONTOK state prob \n");
-		}
-	     	| action COLONTOK state 
+       YACCtrace("trans_spec_tail -> action COLONTOK state COLONTOK state prob \n");
+    }
+        | action COLONTOK state 
                          { setMatrixContext(mc_trans_row, $1, $3, 0, 0); } u_matrix 
-		{
-		   YACCtrace("trans_spec_tail -> action COLONTOK state ui_matrix \n");
-		}
-	     	|  action { setMatrixContext(mc_trans_all, $1, 0, 0, 0); } ui_matrix
-		{
-		   YACCtrace("trans_spec_tail -> action ui_matrix\n");
-		}
+    {
+       YACCtrace("trans_spec_tail -> action COLONTOK state ui_matrix \n");
+    }
+        |  action { setMatrixContext(mc_trans_all, $1, 0, 0, 0); } ui_matrix
+    {
+       YACCtrace("trans_spec_tail -> action ui_matrix\n");
+    }
 ;
 obs_prob_spec	: OTOK COLONTOK  obs_spec_tail
-		{
-		   YACCtrace("obs_prob_spec -> OTOK COLONTOK  obs_spec_tail\n");
-		}
+              {
+       YACCtrace("obs_prob_spec -> OTOK COLONTOK  obs_spec_tail\n");
+    }
 ;
 obs_spec_tail	: action COLONTOK state COLONTOK obs 
-                         { setMatrixContext(mc_obs_single, $1, 0, $3, $5); } prob 
-		{
+              { setMatrixContext(mc_obs_single, $1, 0, $3, $5); } prob 
+    {
                    enterMatrix( $7 );
-		   YACCtrace("obs_spec_tail -> action COLONTOK state COLONTOK obs prob \n");
-		}
-	     	| action COLONTOK state 
+       YACCtrace("obs_spec_tail -> action COLONTOK state COLONTOK obs prob \n");
+    }
+        | action COLONTOK state 
                          { setMatrixContext(mc_obs_row, $1, 0, $3, 0); } u_matrix
-		{
-		   YACCtrace("obs_spec_tail -> action COLONTOK state COLONTOK u_matrix\n");
-		}
-	     	| action { setMatrixContext(mc_obs_all, $1, 0, 0, 0); } u_matrix
-		{
-		   YACCtrace("obs_spec_tail -> action u_matrix\n");
-		}
+    {
+       YACCtrace("obs_spec_tail -> action COLONTOK state COLONTOK u_matrix\n");
+    }
+        | action { setMatrixContext(mc_obs_all, $1, 0, 0, 0); } u_matrix
+    {
+       YACCtrace("obs_spec_tail -> action u_matrix\n");
+    }
 ;
 reward_spec	: RTOK COLONTOK  reward_spec_tail
-		{
-		   YACCtrace("reward_spec -> RTOK COLONTOK  reward_spec_tail\n");
-		}
+            {
+       YACCtrace("reward_spec -> RTOK COLONTOK  reward_spec_tail\n");
+    }
 ;
 reward_spec_tail : 
-                /* This syntax is only available for POMDPs */ 
+                 /* This syntax is only available for POMDPs */ 
                 action COLONTOK state COLONTOK state COLONTOK obs 
                           { setMatrixContext(mc_reward_single, $1, $3, $5, $7); } number 
-		{
+    {
                    enterMatrix( $9 );
 
-		   /* Only need this for the call to doneImmReward */
-		   checkMatrix();  
-		   YACCtrace("reward_spec_tail -> action COLONTOK state COLONTOK state COLONTOK obs number\n");
-		}
-	     	| action COLONTOK state COLONTOK state 
+/* Only need this for the call to doneImmReward */
+       checkMatrix();  
+       YACCtrace("reward_spec_tail -> action COLONTOK state COLONTOK state COLONTOK obs number\n");
+    }
+        | action COLONTOK state COLONTOK state 
                          { setMatrixContext(mc_reward_row, $1, $3, $5, 0); } num_matrix
                   {
                    checkMatrix();
-		   YACCtrace("reward_spec_tail -> action COLONTOK state COLONTOK state num_matrix\n");
-		 }
-	     	|  action COLONTOK state 
+       YACCtrace("reward_spec_tail -> action COLONTOK state COLONTOK state num_matrix\n");
+     }
+        |  action COLONTOK state 
                           { setMatrixContext(mc_reward_all, $1, $3, 0, 0); } num_matrix
-		{
+    {
                    checkMatrix();
-		   YACCtrace("reward_spec_tail -> action COLONTOK state num_matrix\n");
-		}
+       YACCtrace("reward_spec_tail -> action COLONTOK state num_matrix\n");
+    }
                 /* This syntax is only available for MDPs */
-	     	|  action 
+        |  action 
                           { setMatrixContext(mc_reward_mdp_only, $1, 0, 0, 0); } num_matrix
-		{
+    {
                    checkMatrix();
-		   YACCtrace("reward_spec_tail -> action num_matrix\n");
+       YACCtrace("reward_spec_tail -> action num_matrix\n");
                 }
 ;
 ui_matrix 	: UNIFORMTOK 
-                {
+           {
                    enterUniformMatrix();
                 }
-	    	| IDENTITYTOK 
+        | IDENTITYTOK 
                 {
                    enterIdentityMatrix();
                 }
-	    	| prob_matrix
+        | prob_matrix
                 {
                    checkMatrix();
                 }
 
 ;
 u_matrix 	: UNIFORMTOK 
-                {
+          {
                    enterUniformMatrix();
                 }
                 | RESETTOK
                 {
-		  enterResetMatrix();
-		}
-	   	| prob_matrix
+      enterResetMatrix();
+    }
+      | prob_matrix
                 {
                    checkMatrix();
                 }
 ;
 prob_matrix 	: prob_matrix prob
-                {
+             {
                    enterMatrix( $2 );
                 }
                 | prob
@@ -586,7 +586,7 @@ prob_matrix 	: prob_matrix prob
                 }
 ;
 num_matrix 	: num_matrix number
-                {
+            {
                    enterMatrix( $2 );
                 }
                 | number
@@ -595,7 +595,7 @@ num_matrix 	: num_matrix number
                 }
 ;
 state		: INTTOK
-                {
+       {
                    if(( $1->theValue.theInt < 0 ) 
                       || ($1->theValue.theInt >= gNumStates )) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
@@ -606,28 +606,28 @@ state		: INTTOK
                       $$ = $1->theValue.theInt;
                    XFREE( $1 );
                 }
-		| STRINGTOK
+    | STRINGTOK
                 {
                    int num;
                    num = H_lookup( $1->theValue.theString, nt_state );
                    if (( num < 0 ) || (num >= gNumStates )) {
-				 ERR_enter("Parser<ytab>:", currentLineNumber, 
-						 BAD_STATE_STR, $1->theValue.theString );
-				 $$ = 0;
+         ERR_enter("Parser<ytab>:", currentLineNumber, 
+             BAD_STATE_STR, $1->theValue.theString );
+         $$ = 0;
                    }
                    else
-				 $$ = num;
+         $$ = num;
 
-                   XFREE( $1->theValue.theString );
+XFREE( $1->theValue.theString );
                    XFREE( $1 );
                 }
-		| ASTERICKTOK
+    | ASTERICKTOK
                 {
                    $$ = WILDCARD_SPEC;
                 }
 ;
 action		: INTTOK
-                {
+        {
                    $$ = $1->theValue.theInt;
                    if(( $1->theValue.theInt < 0 ) 
                       || ($1->theValue.theInt >= gNumActions )) {
@@ -639,7 +639,7 @@ action		: INTTOK
                       $$ = $1->theValue.theInt;
                    XFREE( $1 );
                 }
-		| STRINGTOK
+    | STRINGTOK
                 {
                    int num;
                    num = H_lookup( $1->theValue.theString, nt_action );
@@ -651,16 +651,16 @@ action		: INTTOK
                    else
                       $$ = num;
 
-                   XFREE( $1->theValue.theString );
+XFREE( $1->theValue.theString );
                    XFREE( $1 );
                 }
-		| ASTERICKTOK
+    | ASTERICKTOK
                 {
                    $$ = WILDCARD_SPEC;
                 }
 ;
 obs		: INTTOK
-                {
+     {
                    if(( $1->theValue.theInt < 0 ) 
                       || ($1->theValue.theInt >= gNumObservations )) {
                       ERR_enter("Parser<ytab>:", currentLineNumber, 
@@ -671,7 +671,7 @@ obs		: INTTOK
                       $$ = $1->theValue.theInt;
                    XFREE( $1 );
                 }
-		| STRINGTOK
+    | STRINGTOK
                 {
                    int num;
                    num = H_lookup( $1->theValue.theString, nt_observation );
@@ -683,44 +683,44 @@ obs		: INTTOK
                    else
                       $$ = num;
 
-                   XFREE( $1->theValue.theString );
+XFREE( $1->theValue.theString );
                    XFREE( $1 );
                }
-		| ASTERICKTOK
+    | ASTERICKTOK
                 {
                    $$ = WILDCARD_SPEC;
                 }
 ;
 ident_list	: ident_list STRINGTOK
-                {
+           {
                    enterString( $2 );
                 }
-		| STRINGTOK
+    | STRINGTOK
                 {
                    enterString( $1 );
                 }
 ;
 prob		: INTTOK
-		{
-		  $$ = $1->theValue.theInt;
-		  if( curMatrixContext != mc_mdp_start )
-		    if(( $$ < 0 ) || ($$ > 1 ))
-		      ERR_enter("Parser<ytab>:", currentLineNumber, 
-				BAD_PROB_VAL, "");
-		  XFREE( $1 );
-		}
-		| FLOATTOK
-		{
-		  $$ = $1->theValue.theFloat;
-		  if( curMatrixContext == mc_mdp_start )
-		    ERR_enter("Parser<ytab>:", currentLineNumber, 
-				    BAD_START_STATE_TYPE, "" );
-		  else
-		    if(( $$ < 0.0 ) || ($$ > 1.0 ))
-			 ERR_enter("Parser<ytab>:", currentLineNumber, 
-					 BAD_PROB_VAL, "" );
-		  XFREE( $1 );
-		}
+      {
+      $$ = $1->theValue.theInt;
+      if( curMatrixContext != mc_mdp_start )
+        if(( $$ < 0 ) || ($$ > 1 ))
+          ERR_enter("Parser<ytab>:", currentLineNumber, 
+        BAD_PROB_VAL, "");
+      XFREE( $1 );
+    }
+    | FLOATTOK
+    {
+      $$ = $1->theValue.theFloat;
+      if( curMatrixContext == mc_mdp_start )
+        ERR_enter("Parser<ytab>:", currentLineNumber, 
+            BAD_START_STATE_TYPE, "" );
+      else
+        if(( $$ < 0.0 ) || ($$ > 1.0 ))
+       ERR_enter("Parser<ytab>:", currentLineNumber, 
+           BAD_PROB_VAL, "" );
+      XFREE( $1 );
+    }
 ;
 number          : optional_sign INTTOK
                 {
@@ -740,14 +740,14 @@ number          : optional_sign INTTOK
                 }
 ;
 optional_sign	: PLUSTOK
-                {
+              {
                    $$ = 0;
                 }
-		| MINUSTOK
+    | MINUSTOK
                 {
                    $$ = 1;
                 }
-		|  /* empty */
+    |  /* empty */
                 {
                    $$ = 0;
                 }
@@ -782,7 +782,7 @@ checkMatrix() {
    entries.
    */
 
-   switch( curMatrixContext ) {
+switch( curMatrixContext ) {
    case mc_trans_row:
       if( curCol < gNumStates )
          ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
@@ -790,9 +790,9 @@ checkMatrix() {
       break;
    case mc_trans_all:
       if((curRow < (gNumStates-1) )
-	 || ((curRow == (gNumStates-1))
-	     && ( curCol < gNumStates ))) 
-	ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
+   || ((curRow == (gNumStates-1))
+       && ( curCol < gNumStates ))) 
+  ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
                    TOO_FEW_ENTRIES, "" );
       break;
    case mc_obs_row:
@@ -802,66 +802,66 @@ checkMatrix() {
       break;
    case mc_obs_all:
       if((curRow < (gNumStates-1) )
-	 || ((curRow == (gNumStates-1))
-	     && ( curCol < gNumObservations ))) 
+   || ((curRow == (gNumStates-1))
+       && ( curCol < gNumObservations ))) 
          ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
                    TOO_FEW_ENTRIES, "" );
       break;
    case mc_start_belief:
       if( curCol < gNumStates )
-	ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
-		  TOO_FEW_ENTRIES, "");
+  ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
+      TOO_FEW_ENTRIES, "");
       break;
 
-    case mc_mdp_start:
+case mc_mdp_start:
       /* We will check for invalid multiple entries for MDP in 
-	 enterMatrix() */
+   enterMatrix() */
       break;
 
-    case mc_reward_row:
+case mc_reward_row:
       if( gProblemType == POMDP_problem_type )
-	if( curCol < gNumObservations )
-	  ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
-		    TOO_FEW_ENTRIES, "");
+  if( curCol < gNumObservations )
+    ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
+        TOO_FEW_ENTRIES, "");
       break;
 
-    case mc_reward_all:
+case mc_reward_all:
       if( gProblemType == POMDP_problem_type ) {
-	if((curRow < (gNumStates-1) )
-	   || ((curRow == (gNumStates-1))
-	       && ( curCol < gNumObservations ))) 
-	  ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
-		    TOO_FEW_ENTRIES, "" );
+  if((curRow < (gNumStates-1) )
+     || ((curRow == (gNumStates-1))
+         && ( curCol < gNumObservations ))) 
+    ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
+        TOO_FEW_ENTRIES, "" );
       }
       else
-	if( curCol < gNumStates )
-	  ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
-		    TOO_FEW_ENTRIES, "");
-      
-      break;
+  if( curCol < gNumStates )
+    ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
+        TOO_FEW_ENTRIES, "");
+
+break;
     case mc_reward_single:
       /* Don't need to do anything */
       break;
 
-    case mc_reward_mdp_only:
+case mc_reward_mdp_only:
       if((curRow < (gNumStates-1) )
-	 || ((curRow == (gNumStates-1))
-	     && ( curCol < gNumStates ))) 
-	ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
-		  TOO_FEW_ENTRIES, "" );
+   || ((curRow == (gNumStates-1))
+       && ( curCol < gNumStates ))) 
+  ERR_enter("Parser<checkMatrix>:", currentLineNumber,  
+      TOO_FEW_ENTRIES, "" );
       break;
 
-   default:
-      ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
+default:
+       ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
                 BAD_MATRIX_CONTEXT, "" );
       break;
    }  /* switch */
 
-   if( gTooManyEntries )
+if( gTooManyEntries )
      ERR_enter("Parser<checkMatrix>:", currentLineNumber, 
-	       TOO_MANY_ENTRIES, "" );
+         TOO_MANY_ENTRIES, "" );
 
-   /* After reading a line for immediate rewards for a pomdp, we must tell
+/* After reading a line for immediate rewards for a pomdp, we must tell
       the data structures for the special representation that we are done */
    switch( curMatrixContext ) {
    case mc_reward_row:
@@ -870,9 +870,9 @@ checkMatrix() {
      doneImmReward();
      break;
 
-     /* This case is only valid for POMDPs, so if we have an MDP, we
-	never would have started a new immediate reward, so calling 
-	the doneImmReward will be in error.  */
+/* This case is only valid for POMDPs, so if we have an MDP, we
+  never would have started a new immediate reward, so calling 
+  the doneImmReward will be in error.  */
    case mc_reward_single:
      if( gProblemType == POMDP_problem_type )
        doneImmReward();
@@ -880,19 +880,19 @@ checkMatrix() {
    default:
      break;
    }  /* switch */
-   
 
-   curMatrixContext = mc_none;  /* reset this as a safety precaution */
+
+curMatrixContext = mc_none;  /* reset this as a safety precaution */
 }  /* checkMatrix */
 /******************************************************************************/
 void 
 enterString( Constant_Block *block ) {
-   
-   if( H_enter( block->theValue.theString, curMnemonic ) == 0 )
+
+if( H_enter( block->theValue.theString, curMnemonic ) == 0 )
       ERR_enter("Parser<enterString>:", currentLineNumber, 
                 DUPLICATE_STRING, block->theValue.theString );
 
-   XFREE( block->theValue.theString );
+XFREE( block->theValue.theString );
    XFREE( block );
 }  /* enterString */
 /******************************************************************************/
@@ -901,34 +901,34 @@ enterUniformMatrix( ) {
    int a, i, j, obs;
    double prob;
 
-   switch( curMatrixContext ) {
+switch( curMatrixContext ) {
    case mc_trans_row:
       prob = 1.0/gNumStates;
       for( a = minA; a <= maxA; a++ )
          for( i = minI; i <= maxI; i++ )
             for( j = 0; j < gNumStates; j++ )
-	       addEntryToIMatrix( IP[a], i, j, prob );
+         addEntryToIMatrix( IP[a], i, j, prob );
       break;
    case mc_trans_all:
       prob = 1.0/gNumStates;
       for( a = minA; a <= maxA; a++ )
          for( i = 0; i < gNumStates; i++ )
             for( j = 0; j < gNumStates; j++ )
- 	       addEntryToIMatrix( IP[a], i, j, prob );
+         addEntryToIMatrix( IP[a], i, j, prob );
       break;
    case mc_obs_row:
       prob = 1.0/gNumObservations;
       for( a = minA; a <= maxA; a++ )
          for( j = minJ; j <= maxJ; j++ )
             for( obs = 0; obs < gNumObservations; obs++ )
- 	       addEntryToIMatrix( IR[a], j, obs, prob );
+         addEntryToIMatrix( IR[a], j, obs, prob );
       break;
    case mc_obs_all:
       prob = 1.0/gNumObservations;
       for( a = minA; a <= maxA; a++ )
          for( j = 0; j < gNumStates; j++ )
             for( obs = 0; obs < gNumObservations; obs++ )
- 	       addEntryToIMatrix( IR[a], j, obs, prob );
+         addEntryToIMatrix( IR[a], j, obs, prob );
       break;
    case mc_start_belief:
       setStartStateUniform();
@@ -949,15 +949,15 @@ void
 enterIdentityMatrix( ) {
    int a, i,j;
 
-   switch( curMatrixContext ) {
+switch( curMatrixContext ) {
    case mc_trans_all:
       for( a = minA; a <= maxA; a++ )
          for( i = 0; i < gNumStates; i++ )
             for( j = 0; j < gNumStates; j++ )
                if( i == j )
-		 addEntryToIMatrix( IP[a], i, j, 1.0 );
+     addEntryToIMatrix( IP[a], i, j, 1.0 );
                else
-		 addEntryToIMatrix( IP[a], i, j, 0.0 );
+     addEntryToIMatrix( IP[a], i, j, 0.0 );
       break;
    default:
       ERR_enter("Parser<enterIdentityMatrix>:", currentLineNumber, 
@@ -970,23 +970,23 @@ void
 enterResetMatrix( ) {
   int a, i, j;
 
-  if( curMatrixContext != mc_trans_row ) {
+if( curMatrixContext != mc_trans_row ) {
     ERR_enter("Parser<enterMatrix>:", currentLineNumber, 
-	      BAD_RESET_USAGE, "" );
+        BAD_RESET_USAGE, "" );
     return;
   }
 
-  if( gProblemType == POMDP_problem_type )
+if( gProblemType == POMDP_problem_type )
     for( a = minA; a <= maxA; a++ )
       for( i = minI; i <= maxI; i++ )
-	for( j = 0; j < gNumStates; j++ )
-	  addEntryToIMatrix( IP[a], i, j, gInitialBelief[j] );
-  
-  else  /* It is an MDP */
+  for( j = 0; j < gNumStates; j++ )
+    addEntryToIMatrix( IP[a], i, j, gInitialBelief[j] );
+
+else  /* It is an MDP */
     for( a = minA; a <= maxA; a++ )
       for( i = minI; i <= maxI; i++ )
-	addEntryToIMatrix( IP[a], i, gInitialState, 1.0 );
-  
+  addEntryToIMatrix( IP[a], i, gInitialState, 1.0 );
+
 
 }  /* enterResetMatrix */
 /******************************************************************************/
@@ -1001,86 +1001,89 @@ enterMatrix( double value ) {
   */
    int a, i, j, obs;
 
-   switch( curMatrixContext ) {
+switch( curMatrixContext ) {
    case mc_trans_single:
       for( a = minA; a <= maxA; a++ )
          for( i = minI; i <= maxI; i++ )
             for( j = minJ; j <= maxJ; j++ )
-	      addEntryToIMatrix( IP[a], i, j, value );
+        addEntryToIMatrix( IP[a], i, j, value );
       break;
    case mc_trans_row:
       if( curCol < gNumStates ) {
          for( a = minA; a <= maxA; a++ )
             for( i = minI; i <= maxI; i++ )
-	      addEntryToIMatrix( IP[a], i, curCol, value );
+        addEntryToIMatrix( IP[a], i, curCol, value );
          curCol++;
       }
       else
-	gTooManyEntries = 1;
+  gTooManyEntries = 1;
 
-      break;
+break;
    case mc_trans_all:
       if( curCol >= gNumStates ) {
          curRow++;
          curCol = 0;;
       }
 
-      if( curRow < gNumStates ) {
+if( curRow < gNumStates ) {
          for( a = minA; a <= maxA; a++ )
-	   addEntryToIMatrix( IP[a], curRow, curCol, value );
+     addEntryToIMatrix( IP[a], curRow, curCol, value );
          curCol++;
       }
       else
-	gTooManyEntries = 1;
+  gTooManyEntries = 1;
 
-      break;
+break;
 
-   case mc_obs_single:
+case mc_obs_single:
 
-      if( gProblemType == POMDP_problem_type )
-	/* We ignore this if it is an MDP */
+if( gProblemType == POMDP_problem_type )
+  /* We ignore this if it is an MDP */
 
-	for( a = minA; a <= maxA; a++ )
-	  for( j = minJ; j <= maxJ; j++ )
+for( a = minA; a <= maxA; a++ )
+    for( j = minJ; j <= maxJ; j++ )
             for( obs = minObs; obs <= maxObs; obs++ )
-	      addEntryToIMatrix( IR[a], j, obs, value );
+        addEntryToIMatrix( IR[a], j, obs, value );
       break;
 
-   case mc_obs_row:
+case mc_obs_row:
       if( gProblemType == POMDP_problem_type )
-	/* We ignore this if it is an MDP */
+      {
+  /* We ignore this if it is an MDP */
 
-	if( curCol < gNumObservations ) {
+if( curCol < gNumObservations ) {
+    for( a = minA; a <= maxA; a++ )
+      for( j = minJ; j <= maxJ; j++ )
+        addEntryToIMatrix( IR[a], j, curCol, value );
 
-	  for( a = minA; a <= maxA; a++ )
-            for( j = minJ; j <= maxJ; j++ )
-	      addEntryToIMatrix( IR[a], j, curCol, value );
-	  
-	  curCol++;
-	}
-	else
-	  gTooManyEntries = 1;
-
+curCol++;
+    }
+  }
+  else
+  {
+    gTooManyEntries = 1;
+  }
       break;
 
-   case mc_obs_all:
+case mc_obs_all:
       if( curCol >= gNumObservations ) {
          curRow++;
          curCol = 0;
       }
 
-      if( gProblemType == POMDP_problem_type )
-	/* We ignore this if it is an MDP */
+if( gProblemType == POMDP_problem_type ){
+  /* We ignore this if it is an MDP */
 
-	if( curRow < gNumStates ) {
-	  for( a = minA; a <= maxA; a++ )
-	    addEntryToIMatrix( IR[a], curRow, curCol, value );
-	  
-	  curCol++;
-	}
-	else
-	  gTooManyEntries = 1;
+if( curRow < gNumStates ) {
+    for( a = minA; a <= maxA; a++ )
+      addEntryToIMatrix( IR[a], curRow, curCol, value );
 
+curCol++;
+  }
+  }
+  else{
+    gTooManyEntries = 1;
+  }
       break;
 
 /* This is a special case for POMDPs, since we need a special 
@@ -1091,129 +1094,129 @@ enterMatrix( double value ) {
    case mc_reward_single:
       if( gProblemType == POMDP_problem_type ) {
 
-	if( curCol == 0 ) {
-	  enterImmReward( 0, 0, 0, value );
-	  curCol++;
-	}
-	else
-	  gTooManyEntries = 1;
+if( curCol == 0 ) {
+    enterImmReward( 0, 0, 0, value );
+    curCol++;
+  }
+  else
+    gTooManyEntries = 1;
 
-      }
+}
      break;
 
-    case mc_reward_row:
+case mc_reward_row:
       if( gProblemType == POMDP_problem_type ) {
 
-	/* This is a special case for POMDPs, since we need a special 
-	   representation for immediate rewards for POMDP's */
-   
-	if( curCol < gNumObservations ) {
-	  enterImmReward( 0, 0, curCol, value );
-	  curCol++;
-	}
-	else
-	  gTooManyEntries = 1;
+/* This is a special case for POMDPs, since we need a special 
+     representation for immediate rewards for POMDP's */
 
-      }  /* if POMDP problem */
+if( curCol < gNumObservations ) {
+    enterImmReward( 0, 0, curCol, value );
+    curCol++;
+  }
+  else
+    gTooManyEntries = 1;
 
-      else /* we are dealing with an MDP, so there should only be 
-	      a single entry */
-	if( curCol == 0 ) {
-	  enterImmReward( 0, 0, 0, value );
-	  curCol++;
-	}
-	else
-	  gTooManyEntries = 1;
+}  /* if POMDP problem */
+
+else /* we are dealing with an MDP, so there should only be 
+        a single entry */
+  if( curCol == 0 ) {
+    enterImmReward( 0, 0, 0, value );
+    curCol++;
+  }
+  else
+    gTooManyEntries = 1;
 
 
-     break;
+break;
 
-   case mc_reward_all:
+case mc_reward_all:
 
-      /* This is a special case for POMDPs, since we need a special 
-	 representation for immediate rewards for POMDP's */
+/* This is a special case for POMDPs, since we need a special 
+   representation for immediate rewards for POMDP's */
 
-      if( gProblemType == POMDP_problem_type ) {
-	if( curCol >= gNumObservations ) {
-	  curRow++;
-	  curCol = 0;
-	}
-	if( curRow < gNumStates ) {
-	  enterImmReward( 0, curRow, curCol, value );
-	  curCol++;
-	}
-	else
-	  gTooManyEntries = 1;
+if( gProblemType == POMDP_problem_type ) {
+  if( curCol >= gNumObservations ) {
+    curRow++;
+    curCol = 0;
+  }
+  if( curRow < gNumStates ) {
+    enterImmReward( 0, curRow, curCol, value );
+    curCol++;
+  }
+  else
+    gTooManyEntries = 1;
 
-      }  /* If POMDP problem */
+}  /* If POMDP problem */
 
-      /* Otherwise it is an MDP and we should be expecting an entire
-	 row of rewards. */
+/* Otherwise it is an MDP and we should be expecting an entire
+   row of rewards. */
 
-      else  /* MDP */
-	if( curCol < gNumStates ) {
-	  enterImmReward( 0, curCol, 0, value );
-	  curCol++;
-	}
-	else
-	  gTooManyEntries = 1;
+else  /* MDP */
+  if( curCol < gNumStates ) {
+    enterImmReward( 0, curCol, 0, value );
+    curCol++;
+  }
+  else
+    gTooManyEntries = 1;
 
-      break;
+break;
 
-      /* This is a special case for an MDP only where we specify
-	 the entire matrix of rewards. If we are erroneously 
-	 definining a POMDP, this error will be flagged in the 
-	 setMatrixContext() routine.
-	 */
+/* This is a special case for an MDP only where we specify
+   the entire matrix of rewards. If we are erroneously 
+   definining a POMDP, this error will be flagged in the 
+   setMatrixContext() routine.
+   */
 
-    case mc_reward_mdp_only:
+case mc_reward_mdp_only:
       if( gProblemType == MDP_problem_type ) {
-	if( curCol >= gNumStates ) {
-	  curRow++;
-	  curCol = 0;
-	}
-	if( curRow < gNumStates ) {
-	  enterImmReward( curRow, curCol, 0, value );
-	  curCol++;
-	}
-	else
-	  gTooManyEntries = 1;
+  if( curCol >= gNumStates ) {
+    curRow++;
+    curCol = 0;
+  }
+  if( curRow < gNumStates ) {
+    enterImmReward( curRow, curCol, 0, value );
+    curCol++;
+  }
+  else
+    gTooManyEntries = 1;
 
-      }
+}
       break;
 
-    case mc_mdp_start:
+case mc_mdp_start:
 
-      /* For an MDP we only want to see a single value and */
+/* For an MDP we only want to see a single value and */
       /* we want it to correspond to a valid state number. */
 
-      if( curCol > 0 )
-	gTooManyEntries = 1;
+if( curCol > 0 )
+  gTooManyEntries = 1;
 
-      else {
-	gInitialState = value;
-	curCol++;
+else {
+  gInitialState = value;
+  curCol++;
       }
       break;
-	  
-   case mc_start_belief:
 
-      /* This will process the individual entries when a starting */
+case mc_start_belief:
+
+/* This will process the individual entries when a starting */
       /* belief state is fully specified.  When it is a POMDP, we need */
       /* an entry for each state, so we keep the curCol variable */
       /* updated.  */
 
-      if( curCol < gNumStates ) {
-	gInitialBelief[curCol] = value;
-	curCol++;
+if( curCol < gNumStates ) {
+  gInitialBelief[curCol] = value;
+  curCol++;
       }
       else
-	gTooManyEntries = 1;
+  gTooManyEntries = 1;
 
-      break;
+break;
 
-   default:
-      ERR_enter("Parser<enterMatrix>:", currentLineNumber, 
+default:
+       ERR_enter("Parser<enterMatrix>:", currentLineNumber, 
                 BAD_MATRIX_CONTEXT, "");
       break;
    }  /* switch */
@@ -1222,14 +1225,14 @@ enterMatrix( double value ) {
 /******************************************************************************/
 void 
 setMatrixContext( Matrix_Context context, 
-		  int a, int i, int j, int obs ) {
+      int a, int i, int j, int obs ) {
 /* 
    Note that we must enter the matrix entries in reverse order because
    the matrices are defined with left-recursive rules.  Set the a, i,
    and j parameters to be less than zero when you want to define it
    for all possible values.  
 
-   Rewards for MDPs and POMDPs differ since in the former, rewards are not
+Rewards for MDPs and POMDPs differ since in the former, rewards are not
    based upon an observations.  This complicates things since not only is one 
    of the reward syntax options not valid, but the semantics of all the
    rewards change as well.  I have chosen to handle this in this routine.  
@@ -1238,53 +1241,53 @@ setMatrixContext( Matrix_Context context,
 */
   int state;
 
-   curMatrixContext = context;
+curMatrixContext = context;
    gTooManyEntries = 0;  /* Clear this out before reading any */
 
-   curRow = 0;  /* This is ignored for some contexts */
+curRow = 0;  /* This is ignored for some contexts */
    curCol = 0;
 
-   switch( curMatrixContext ) {
+switch( curMatrixContext ) {
 
-   mc_start_belief:
-     
-     break;
+mc_start_belief:
 
-   case mc_start_include:
+break;
 
-     /* When we specify the starting belief state as a list of states */
+case mc_start_include:
+
+/* When we specify the starting belief state as a list of states */
      /* to include, we initialize all state to 0.0, since as we read */
      /* the states we will set that particular value to 1.0.  After it */
      /* is all done we can then just normalize the belief state */
 
-     if( gProblemType == POMDP_problem_type )
+if( gProblemType == POMDP_problem_type )
        for( state = 0; state < gNumStates; state++ )
-	 gInitialBelief[state] = 0.0;
+   gInitialBelief[state] = 0.0;
 
-     else  /* It is an MDP which is not valid */
+else  /* It is an MDP which is not valid */
        ERR_enter("Parser<setMatrixContext>:", currentLineNumber, 
-		 BAD_START_STATE_TYPE, "");
-      
-     break;
+     BAD_START_STATE_TYPE, "");
 
-   case mc_start_exclude:
+break;
 
-     /* When we are specifying the starting belief state as a a list */
+case mc_start_exclude:
+
+/* When we are specifying the starting belief state as a a list */
      /* of states, we initialize all states to 1.0 and as we read each */
      /* in the list we clear it out to be zero.  fter it */
      /* is all done we can then just normalize the belief state */
 
-     if( gProblemType == POMDP_problem_type )
+if( gProblemType == POMDP_problem_type )
        for( state = 0; state < gNumStates; state++ )
-	 gInitialBelief[state] = 1.0;
+   gInitialBelief[state] = 1.0;
 
-     else  /* It is an MDP which is not valid */
+else  /* It is an MDP which is not valid */
        ERR_enter("Parser<setMatrixContext>:", currentLineNumber, 
-		 BAD_START_STATE_TYPE, "");
+     BAD_START_STATE_TYPE, "");
 
-     break;
+break;
 
-  /* We need a special representation for the immediate rewards.
+/* We need a special representation for the immediate rewards.
      These four cases initialize the data structure that will be
      needed for immediate rewards by calling newImmReward.  Note that
      the arguments will differe depending upon whether it is an
@@ -1293,45 +1296,45 @@ setMatrixContext( Matrix_Context context,
   case mc_reward_mdp_only:
     if( gProblemType == POMDP_problem_type )  {
        ERR_enter("Parser<setMatrixContext>:", currentLineNumber, 
-		 BAD_REWARD_SYNTAX, "");
+     BAD_REWARD_SYNTAX, "");
     }
     else {
       newImmReward( a, NOT_PRESENT, NOT_PRESENT, 0 );
     } 
     break;
- 
-  case mc_reward_all:	
+
+case mc_reward_all:	
     if( gProblemType == POMDP_problem_type ) 
       newImmReward( a, i, NOT_PRESENT, NOT_PRESENT );
 
-    else {
+else {
       newImmReward( a, i, NOT_PRESENT, 0 );
     }
     break;
   case mc_reward_row:
     if( gProblemType == POMDP_problem_type ) 
       newImmReward( a, i, j, NOT_PRESENT );
-    
-    else {
+
+else {
       newImmReward( a, i, j, 0 );
     } 
     break;
   case mc_reward_single:
 
-    if( gProblemType == MDP_problem_type ) {
+if( gProblemType == MDP_problem_type ) {
        ERR_enter("Parser<setMatrixContext>:", currentLineNumber, 
-		 BAD_REWARD_SYNTAX, "");
+     BAD_REWARD_SYNTAX, "");
     }
     else {
        newImmReward( a, i, j, obs );
      }
     break;
 
-   default:
-     break;
+default:
+       break;
    }
 
-  /* These variable settings will define the range over which the current 
+/* These variable settings will define the range over which the current 
      matrix context will have effect.  This accounts for wildcards by
      setting the range to include everything.  When a single entry was
      specified, the range is that single number.  When we actually 
@@ -1346,21 +1349,21 @@ setMatrixContext( Matrix_Context context,
    else
       minA = maxA = a;
 
-   if( i < 0 ) {
+if( i < 0 ) {
       minI = 0;
       maxI = gNumStates - 1;
    }
    else
       minI = maxI = i;
 
-   if( j < 0 ) {
+if( j < 0 ) {
       minJ = 0;
       maxJ = gNumStates - 1;
    }
    else
       minJ = maxJ = j;
 
-   if( obs < 0 ) {
+if( obs < 0 ) {
       minObs = 0;
       maxObs = gNumObservations - 1;
    }
@@ -1377,10 +1380,10 @@ enterStartState( int i ) {
    it is an MDP.
 */
 
-  if( gProblemType == MDP_problem_type )
+if( gProblemType == MDP_problem_type )
     return;
 
-  switch( curMatrixContext ) {
+switch( curMatrixContext ) {
   case mc_start_include:
     gInitialBelief[i] = 1.0;
     break;
@@ -1389,7 +1392,7 @@ enterStartState( int i ) {
     break;
   default:
     ERR_enter("Parser<enterStartState>:", currentLineNumber, 
-	      BAD_MATRIX_CONTEXT, "");
+        BAD_MATRIX_CONTEXT, "");
       break;
   } /* switch */
 }  /* enterStartState */
@@ -1399,10 +1402,10 @@ setStartStateUniform() {
   int i;
   double prob;
 
-  if( gProblemType != POMDP_problem_type )
+if( gProblemType != POMDP_problem_type )
     return;
 
-  prob = 1.0/gNumStates;
+prob = 1.0/gNumStates;
   for( i = 0; i < gNumStates; i++ )
     gInitialBelief[i] = prob;
 
@@ -1418,12 +1421,12 @@ endStartStates() {
   int i;
   double prob;
 
-  if( gProblemType == MDP_problem_type ) {
+if( gProblemType == MDP_problem_type ) {
     curMatrixContext = mc_none;  /* just to be sure */
     return;
   }
-    
-  switch( curMatrixContext ) {
+
+switch( curMatrixContext ) {
   case mc_start_include:
   case mc_start_exclude:
     /* At this point gInitialBelief should be a vector of 1.0's and 0.0's
@@ -1441,18 +1444,18 @@ endStartStates() {
       gInitialBelief[i] /= prob;
     break;
 
-  default:  /* Make sure we have a valid prob. distribution */
-    prob = 0.0;
+default:  /* Make sure we have a valid prob. distribution */
+       prob = 0.0;
     for( i = 0; i < gNumStates; i++ ) 
       prob += gInitialBelief[i];
     if((prob < ( 1.0 - EPSILON)) || (prob > (1.0 + EPSILON))) {
       ERR_enter("Parser<endStartStates>:", NO_LINE, 
-		BAD_START_PROB_SUM, "" );
+    BAD_START_PROB_SUM, "" );
     }
     break;
   }  /* switch */
 
-  curMatrixContext = mc_none;
+curMatrixContext = mc_none;
 
 }  /* endStartStates */
 /******************************************************************************/
@@ -1465,7 +1468,7 @@ verifyPreamble() {
    but return 0 so that more errors can be detected 
    */
 
-   if( discountDefined == 0 )
+if( discountDefined == 0 )
       ERR_enter("Parser<verifyPreamble>:", currentLineNumber, 
                 MISSING_DISCOUNT, "" );
    if( valuesDefined == 0 )
@@ -1482,13 +1485,13 @@ verifyPreamble() {
       gNumActions = 1;
    }
 
-   /* If we do not see this, them we must be parsing an MDP */
+/* If we do not see this, them we must be parsing an MDP */
    if( observationsDefined == 0 ) {
      gNumObservations = 0;
      gProblemType = MDP_problem_type;
    }
 
-   else
+else
      gProblemType = POMDP_problem_type;
 
 }  /* verifyPreamble */
@@ -1499,10 +1502,10 @@ checkProbs() {
    double sum;
    char str[40];
 
-   
-   for( a = 0; a < gNumActions; a++ )
+
+for( a = 0; a < gNumActions; a++ )
       for( i = 0; i < gNumStates; i++ ) {
-	 sum = sumIMatrixRowValues( IP[a], i );
+   sum = sumIMatrixRowValues( IP[a], i );
          if((sum < ( 1.0 - EPSILON)) || (sum > (1.0 + EPSILON))) {
             sprintf( str, "action=%d, state=%d (%.5lf)", a, i, sum );
             ERR_enter("Parser<checkProbs>:", NO_LINE, 
@@ -1510,22 +1513,22 @@ checkProbs() {
          }
       } /* for i */
 
-   if( gProblemType == POMDP_problem_type )
+if( gProblemType == POMDP_problem_type )
      for( a = 0; a < gNumActions; a++ )
        for( j = 0; j < gNumStates; j++ ) {
-	 sum = sumIMatrixRowValues( IR[a], j );
+   sum = sumIMatrixRowValues( IR[a], j );
          if((sum < ( 1.0 - EPSILON)) || (sum > (1.0 + EPSILON))) {
-	   sprintf( str, "action=%d, state=%d (%.5lf)", a, j, sum );
-	   ERR_enter("Parser<checkProbs>:", NO_LINE, 
-		     BAD_OBS_PROB_SUM, str );
+     sprintf( str, "action=%d, state=%d (%.5lf)", a, j, sum );
+     ERR_enter("Parser<checkProbs>:", NO_LINE, 
+         BAD_OBS_PROB_SUM, str );
          } /* if sum not == 1 */
        }  /* for j */
 
-   /* Now see if we had observation specs defined in an MDP */
+/* Now see if we had observation specs defined in an MDP */
 
-   if( observationSpecDefined && (gProblemType == MDP_problem_type))
+if( observationSpecDefined && (gProblemType == MDP_problem_type))
      ERR_enter("Parser<checkProbs>:", NO_LINE, 
-	       OBS_IN_MDP_PROBLEM, "" );
+         OBS_IN_MDP_PROBLEM, "" );
 
 }  /* checkProbs */
 /************************************************************************/
@@ -1553,40 +1556,40 @@ readMDPFile( FILE *file ) {
    int returnValue, dump_status;
    extern FILE *yyin;
 
-   initParser();
+  initParser();
 
-   ERR_initialize();
+  ERR_initialize();
    H_create();
    yyin = file;
 
-   returnValue = yyparse();
+returnValue = yyparse();
 
-   /* If there are syntax errors, then we have to do something if we 
+/* If there are syntax errors, then we have to do something if we 
       want to parse another file without restarting.  It seems that
       a syntax error bombs the code out, but leaves the file pointer
       at the place it bombed.  Thus, another call to yyparse() will
       pick up where it left off and not necessarily at the start of a 
       new file.
 
-      Unfortunately, I do not know how to do this yet.
+Unfortunately, I do not know how to do this yet.
       */
    if (returnValue != 0) {
       printf("\nParameter file contains syntax errors!\n");
     }
 
-   dump_status = ERR_dump();
+dump_status = ERR_dump();
 
-   ERR_cleanUp();
+ERR_cleanUp();
    H_destroy();
 
-   if (dump_status || returnValue ) 
+if (dump_status || returnValue ) 
       return( 0 );
 
-   /* This is where intermediate matrix representation are
+/* This is where intermediate matrix representation are
       converted into their final representation */
    convertMatrices();
 
-   return( 1 );
+return( 1 );
 }  /* readPomdpFile */
 /************************************************************************/
 int 

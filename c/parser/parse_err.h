@@ -145,9 +145,10 @@ typedef struct enode
 	struct enode *nextError;	/* pointer to next node */
 } Err_node;
 
-extern int ERR_dump();
-extern void ERR_enter();
-extern void ERR_inititalize();
+int ERR_dump();
+void ERR_enter(char* x, int a, int b, char* y);
+void ERR_initialize();
+void ERR_cleanUp();
 
 #endif
 /*************************************************************************/
