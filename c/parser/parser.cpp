@@ -112,7 +112,7 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "parser.y"
+#line 1 "pomdp_parser.y"
 
 /*
   *****
@@ -253,14 +253,14 @@ int gTooManyEntries = 0;
 #endif
 
 #if ! defined (YYSTYPE) && ! defined (YYSTYPE_IS_DECLARED)
-#line 131 "parser.y"
+#line 131 "pomdp_parser.y"
 typedef union YYSTYPE {
   Constant_Block *constBlk;
   int i_num;
   double f_num;
 } YYSTYPE;
 /* Line 196 of yacc.c.  */
-#line 264 "parser.c"
+#line 264 "pomdp_parser.c"
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
 # define YYSTYPE_IS_TRIVIAL 1
@@ -272,7 +272,7 @@ typedef union YYSTYPE {
 
 
 /* Line 219 of yacc.c.  */
-#line 276 "parser.c"
+#line 276 "pomdp_parser.c"
 
 #if ! defined (YYSIZE_T) && defined (__SIZE_TYPE__)
 # define YYSIZE_T __SIZE_TYPE__
@@ -1387,7 +1387,7 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 144 "parser.y"
+#line 144 "pomdp_parser.y"
     { 
 		    /* The preamble is a section of the file which */
 		    /* must come first and whcih contains some global */
@@ -1413,7 +1413,7 @@ yyreduce:
     break;
 
   case 3:
-#line 168 "parser.y"
+#line 168 "pomdp_parser.y"
     { 
 		    /* Some type of algorithms want a place to start */
 		    /* off the problem, especially when doing */
@@ -1431,7 +1431,7 @@ yyreduce:
     break;
 
   case 4:
-#line 187 "parser.y"
+#line 187 "pomdp_parser.y"
     {
 		    /* This is the very last thing we do while */
 		    /* parsing.  Even though the file may conform to */
@@ -1450,14 +1450,14 @@ yyreduce:
     break;
 
   case 5:
-#line 204 "parser.y"
+#line 204 "pomdp_parser.y"
     {
 		   YACCtrace("preamble -> preamble param_type\n");
 		}
     break;
 
   case 12:
-#line 216 "parser.y"
+#line 216 "pomdp_parser.y"
     {
 		  /* The discount factor only makes sense when in the */
 		  /* range 0 to 1, so it is an error to specify */
@@ -1473,7 +1473,7 @@ yyreduce:
     break;
 
   case 13:
-#line 230 "parser.y"
+#line 230 "pomdp_parser.y"
     {
                    valuesDefined = 1;
 		   YACCtrace("value_param -> VALUESTOK COLONTOK value_tail\n");
@@ -1481,21 +1481,21 @@ yyreduce:
     break;
 
   case 14:
-#line 243 "parser.y"
+#line 243 "pomdp_parser.y"
     {
                    gValueType = REWARD_value_type;
 		}
     break;
 
   case 15:
-#line 247 "parser.y"
+#line 247 "pomdp_parser.y"
     {
                    gValueType = COST_value_type;
 		}
     break;
 
   case 16:
-#line 252 "parser.y"
+#line 252 "pomdp_parser.y"
     { 
 		  /* Since are able to enumerate the states and refer */
 		  /* to them by identifiers, we will need to set the */
@@ -1510,7 +1510,7 @@ yyreduce:
     break;
 
   case 17:
-#line 264 "parser.y"
+#line 264 "pomdp_parser.y"
     {
                    statesDefined = 1;
                    curMnemonic = nt_unknown;
@@ -1519,7 +1519,7 @@ yyreduce:
     break;
 
   case 18:
-#line 271 "parser.y"
+#line 271 "pomdp_parser.y"
     {
 
 		  /*  For the number of states, we can just have a */
@@ -1541,7 +1541,7 @@ yyreduce:
     break;
 
   case 20:
-#line 293 "parser.y"
+#line 293 "pomdp_parser.y"
     {
 		  /* See state_param for explanation of this */
 
@@ -1550,7 +1550,7 @@ yyreduce:
     break;
 
   case 21:
-#line 299 "parser.y"
+#line 299 "pomdp_parser.y"
     {
                    actionsDefined = 1;
                    curMnemonic = nt_unknown;
@@ -1559,7 +1559,7 @@ yyreduce:
     break;
 
   case 22:
-#line 306 "parser.y"
+#line 306 "pomdp_parser.y"
     {
 
 		  /*  For the number of actions, we can just have a */
@@ -1581,7 +1581,7 @@ yyreduce:
     break;
 
   case 24:
-#line 328 "parser.y"
+#line 328 "pomdp_parser.y"
     { 
 		  /* See state_param for explanation of this */
 
@@ -1590,7 +1590,7 @@ yyreduce:
     break;
 
   case 25:
-#line 334 "parser.y"
+#line 334 "pomdp_parser.y"
     {
                    observationsDefined = 1;
                    curMnemonic = nt_unknown;
@@ -1599,7 +1599,7 @@ yyreduce:
     break;
 
   case 26:
-#line 341 "parser.y"
+#line 341 "pomdp_parser.y"
     {
 
 		  /*  For the number of observation, we can just have a */
@@ -1621,7 +1621,7 @@ yyreduce:
     break;
 
   case 28:
-#line 363 "parser.y"
+#line 363 "pomdp_parser.y"
     { 
 		  /* There are a number of different formats for the */
 		  /* start state.  This one is valid for either a */
@@ -1639,7 +1639,7 @@ yyreduce:
     break;
 
   case 30:
-#line 396 "parser.y"
+#line 396 "pomdp_parser.y"
     {
                    int num;
 
@@ -1661,42 +1661,42 @@ yyreduce:
     break;
 
   case 31:
-#line 416 "parser.y"
+#line 416 "pomdp_parser.y"
     { 
 		  setMatrixContext(mc_start_include, 0, 0, 0, 0); 
 		}
     break;
 
   case 33:
-#line 422 "parser.y"
+#line 422 "pomdp_parser.y"
     { 
 		  setMatrixContext(mc_start_exclude, 0, 0, 0, 0); 
 		}
     break;
 
   case 35:
-#line 429 "parser.y"
+#line 429 "pomdp_parser.y"
     { 
 		  setStartStateUniform(); 
 		}
     break;
 
   case 36:
-#line 434 "parser.y"
+#line 434 "pomdp_parser.y"
     {
 		  enterStartState( (yyvsp[0].i_num) );
                 }
     break;
 
   case 37:
-#line 438 "parser.y"
+#line 438 "pomdp_parser.y"
     {
 		  enterStartState( (yyvsp[0].i_num) );
                 }
     break;
 
   case 41:
-#line 447 "parser.y"
+#line 447 "pomdp_parser.y"
     {
 		    /* If there are observation specifications defined,
 		       but no observations listed in the preamble, then
@@ -1725,19 +1725,19 @@ yyreduce:
     break;
 
   case 43:
-#line 475 "parser.y"
+#line 475 "pomdp_parser.y"
     {
 		   YACCtrace("trans_prob_spec -> TTOK COLONTOK trans_spec_tail\n");
 		}
     break;
 
   case 44:
-#line 480 "parser.y"
+#line 480 "pomdp_parser.y"
     { setMatrixContext(mc_trans_single, (yyvsp[-4].i_num), (yyvsp[-2].i_num), (yyvsp[0].i_num), 0); }
     break;
 
   case 45:
-#line 481 "parser.y"
+#line 481 "pomdp_parser.y"
     {
                    enterMatrix( (yyvsp[0].f_num) );
 		   YACCtrace("trans_spec_tail -> action COLONTOK state COLONTOK state prob \n");
@@ -1745,43 +1745,43 @@ yyreduce:
     break;
 
   case 46:
-#line 486 "parser.y"
+#line 486 "pomdp_parser.y"
     { setMatrixContext(mc_trans_row, (yyvsp[-2].i_num), (yyvsp[0].i_num), 0, 0); }
     break;
 
   case 47:
-#line 487 "parser.y"
+#line 487 "pomdp_parser.y"
     {
 		   YACCtrace("trans_spec_tail -> action COLONTOK state ui_matrix \n");
 		}
     break;
 
   case 48:
-#line 490 "parser.y"
+#line 490 "pomdp_parser.y"
     { setMatrixContext(mc_trans_all, (yyvsp[0].i_num), 0, 0, 0); }
     break;
 
   case 49:
-#line 491 "parser.y"
+#line 491 "pomdp_parser.y"
     {
 		   YACCtrace("trans_spec_tail -> action ui_matrix\n");
 		}
     break;
 
   case 50:
-#line 496 "parser.y"
+#line 496 "pomdp_parser.y"
     {
 		   YACCtrace("obs_prob_spec -> OTOK COLONTOK  obs_spec_tail\n");
 		}
     break;
 
   case 51:
-#line 501 "parser.y"
+#line 501 "pomdp_parser.y"
     { setMatrixContext(mc_obs_single, (yyvsp[-4].i_num), 0, (yyvsp[-2].i_num), (yyvsp[0].i_num)); }
     break;
 
   case 52:
-#line 502 "parser.y"
+#line 502 "pomdp_parser.y"
     {
                    enterMatrix( (yyvsp[0].f_num) );
 		   YACCtrace("obs_spec_tail -> action COLONTOK state COLONTOK obs prob \n");
@@ -1789,43 +1789,43 @@ yyreduce:
     break;
 
   case 53:
-#line 507 "parser.y"
+#line 507 "pomdp_parser.y"
     { setMatrixContext(mc_obs_row, (yyvsp[-2].i_num), 0, (yyvsp[0].i_num), 0); }
     break;
 
   case 54:
-#line 508 "parser.y"
+#line 508 "pomdp_parser.y"
     {
 		   YACCtrace("obs_spec_tail -> action COLONTOK state COLONTOK u_matrix\n");
 		}
     break;
 
   case 55:
-#line 511 "parser.y"
+#line 511 "pomdp_parser.y"
     { setMatrixContext(mc_obs_all, (yyvsp[0].i_num), 0, 0, 0); }
     break;
 
   case 56:
-#line 512 "parser.y"
+#line 512 "pomdp_parser.y"
     {
 		   YACCtrace("obs_spec_tail -> action u_matrix\n");
 		}
     break;
 
   case 57:
-#line 517 "parser.y"
+#line 517 "pomdp_parser.y"
     {
 		   YACCtrace("reward_spec -> RTOK COLONTOK  reward_spec_tail\n");
 		}
     break;
 
   case 58:
-#line 524 "parser.y"
+#line 524 "pomdp_parser.y"
     { setMatrixContext(mc_reward_single, (yyvsp[-6].i_num), (yyvsp[-4].i_num), (yyvsp[-2].i_num), (yyvsp[0].i_num)); }
     break;
 
   case 59:
-#line 525 "parser.y"
+#line 525 "pomdp_parser.y"
     {
                    enterMatrix( (yyvsp[0].f_num) );
 
@@ -1836,12 +1836,12 @@ yyreduce:
     break;
 
   case 60:
-#line 533 "parser.y"
+#line 533 "pomdp_parser.y"
     { setMatrixContext(mc_reward_row, (yyvsp[-4].i_num), (yyvsp[-2].i_num), (yyvsp[0].i_num), 0); }
     break;
 
   case 61:
-#line 534 "parser.y"
+#line 534 "pomdp_parser.y"
     {
                    checkMatrix();
 		   YACCtrace("reward_spec_tail -> action COLONTOK state COLONTOK state num_matrix\n");
@@ -1849,12 +1849,12 @@ yyreduce:
     break;
 
   case 62:
-#line 539 "parser.y"
+#line 539 "pomdp_parser.y"
     { setMatrixContext(mc_reward_all, (yyvsp[-2].i_num), (yyvsp[0].i_num), 0, 0); }
     break;
 
   case 63:
-#line 540 "parser.y"
+#line 540 "pomdp_parser.y"
     {
                    checkMatrix();
 		   YACCtrace("reward_spec_tail -> action COLONTOK state num_matrix\n");
@@ -1862,12 +1862,12 @@ yyreduce:
     break;
 
   case 64:
-#line 546 "parser.y"
+#line 546 "pomdp_parser.y"
     { setMatrixContext(mc_reward_mdp_only, (yyvsp[0].i_num), 0, 0, 0); }
     break;
 
   case 65:
-#line 547 "parser.y"
+#line 547 "pomdp_parser.y"
     {
                    checkMatrix();
 		   YACCtrace("reward_spec_tail -> action num_matrix\n");
@@ -1875,81 +1875,81 @@ yyreduce:
     break;
 
   case 66:
-#line 553 "parser.y"
+#line 553 "pomdp_parser.y"
     {
                    enterUniformMatrix();
                 }
     break;
 
   case 67:
-#line 557 "parser.y"
+#line 557 "pomdp_parser.y"
     {
                    enterIdentityMatrix();
                 }
     break;
 
   case 68:
-#line 561 "parser.y"
+#line 561 "pomdp_parser.y"
     {
                    checkMatrix();
                 }
     break;
 
   case 69:
-#line 567 "parser.y"
+#line 567 "pomdp_parser.y"
     {
                    enterUniformMatrix();
                 }
     break;
 
   case 70:
-#line 571 "parser.y"
+#line 571 "pomdp_parser.y"
     {
 		  enterResetMatrix();
 		}
     break;
 
   case 71:
-#line 575 "parser.y"
+#line 575 "pomdp_parser.y"
     {
                    checkMatrix();
                 }
     break;
 
   case 72:
-#line 580 "parser.y"
+#line 580 "pomdp_parser.y"
     {
                    enterMatrix( (yyvsp[0].f_num) );
                 }
     break;
 
   case 73:
-#line 584 "parser.y"
+#line 584 "pomdp_parser.y"
     {
                    enterMatrix( (yyvsp[0].f_num) );
                 }
     break;
 
   case 74:
-#line 589 "parser.y"
+#line 589 "pomdp_parser.y"
     {
                    enterMatrix( (yyvsp[0].f_num) );
                 }
     break;
 
   case 75:
-#line 593 "parser.y"
+#line 593 "pomdp_parser.y"
     {
                    enterMatrix( (yyvsp[0].f_num) );
                 }
     break;
 
   case 76:
-#line 598 "parser.y"
+#line 598 "pomdp_parser.y"
     {
                    if(( (yyvsp[0].constBlk)->theValue.theInt < 0 ) 
                       || ((yyvsp[0].constBlk)->theValue.theInt >= gNumStates )) {
-                      ERR_enter("Parser<ytab>:", currentLineNumber, 
+                      ERR_enter("pomdp_parser<ytab>:", currentLineNumber, 
                                 BAD_STATE_VAL, "");
                       (yyval.i_num) = 0;
                    }
@@ -1960,12 +1960,12 @@ yyreduce:
     break;
 
   case 77:
-#line 610 "parser.y"
+#line 610 "pomdp_parser.y"
     {
                    int num;
                    num = H_lookup( (yyvsp[0].constBlk)->theValue.theString, nt_state );
                    if (( num < 0 ) || (num >= gNumStates )) {
-				 ERR_enter("Parser<ytab>:", currentLineNumber, 
+				 ERR_enter("pomdp_parser<ytab>:", currentLineNumber, 
 						 BAD_STATE_STR, (yyvsp[0].constBlk)->theValue.theString );
 				 (yyval.i_num) = 0;
                    }
@@ -1978,19 +1978,19 @@ yyreduce:
     break;
 
   case 78:
-#line 625 "parser.y"
+#line 625 "pomdp_parser.y"
     {
                    (yyval.i_num) = WILDCARD_SPEC;
                 }
     break;
 
   case 79:
-#line 630 "parser.y"
+#line 630 "pomdp_parser.y"
     {
                    (yyval.i_num) = (yyvsp[0].constBlk)->theValue.theInt;
                    if(( (yyvsp[0].constBlk)->theValue.theInt < 0 ) 
                       || ((yyvsp[0].constBlk)->theValue.theInt >= gNumActions )) {
-                      ERR_enter("Parser<ytab>:", currentLineNumber, 
+                      ERR_enter("pomdp_parser<ytab>:", currentLineNumber, 
                                 BAD_ACTION_VAL, "" );
                       (yyval.i_num) = 0;
                    }
@@ -2001,12 +2001,12 @@ yyreduce:
     break;
 
   case 80:
-#line 643 "parser.y"
+#line 643 "pomdp_parser.y"
     {
                    int num;
                    num = H_lookup( (yyvsp[0].constBlk)->theValue.theString, nt_action );
                    if(( num < 0 ) || (num >= gNumActions )) {
-                      ERR_enter("Parser<ytab>:", currentLineNumber, 
+                      ERR_enter("pomdp_parser<ytab>:", currentLineNumber, 
                                 BAD_ACTION_STR, (yyvsp[0].constBlk)->theValue.theString );
                       (yyval.i_num) = 0;
                    }
@@ -2019,18 +2019,18 @@ yyreduce:
     break;
 
   case 81:
-#line 658 "parser.y"
+#line 658 "pomdp_parser.y"
     {
                    (yyval.i_num) = WILDCARD_SPEC;
                 }
     break;
 
   case 82:
-#line 663 "parser.y"
+#line 663 "pomdp_parser.y"
     {
                    if(( (yyvsp[0].constBlk)->theValue.theInt < 0 ) 
                       || ((yyvsp[0].constBlk)->theValue.theInt >= gNumObservations )) {
-                      ERR_enter("Parser<ytab>:", currentLineNumber, 
+                      ERR_enter("pomdp_parser<ytab>:", currentLineNumber, 
                                 BAD_OBS_VAL, "");
                       (yyval.i_num) = 0;
                    }
@@ -2041,7 +2041,7 @@ yyreduce:
     break;
 
   case 83:
-#line 675 "parser.y"
+#line 675 "pomdp_parser.y"
     {
                    int num;
                    num = H_lookup( (yyvsp[0].constBlk)->theValue.theString, nt_observation );
@@ -2059,28 +2059,28 @@ yyreduce:
     break;
 
   case 84:
-#line 690 "parser.y"
+#line 690 "pomdp_parser.y"
     {
                    (yyval.i_num) = WILDCARD_SPEC;
                 }
     break;
 
   case 85:
-#line 695 "parser.y"
+#line 695 "pomdp_parser.y"
     {
                    enterString( (yyvsp[0].constBlk) );
                 }
     break;
 
   case 86:
-#line 699 "parser.y"
+#line 699 "pomdp_parser.y"
     {
                    enterString( (yyvsp[0].constBlk) );
                 }
     break;
 
   case 87:
-#line 704 "parser.y"
+#line 704 "pomdp_parser.y"
     {
 		  (yyval.f_num) = (yyvsp[0].constBlk)->theValue.theInt;
 		  if( curMatrixContext != mc_mdp_start )
@@ -2092,11 +2092,11 @@ yyreduce:
     break;
 
   case 88:
-#line 713 "parser.y"
+#line 713 "pomdp_parser.y"
     {
 		  (yyval.f_num) = (yyvsp[0].constBlk)->theValue.theFloat;
 		  if( curMatrixContext == mc_mdp_start )
-		    ERR_enter("Parser<ytab>:", currentLineNumber, 
+		    ERR_enter("pomdp_parser<ytab>:", currentLineNumber, 
 				    BAD_START_STATE_TYPE, "" );
 		  else
 		    if(( (yyval.f_num) < 0.0 ) || ((yyval.f_num) > 1.0 ))
@@ -2107,7 +2107,7 @@ yyreduce:
     break;
 
   case 89:
-#line 726 "parser.y"
+#line 726 "pomdp_parser.y"
     {
                    if( (yyvsp[-1].i_num) )
                       (yyval.f_num) = (yyvsp[0].constBlk)->theValue.theInt * -1.0;
@@ -2118,7 +2118,7 @@ yyreduce:
     break;
 
   case 90:
-#line 734 "parser.y"
+#line 734 "pomdp_parser.y"
     {
                    if( (yyvsp[-1].i_num) )
                       (yyval.f_num) = (yyvsp[0].constBlk)->theValue.theFloat * -1.0;
@@ -2129,21 +2129,21 @@ yyreduce:
     break;
 
   case 91:
-#line 743 "parser.y"
+#line 743 "pomdp_parser.y"
     {
                    (yyval.i_num) = 0;
                 }
     break;
 
   case 92:
-#line 747 "parser.y"
+#line 747 "pomdp_parser.y"
     {
                    (yyval.i_num) = 1;
                 }
     break;
 
   case 93:
-#line 751 "parser.y"
+#line 751 "pomdp_parser.y"
     {
                    (yyval.i_num) = 0;
                 }
@@ -2154,7 +2154,7 @@ yyreduce:
     }
 
 /* Line 1126 of yacc.c.  */
-#line 2158 "parser.c"
+#line 2158 "pomdp_parser.c"
 
   yyvsp -= yylen;
   yyssp -= yylen;
@@ -2422,7 +2422,7 @@ yyreturn:
 }
 
 
-#line 758 "parser.y"
+#line 758 "pomdp_parser.y"
 
 
 /********************************************************************/
