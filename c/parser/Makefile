@@ -4,18 +4,18 @@ CPP = g++-4.7
 BIN = ./test_parser
 
 C_SRCS = 
-CPP_SRCS = scanner.cpp parse_err.cpp pomdp_parser.cpp imm-reward.cpp parse_hash.cpp mdp.cpp test_parser.cpp
+CPP_SRCS = sparse-matrix.cpp scanner.cpp parse_err.cpp pomdp_parser.cpp imm-reward.cpp parse_hash.cpp mdp.cpp test_parser.cpp
 
 C_OBJS = $(C_SRCS:.c=.o) 
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)
 OBJS = $(C_OBJS) $(CPP_OBJS)
 
 INCS = -I ../ -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported
-LIBS = 
+LIBS = -lfl
 
 CFLAGS = -Wall -g -O3 -ggdb
 CPPFLAGS = -Wno-write-strings -Wall -g -O3 -ggdb -std=c++11 
-LDFLAGS =
+LDFLAGS = 
 
 all: $(BIN)
 

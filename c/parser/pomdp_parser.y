@@ -1550,6 +1550,7 @@ initParser() {
    curMatrixContext = mc_none;
 
 }  /* initParser */
+
 /************************************************************************/
 int 
 readMDPFile( FILE *file ) {

@@ -1,4 +1,4 @@
-/*  mdp.c
+/*  mdp.cpp
 
  *****
  Copyright 1994-1997, Brown University
@@ -33,7 +33,6 @@
 #include "mdp.h"
 #include "imm-reward.h"
 #include "sparse-matrix.h"
-#include "pomdp.h"
 
 #define MDP_C
 
@@ -75,9 +74,9 @@ int gNumObservations = 0;   /* remains zero for MDPs */
 
 /* Intermediate variables */
 
-I_Matrix *IP;  /* Transition Probabilities */
+//I_Matrix *IP;  /* Transition Probabilities */
 
-I_Matrix *IR;  /* Observation Probabilities (POMDP only) */
+//I_Matrix *IR;  /* Observation Probabilities (POMDP only) */
 
 I_Matrix IQ;  /* Immediate action-state pair values (both MDP and POMDP) */
 
@@ -238,6 +237,7 @@ readMDP( char *filename, model_t& model ) {
     for(int s=0; s<ns; s++)
       pr[a](s) = getImmediateReward(a,s,0,0);
   }
+  model = model_t(ns,na,no,pt,po,discount, pr,b0);
 
   /* After the file has been parsed, we should have everything we need
      in the final representation.  

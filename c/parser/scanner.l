@@ -211,7 +211,7 @@ IntLiteral {Digit}+
 
 .				{ 
                                   
-                                  //ERR_enter("Scanner<yylex>",currentLineNumber, ILL_CHAR_ERR, yytext);
+                                  ERR_enter("Scanner<yylex>",currentLineNumber, ILL_CHAR_ERR, yytext);
                                 }
 
 
