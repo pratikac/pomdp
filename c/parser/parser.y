@@ -1416,8 +1416,7 @@ setStartStateUniform() {
 
 }  /*  setStartStateUniform*/
 /******************************************************************************/
-void 
-endStartStates() {
+void endStartStates(){
 /*
    There are a few cases where the matrix context will not be
    set at this point.  When there is a list of probabilities
@@ -1426,12 +1425,12 @@ endStartStates() {
   int i;
   double prob;
 
-  if( gProblemType == MDP_problem_type ) {
+if( gProblemType == MDP_problem_type ) {
     curMatrixContext = mc_none;  /* just to be sure */
     return;
   }
-    
-  switch( curMatrixContext ) {
+
+switch( curMatrixContext ) {
   case mc_start_include:
   case mc_start_exclude:
     /* At this point model->b0.p should be a vector of 1.0's and 0.0's
@@ -1449,20 +1448,20 @@ endStartStates() {
       model->b0.p(i) /= prob;
     break;
 
-  default:  /* Make sure we have a valid prob. distribution */
-    prob = 0.0;
+default:  /* Make sure we have a valid prob. distribution */
+       prob = 0.0;
     for( i = 0; i < model.ns; i++ ) 
       prob += model->b0.p(i);
     if((prob < ( 1.0 - EPSILON)) || (prob > (1.0 + EPSILON))) {
       ERR_enter("Parser<endStartStates>:", NO_LINE, 
-		BAD_START_PROB_SUM, "" );
+    BAD_START_PROB_SUM, "" );
     }
     break;
   }  /* switch */
 
-  curMatrixContext = mc_none;
+curMatrixContext = mc_none;
 
-}  /* endStartStates */
+}
 
 /******************************************************************************/
 void 
