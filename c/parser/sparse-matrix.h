@@ -69,7 +69,7 @@ struct Matrix_Struct {
   int *row_length;  /* The length of each row in mat_val */
   int *col;         /* The column number for each entry in mat_val */
 };
-typedef struct Matrix_Struct *Matrix;
+typedef struct Matrix_Struct *CMatrix;
 
 /**********************************************************************/
 /******************************  External Routines  *******************/
@@ -87,11 +87,11 @@ extern int accumulateEntryInIMatrix( I_Matrix i_matrix, int row,
 extern void destroyIMatrix( I_Matrix i_matrix );
 extern I_Matrix newIMatrix( int num_rows );
 extern double sumIMatrixRowValues( I_Matrix i_matrix, int row );
-extern Matrix newMatrix( int num_rows, int num_non_zero );
-extern void destroyMatrix( Matrix matrix );
-extern Matrix transformIMatrix( I_Matrix i_matrix );
-extern void displayMatrix( Matrix matrix );
-extern double sumRowValues( Matrix matrix, int row );
-extern double getEntryMatrix( Matrix matrix, int row, int col );
+extern CMatrix newMatrix( int num_rows, int num_non_zero );
+extern void destroyMatrix( CMatrix matrix );
+extern CMatrix transformIMatrix( I_Matrix i_matrix );
+extern void displayMatrix( CMatrix matrix );
+extern double sumRowValues( CMatrix matrix, int row );
+extern double getEntryMatrix( CMatrix matrix, int row, int col );
 
 #endif

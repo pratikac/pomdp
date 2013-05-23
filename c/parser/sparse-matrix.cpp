@@ -315,11 +315,11 @@ displayIMatrix( I_Matrix i_matrix ) {
 /**********************************************************************/
 /********************  Routines for sparse matrix    ******************/
 /**********************************************************************/
-Matrix 
+CMatrix 
 newMatrix( int num_rows, int num_non_zero ) {
-  Matrix matrix;
+  CMatrix matrix;
 
-  matrix = (Matrix) XMALLOC( sizeof( *matrix ));
+  matrix = (CMatrix) XMALLOC( sizeof( *matrix ));
 
   matrix->num_rows = num_rows;
   matrix->num_non_zero = num_non_zero;
@@ -337,7 +337,7 @@ newMatrix( int num_rows, int num_non_zero ) {
 }  /* newMatrix */
 /**********************************************************************/
 void 
-destroyMatrix( Matrix matrix ) {
+destroyMatrix( CMatrix matrix ) {
 
   XFREE( matrix->row_length );
   XFREE( matrix->row_start );
@@ -347,14 +347,14 @@ destroyMatrix( Matrix matrix ) {
   XFREE( matrix );
 }  /* destroyMatrix */
 /**********************************************************************/
-Matrix 
+CMatrix 
 transformIMatrix( I_Matrix i_matrix ) {
 /*
    Will convert a matrix object in intermediate form into a sparse
    representation.  It does not free the memory of the intermediate
    representation.
    */
-  Matrix matrix;
+  CMatrix matrix;
   int row;
   I_Matrix_Row_Node cur_node;
   int index = 0;  /* holds the position in the mat_val and col arrays */
@@ -387,7 +387,7 @@ transformIMatrix( I_Matrix i_matrix ) {
 }  /* transformIMatrix */
 /**********************************************************************/
 double 
-sumRowValues( Matrix matrix, int row ) {
+sumRowValues( CMatrix matrix, int row ) {
   double sum = 0.0;
   int col;
 
@@ -400,7 +400,7 @@ sumRowValues( Matrix matrix, int row ) {
 }  /* sumRowValues */
 /**********************************************************************/
 void 
-displayMatrix( Matrix matrix ) {
+displayMatrix( CMatrix matrix ) {
   int i, j;
   
   for( i = 0; i < matrix->num_rows; i++ ) {
@@ -423,7 +423,7 @@ displayMatrix( Matrix matrix ) {
 } /* displayMatrix */
 /**********************************************************************/
 double 
-getEntryMatrix( Matrix matrix, int row, int col ) {
+getEntryMatrix( CMatrix matrix, int row, int col ) {
 /*
    Returns the value for a particular entry in the matrix.  It looks in
    the row for the specified column, and if it is not found it will

@@ -83,12 +83,12 @@ I_Matrix IQ;  /* Immediate action-state pair values (both MDP and POMDP) */
 
 /* Sparse variables */
 
-Matrix *P;  /* Transition Probabilities */
+CMatrix *P;  /* Transition Probabilities */
 
-Matrix *R;  /* Observation Probabilities */
+CMatrix *R;  /* Observation Probabilities */
 
-Matrix Q;  /* Immediate values for state action pairs.  These are
-              expectations computed from immediate values. */
+CMatrix Q;  /* Immediate values for state action pairs.  These are
+               expectations computed from immediate values. */
 
 /* Normal variables */
 
@@ -202,9 +202,9 @@ readMDP( char *filename, model_t& model ) {
   }
 
   fclose( file );
-  
+
   // copy cassandra's pomdp model into model_t
-  int ns,na.no;
+  int ns,na,no;
   float discount;
   belief_t b0;
   pt_t pt;
@@ -217,7 +217,7 @@ readMDP( char *filename, model_t& model ) {
   b0.p = vec(ns);
   for(int i=0; i<ns; i++)
     b0.p(i) = gInitialBelief[i];
-  
+
   pt = pt_t(na, mat(ns,ns));
   po = po_t(na, mat(no, ns));
   pr = pr_t(na, vec(ns));
@@ -225,13 +225,13 @@ readMDP( char *filename, model_t& model ) {
   {
     for(int s1=0; s1<ns; s1++)
       for(int s2=0; s2<ns; s2++)
-        pt[a].coeffRef(s1,s2) = getEntryMatrix(P, s1,s2); 
+        pt[a].coeffRef(s1,s2) = getEntryMatrix(*P, s1,s2); 
   }
   for(int a=0; a<na; a++)
   {
     for(int o=0; o<no; o++)
       for(int s=0; s<ns; s++)
-        po[a].coeffRef(o,s) = getEntryMatrix(R, s, o)
+        po[a].coeffRef(o,s) = getEntryMatrix(*R, s, o);
   }
   for(int a=0; a<na; a++)
   {
@@ -447,8 +447,8 @@ convertMatrices() {
   int a;
 
   /* Allocate room for each action */
-  P = (Matrix *) XMALLOC( gNumActions * sizeof( *P ) );
-  R = (Matrix *) XMALLOC( gNumActions * sizeof( *R ) );
+  P = (CMatrix *) XMALLOC( gNumActions * sizeof( *P ) );
+  R = (CMatrix *) XMALLOC( gNumActions * sizeof( *R ) );
 
   /* First convert the intermediate sparse matrices for trans. and obs. */
 

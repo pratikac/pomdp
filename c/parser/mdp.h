@@ -80,10 +80,10 @@ extern I_Matrix IQ;  /* Immediate values for MDP only */
 
 /* Sparse variables */
 
-extern Matrix *P;  /* Transition Probabilities */
-extern Matrix *R;  /* Observation Probabilities */
-extern Matrix *QI;  /* The immediate values, for MDPs only */
-extern Matrix Q;  /* Immediate values for state action pairs.  These
+extern CMatrix *P;  /* Transition Probabilities */
+extern CMatrix *R;  /* Observation Probabilities */
+extern CMatrix *QI;  /* The immediate values, for MDPs only */
+extern CMatrix Q;  /* Immediate values for state action pairs.  These
 		     are expectations computed from immediate values:
 		     either the QI for MDPs or the special
 		     representation for the POMDPs */
@@ -100,6 +100,8 @@ extern int transformBeliefState( double *pi,
 extern void copyBeliefState( double *copy, double *pi );
 extern void displayBeliefState( FILE *file, double *pi );
 extern int readMDP( char *filename, model_t& model );
+extern int readMDPFile(FILE* file);
+
 extern void convertMatrices();
 extern void deallocateMDP();
 extern void convertMatrices();

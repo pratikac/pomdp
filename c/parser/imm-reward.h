@@ -74,7 +74,7 @@ struct Imm_Reward_Node_Struct {
   union rep_tag {
      double value;
      double *vector;
-     Matrix matrix;
+     CMatrix matrix;
   } rep;
 
   Imm_Reward_List next;
