@@ -28,6 +28,7 @@
 #define MDP_MDP_H
 
 #include "sparse-matrix.h"
+#include "pomdp.h"
 
 /* Use this type for a variable that indicated whether we have a 
    POMDP or an MDP.
@@ -98,7 +99,7 @@ extern int transformBeliefState( double *pi,
                                 int obs );
 extern void copyBeliefState( double *copy, double *pi );
 extern void displayBeliefState( FILE *file, double *pi );
-extern int readMDP( char *filename );
+extern int readMDP( char *filename, model_t& model );
 extern void convertMatrices();
 extern void deallocateMDP();
 extern void convertMatrices();

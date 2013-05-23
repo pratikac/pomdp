@@ -115,7 +115,7 @@ transformBeliefState( double *pi,
   int i, j, z, cur_state, next_state;
 
   if( gProblemType != POMDP_problem_type )
-    return;
+    return 1;
 
   /* zero out all elements since we will acumulate probabilities
      as we loop */
@@ -225,13 +225,13 @@ readMDP( char *filename, model_t& model ) {
   {
     for(int s1=0; s1<ns; s1++)
       for(int s2=0; s2<ns; s2++)
-        pt[a].coeffRef(s1,s2) = getEntryMatrix(*P, s1,s2); 
+        pt[a].coeffRef(s1,s2) = getEntryMatrix(P, s1,s2); 
   }
   for(int a=0; a<na; a++)
   {
     for(int o=0; o<no; o++)
       for(int s=0; s<ns; s++)
-        po[a].coeffRef(o,s) = getEntryMatrix(*R, s, o)
+        po[a].coeffRef(o,s) = getEntryMatrix(R, s, o)
   }
   for(int a=0; a<na; a++)
   {
