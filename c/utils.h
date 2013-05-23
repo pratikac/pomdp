@@ -2,7 +2,6 @@
 #define __utils_h___
 
 #include <iostream>
-#include <ctime>
 #include <cstdio>
 #include <vector>
 #include <list>
@@ -11,19 +10,26 @@
 #include <set>
 #include <queue>
 
+#include <sys/time.h>
+
 #define debug(x) \
   std::cout<<"DBG("<<__FILE__<<":"<<__LINE__<<") "<<x<<std::endl
 #define SQ(x)   (x)*(x)
 
 typedef struct tt{
-  std::clock_t _time;
+  struct timeval _time;
   void tic()
   {
-    _time = std::clock();
+    gettimeofday(&_time, NULL);
   }
   double toc() const
   {
-    return double(std::clock() - _time)/CLOCKS_PER_SEC;
+    struct timeval t1;
+    gettimeofday(&t1, NULL);
+    float sec = t1.tv_sec - _time.tv_sec;
+    float usec = t1.tv_usec - _time.tv_usec;
+     
+    return (sec*1000.0 + usec/1000.0);
   }
 }tt;
 

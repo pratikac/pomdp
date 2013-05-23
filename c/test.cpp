@@ -92,7 +92,7 @@ int main()
 
     //pbvi.print_alpha_vectors();
   }
-  cout<<timer.toc()<<"[s]"<<endl;
+  cout<<timer.toc()<<"[ms]"<<endl;
 
   pbvi.belief_tree->print(pbvi.belief_tree->root);
   
