@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mdp-common.h"
 #include "parse_err.h"     /* Routines to keep track of parsing errors */
 #include "parse_hash.h"    /* Routines to hold temporary symbols and strings */
 #include "parse_constant.h"
@@ -95,7 +96,7 @@ IntToYylval()
 {
 Constant_Block *aConst;
 
-   aConst = (Constant_Block *) malloc(sizeof(Constant_Block));
+   aConst = (Constant_Block *) XMALLOC(sizeof(Constant_Block));
    aConst->theTag = CONST_INT;
    aConst->theValue.theInt = atoi(yytext);
 
@@ -107,7 +108,7 @@ FloatToYylval()
 {
 Constant_Block *aConst;
 
-   aConst = (Constant_Block *) malloc(sizeof(Constant_Block));
+   aConst = (Constant_Block *) XMALLOC(sizeof(Constant_Block));
    aConst->theTag = CONST_FLOAT;
    aConst->theValue.theFloat = atof(yytext);
 
@@ -124,14 +125,14 @@ yylval.
    char *tempString;
    int i;
 
-   tempString = (char *) calloc(strlen(yytext)+1, sizeof(char));
+   tempString = (char *) XCALLOC(strlen(yytext)+1, sizeof(char));
 
    for (i = 0; i < yyleng; i++)
 	    tempString[i] = yytext[i];
 
    tempString[i] = '\0';   /* add null terminator */
 
-   aConst = (Constant_Block *) malloc(sizeof(Constant_Block));
+   aConst = (Constant_Block *) XMALLOC(sizeof(Constant_Block));
    aConst->theTag = CONST_STRING;
    aConst->theValue.theString = tempString;
 
