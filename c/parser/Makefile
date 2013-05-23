@@ -20,6 +20,7 @@ LDFLAGS =
 all: $(BIN)
 
 $(BIN): $(OBJS)
+	ar rcs libparser.a $(OBJS)
 	@echo "  [LD]    $@"
 	@$(CPP) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIBS)
 
@@ -36,7 +37,7 @@ parser:
 	@$(CPP) $(CPPFLAGS) $(INCS) -c $< -o $@
 
 clean:
-	rm -rf $(BIN) $(C_OBJS) $(CPP_OBJS)
+	rm -rf libparser.a $(BIN) $(C_OBJS) $(CPP_OBJS)
 
 ctags:
 	ctags -R $(C_SRCS) $(CPP_SRCS) *.h

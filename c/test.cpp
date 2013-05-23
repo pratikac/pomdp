@@ -2,6 +2,7 @@
 #include "utils.h"
 #include "pbvi.h"
 #include "simulator.h"
+#include "parser/mdp.h"
 
 using namespace std;
 
@@ -78,7 +79,10 @@ int test2()
 
 int main()
 {
-  model_t m = create_example();
+  
+  model_t m;
+  readMDP("tiger.pomdp", m);
+
   belief_t b0 = m.b0;
   pbvi_t pbvi(b0, &m);
   
