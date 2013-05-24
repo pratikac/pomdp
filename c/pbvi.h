@@ -35,7 +35,7 @@ class pbvi_t{
       int best_action = -1;
       for(int a=0; a<model->na; a++)
       {
-         float t1 = model->pr[a].minCoeff();
+         float t1 = model->get_step_reward(a).minCoeff();
          if(t1 > max_val)
          {
            max_val = t1;

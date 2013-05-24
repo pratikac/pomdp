@@ -218,8 +218,8 @@ readMDP( char *filename, model_t& model ) {
     b0.p(i) = gInitialBelief[i];
 
   pt = pt_t(na, mat(ns,ns));
-  po = po_t(na, mat(no, ns));
-  pr = pr_t(na, vec(ns));
+  po = po_t(na, mat(no,ns));
+  pr = pr_t(na, mat(ns,ns));
   for(int a=0; a<na; a++)
   {
     for(int s1=0; s1<ns; s1++)
@@ -234,8 +234,9 @@ readMDP( char *filename, model_t& model ) {
   }
   for(int a=0; a<na; a++)
   {
-    for(int s=0; s<ns; s++)
-      pr[a](s) = getImmediateReward(a,s,0,0);
+    for(int s1=0; s1<ns; s1++)
+      for(int s2=0; s2<ns; s2++)
+        pr[a].coeffRef(s1,s2) = getImmediateReward(a,s1,s2,0);
   }
   model = model_t(ns,na,no,pt,po,discount, pr,b0);
 

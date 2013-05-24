@@ -179,7 +179,8 @@ class model_t
         newb.p = pt[aid] * b.p;
       if( (oid != -1) && (aid != -1))
       {
-        newb.p = newb.p.array() * po[aid].col(oid).array();
+        vec t1 = po[aid].row(oid);
+        newb.p = newb.p.array() * t1.array();
         newb.normalize();
       }
       return newb;
@@ -199,6 +200,7 @@ class model_t
     {
       return (pr[aid].array()*pt[aid].array()).rowwise().sum()(sid);
     }
+
     vec get_step_reward(const int& aid)
     {
       return (pr[aid].array()*pt[aid].array()).rowwise().sum().transpose();

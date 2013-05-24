@@ -4,7 +4,7 @@
 int main()
 {
   model_t model;
-  readMDP("../tiger.pomdp", model);
+  readMDP("../../examples/hallway.pomdp", model);
   writeMDP("tr.pomdp");
 
   model.print();
