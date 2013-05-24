@@ -77,11 +77,24 @@ int test2()
   return 0;
 }
 
-int main()
+int main(int argc, char** argv)
 {
   
+  string fname = "";
   model_t m;
-  readMDP("tiger.pomdp", m);
+  if(argc > 1)
+    fname = argv[1];
+  else
+  {
+    cout<<"no input file or model"<<endl;
+    exit(0);
+  }
+  if(fname != "")
+    readMDP(&(fname[0]), m);
+  else
+    m = create_example();
+  m.print();
+  getchar();
 
   belief_t b0 = m.b0;
   pbvi_t pbvi(b0, &m);

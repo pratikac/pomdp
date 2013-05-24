@@ -12,7 +12,7 @@ using namespace std;
 
 typedef vector<mat> pt_t;
 typedef vector<mat> po_t;
-typedef vector<vec> pr_t;
+typedef vector<mat> pr_t;
 
 /*! beliefs
 */
@@ -109,7 +109,7 @@ class model_t
     float discount;
 
     /*! reward matrix
-     * A x S : reward for taking control a at state s
+     * A x S_1 x S_2 : R(s_2 | s_1, a) 
      */
     pr_t pr;
     belief_t b0;
@@ -122,26 +122,28 @@ class model_t
       : ns(ns_in), na(na_in), no(no_in), pt(pt_in), po(po_in), discount(d_in),
       pr(pr_in), b0(b0_in){
     }
+    
     void print()
     {
       cout<<"states: "<<ns<<endl;
       cout<<"actions: "<<na<<endl;
+      cout<<"observations: "<< no << endl;
       cout<<"transition_probabilities: "<<endl;
       for(int i=0; i<na; i++)
       {
-        cout<<"action_id: "<<i<<"-"<<pt[i]<<endl;
+        cout<<"action_id: "<<i<<": ("<<pt[i].rows()<<","<<pt[i].cols()<<")"<<endl;
       }
       cout<<"observation_probabilities: "<<endl;
       for(int i=0; i<na; i++)
       {
-        cout<<"action_id: "<<i<<"-"<<po[i]<<endl;
+        cout<<"action_id: "<<i<<": ("<<po[i].rows()<<","<<po[i].cols()<<")"<<endl;
       }
 
-      cout<<"initial_belief: "<<b0.p<<endl;
+      cout<<"initial_belief: "<<b0.p.transpose()<<endl;
       cout<<"discount: "<<discount<<endl;
       cout<<"reward_function: "<<endl;
       for(int i=0; i<na; i++)
-        cout<<"action_id: "<<i<<"-"<<pr[i]<<endl;
+        cout<<"action_id: "<<i<<": ("<<pr[i].rows()<<","<<pr[i].cols()<<")"<<endl;
     }
     
     int multinomial_sampling(const vec& arr)
@@ -189,12 +191,17 @@ class model_t
      */
     float get_expected_step_reward(const belief_t& b, const int& aid)
     {
-      return pr[aid].dot(b.p);
+      vec t1 = (pr[aid].array()*pt[aid].array()).rowwise().sum().transpose(); 
+      return t1.dot(b.p);
     }
     
     float get_step_reward(const int& sid, const int& aid)
     {
-      return pr[aid](sid);
+      return (pr[aid].array()*pt[aid].array()).rowwise().sum()(sid);
+    }
+    vec get_step_reward(const int& aid)
+    {
+      return (pr[aid].array()*pt[aid].array()).rowwise().sum().transpose();
     }
 
     float get_p_o_given_b(const belief_t& b, const int& aid, const int& oid)
@@ -220,5 +227,8 @@ class model_t
       return multinomial_sampling(t1);
     }
 };
+
+model_t create_example();
+void test_model(model_t& m);
 
 #endif

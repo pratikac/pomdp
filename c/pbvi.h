@@ -213,7 +213,7 @@ class pbvi_t{
           t0.col(o) = alpha_a_o[a][o]->grad;
 
         vec t1 = (model->po[a].transpose() * t0.transpose()). diagonal();
-        t1 = model->pr[a] + model->discount*model->pt[a]*t1;
+        t1 = model->get_step_reward(a) + model->discount*model->pt[a]*t1;
         alpha_t t2(a, t1);
         float t3 = t2.get_value(bn->b);
 
