@@ -102,7 +102,7 @@ class model_t
      */
     pt_t pt;
     /*! observation matrix
-     * A x O x S : P(o | s, a)
+     * A x S x O : P(o | s, a)
      */
     po_t po;
 
@@ -131,19 +131,19 @@ class model_t
       cout<<"transition_probabilities: "<<endl;
       for(int i=0; i<na; i++)
       {
-        cout<<"action_id: "<<i<<": ("<<pt[i].rows()<<","<<pt[i].cols()<<")"<<endl;
+        cout<<"aid: "<<i<<": ("<<pt[i].rows()<<","<<pt[i].cols()<<")"<<endl;
       }
       cout<<"observation_probabilities: "<<endl;
       for(int i=0; i<na; i++)
       {
-        cout<<"action_id: "<<i<<": ("<<po[i].rows()<<","<<po[i].cols()<<")"<<endl;
+        cout<<"aid: "<<i<<": ("<<po[i].rows()<<","<<po[i].cols()<<")"<<endl;
       }
 
       cout<<"initial_belief: "<<b0.p.transpose()<<endl;
       cout<<"discount: "<<discount<<endl;
       cout<<"reward_function: "<<endl;
       for(int i=0; i<na; i++)
-        cout<<"action_id: "<<i<<": ("<<pr[i].rows()<<","<<pr[i].cols()<<")"<<endl;
+        cout<<"aid: "<<i<<": ("<<pr[i].rows()<<","<<pr[i].cols()<<")"<<endl;
     }
     
     int multinomial_sampling(const vec& arr)
@@ -179,7 +179,8 @@ class model_t
         newb.p = pt[aid] * b.p;
       if( (oid != -1) && (aid != -1))
       {
-        vec t1 = po[aid].row(oid);
+        mat t2 = po[aid];
+        vec t1 = po[aid].col(oid);
         newb.p = newb.p.array() * t1.array();
         newb.normalize();
       }

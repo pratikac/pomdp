@@ -218,7 +218,7 @@ readMDP( char *filename, model_t& model ) {
     b0.p(i) = gInitialBelief[i];
 
   pt = pt_t(na, mat(ns,ns));
-  po = po_t(na, mat(no,ns));
+  po = po_t(na, mat(ns,no));
   pr = pr_t(na, mat(ns,ns));
   for(int a=0; a<na; a++)
   {
@@ -228,9 +228,9 @@ readMDP( char *filename, model_t& model ) {
   }
   for(int a=0; a<na; a++)
   {
-    for(int o=0; o<no; o++)
-      for(int s=0; s<ns; s++)
-        po[a].coeffRef(o,s) = getEntryMatrix(R[a], s, o);
+    for(int s=0; s<ns; s++)
+      for(int o=0; o<no; o++)
+        po[a].coeffRef(s,o) = getEntryMatrix(R[a], s, o);
   }
   for(int a=0; a<na; a++)
   {

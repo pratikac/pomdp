@@ -28,7 +28,7 @@ class pbvi_t{
       model = model_in;
       feature_tree = kd_create(model->ns);
       insert_into_feature_tree(belief_tree->root);
-      insert_distance = 0;
+      insert_distance = 0.1;
     
       // create first alpha vector by blind policy
       float max_val = -FLT_MAX;
@@ -212,7 +212,7 @@ class pbvi_t{
         for(int o=0; o<no; o++)
           t0.col(o) = alpha_a_o[a][o]->grad;
 
-        vec t1 = (model->po[a].transpose() * t0.transpose()). diagonal();
+        vec t1 = (model->po[a] * t0.transpose()). diagonal();
         t1 = model->get_step_reward(a) + model->discount*model->pt[a]*t1;
         alpha_t t2(a, t1);
         float t3 = t2.get_value(bn->b);
