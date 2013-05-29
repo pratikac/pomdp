@@ -211,19 +211,21 @@ class solver_t{
       }
       //cout<<"inserted: "<<insert_alpha(new_alpha)<<endl;
       insert_alpha(new_alpha);
-
-      // calculate bound
-      max_val = -FLT_MAX;
+      
+      bn->value_lower_bound = calculate_belief_value(bn->b);
+      return 0;
+    }
+    
+    float calculate_belief_value(belief_t& b)
+    {
+      float max_val = -FLT_MAX;
       for(auto& av : alpha_vectors)
       {
-        float t1 = av->get_value(bn->b);
+        float t1 = av->get_value(b);
         if(t1 > max_val)
-        {
           max_val = t1;
-          bn->value_lower_bound = t1;
-        }
       }
-      return 0;
+      return max_val;
     }
 
     virtual int backup_belief_nodes()
