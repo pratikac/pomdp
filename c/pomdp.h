@@ -204,7 +204,9 @@ class model_t
 
     vec get_step_reward(const int& aid)
     {
-      return (pr[aid].array()*pt[aid].array()).rowwise().sum().transpose();
+      mat t1 = pr[aid].array()*pt[aid].array();
+      vec t2 = t1.rowwise().sum().transpose();
+      return t2; 
     }
 
     float get_p_o_given_b(const belief_t& b, const int& aid, const int& oid)

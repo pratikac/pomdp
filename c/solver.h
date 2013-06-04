@@ -11,6 +11,20 @@
 
 #define RANDF   (rand()/(RAND_MAX+1.0))
 
+class solver_t;
+class policy_t;
+
+class policy_t{
+  public:
+    vector<alpha_t> alpha_vectors;
+
+    policy_t(vector<alpha_t*>& av)
+    {
+      alpha_vectors.clear();
+      for(auto& pav : av)
+        alpha_vectors.push_back(*pav);
+    }
+};
 
 class solver_t{
   public:
@@ -244,7 +258,7 @@ class solver_t{
     virtual float simulate(int steps)
     {
       simulator_t sim(model, alpha_vectors);
-      return sim.simulate_trajectory(steps);
+      return sim.simulate_trajectory(steps, model->b0);
     }
 };
 

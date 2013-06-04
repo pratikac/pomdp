@@ -101,24 +101,21 @@ int main(int argc, char** argv)
   
   tt timer;
   timer.tic();
-  for(int i=0; i<10; i++)
+  for(int i=0; i<25; i++)
   {
     pbvi.sample_belief_nodes();
-    for(int j=0; j< 1; j++)
+    for(int j=0; j< 10; j++)
       pbvi.backup_belief_nodes();
 
     //pbvi.print_alpha_vectors();
-    cout<<i<<endl;
   }
   cout<<timer.toc()<<"[ms]"<<endl;
   cout<<"reward: "<< pbvi.belief_tree->root->value_lower_bound<<endl;
   //pbvi.belief_tree->print(pbvi.belief_tree->root);
   
-  /*
   vec sim_stats(20);
   for(int i=0; i<20; i++)
     sim_stats(i) = pbvi.simulate(300);
   cout<<"mean: "<< sim_stats.mean() << endl;
-  */
   return 0;
 }

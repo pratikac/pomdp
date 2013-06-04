@@ -38,17 +38,17 @@ class simulator_t{
       aid = find_best_action(b);
       rew += pow(m->discount, len)*m->get_step_reward(sid, aid);
       len++;
-      
+
       sid = m->next_state(sid, aid); 
       oid = m->sample_observation(sid, aid);
-      
+
       b = m->next_belief(b, aid, oid);
       return 0;
     }
-  
-    float simulate_trajectory(int steps)
+
+    float simulate_trajectory(int steps, belief_t& b_in)
     {
-      belief_t b = m->b0;
+      belief_t b = b_in;
       float rew=0;
       int len = 0, aid=-1, oid=-1;
       int sid = m->sample_state(b);
