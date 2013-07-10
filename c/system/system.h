@@ -11,15 +11,14 @@ template<size_t dim> class region_t;
 template<size_t ns, size_t nu, size_t no>
 class system_t{
   public:
-    
     region_t<ns> operating_region, goal_region;
     region_t<nu> control_region;
     region_t<no> observation_region;
     vector<region_t<ns> > obstacles;
     
-    system_t();
-    ~system();
-
+    vec init_state;
+    mat init_var;
+    
     bool is_in_goal(vec& s)
     {
       return goal_region.is_inside(s);

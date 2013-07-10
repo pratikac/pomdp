@@ -3,7 +3,7 @@ CPP = g++-4.7
 
 BIN = ./test
 C_SRCS = kdtree.c 
-CPP_SRCS = pomdp.cpp test.cpp
+CPP_SRCS = model.cpp test.cpp
 
 C_OBJS = $(C_SRCS:.c=.o)
 CPP_OBJS = $(CPP_SRCS:.cpp=.o)

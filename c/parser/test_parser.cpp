@@ -1,4 +1,4 @@
-#include "pomdp.h"
+#include "model.h"
 #include "mdp.h"
 
 int main()

@@ -1,12 +1,12 @@
-#include <iostream>
-#include "utils.h"
 #include "pbvi.h"
 #include "simulator.h"
 #include "parser/mdp.h"
 
+#include "ipomdp.h"
+
 using namespace std;
 
-int main(int argc, char** argv)
+int test_solver(int argc, char** argv)
 {
   int c;
   int num_samples = 25, backup_per_sample = 5;
@@ -65,5 +65,18 @@ int main(int argc, char** argv)
   for(int i=0; i<num_sim; i++)
     sim_stats(i) = pbvi.simulate(num_steps);
   cout<<"mean: "<< sim_stats.mean() << endl;
+  return 0;
+}
+
+int test_ipomdp(int argc, char** argv)
+{
+  ipomdp_t<lightdark_t<1,1,1> > ipomdp;
+  return 0;
+}
+
+int main(int argc, char** argv)
+{
+  //test_solver(argc, argv);
+  test_ipomdp(argc, argv);
   return 0;
 }

@@ -3,7 +3,7 @@
 
 #include "utils.h"
 #include "linalg.h"
-#include "pomdp.h"
+#include "model.h"
 #include "float.h"
 #include <string.h>
 

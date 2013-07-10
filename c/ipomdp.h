@@ -4,10 +4,19 @@
 #include "model.h"
 #include "system/lightdark.h"
 
+template<class system_t>
 class ipomdp_t{
   public:
-    ipomdp_t();
-    ~ipomdp_t();
+
+    system_t system;
+    ipomdp_t()
+    {
+      
+    }
+    ~ipomdp_t()
+    {
+
+    }
 
 };
 

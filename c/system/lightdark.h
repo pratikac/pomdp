@@ -1,7 +1,7 @@
 #ifndef __lightdark_h__
 #define __lightdark_h__
 
-#include "../system.h"
+#include "system.h"
 
 template<size_t ns, size_t nu, size_t no>
 class lightdark_t : public system_t<ns, nu, no>
@@ -11,9 +11,26 @@ class lightdark_t : public system_t<ns, nu, no>
 
     lightdark_t()
     {
-      ns = dim;
-      nu = dim;
-      no = dim;
+      operating_region = region_t<ns> (Zero(ns), 2*One(ns));
+      control_region = region_t<nu> (Zero(nu), 2*One(nu));
+      observation_region = region_t<no> (Zero(no), 2*One(no));
+      
+      if(ns == 1)
+      {
+        init_state<<0;
+        init_var<<0.1;
+        goal_region = region_t<ns> (mat::Constant(ns,1,-0.9), mat::Constant(ns,1,0.2));
+        light_regions.push_back(region_t<ns> (mat::Constant(ns,1,0.9), mat::Constant(ns,1,0.2)));
+      }
+      else if(ns == 2)
+      {
+
+      }
+      else
+      {
+        cout<<"dimension for lightdark should be < 3"<<endl;
+        abort();
+      }
     }
     
     vec sample_state()

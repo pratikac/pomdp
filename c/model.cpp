@@ -1,4 +1,4 @@
-#include "pomdp.h"
+#include "model.h"
 
 /*! simple MDP model
  * Tiger door problem (tony cassandra, technical report)

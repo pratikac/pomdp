@@ -28,7 +28,7 @@
 #define MDP_MDP_H
 
 #include "sparse-matrix.h"
-#include "pomdp.h"
+#include "model.h"
 
 /* Use this type for a variable that indicated whether we have a 
    POMDP or an MDP.
