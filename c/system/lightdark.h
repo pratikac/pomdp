@@ -7,20 +7,33 @@ template<size_t ns, size_t nu, size_t no>
 class lightdark_t : public system_t<ns, nu, no>
 {
   public:
+    typedef system_t<ns,nu,no> sys_t;
+    using sys_t::operating_region;
+    using sys_t::goal_region;
+    using sys_t::control_region;
+    using sys_t::observation_region;
+    using sys_t::obstacles;
+    using sys_t::init_state;
+    using sys_t::init_var;
+
     vector<region_t<ns> > light_regions;
 
     lightdark_t()
     {
-      operating_region = region_t<ns> (Zero(ns), 2*One(ns));
-      control_region = region_t<nu> (Zero(nu), 2*One(nu));
-      observation_region = region_t<no> (Zero(no), 2*One(no));
-      
+      vec zero = Zero(ns);
+      vec two = mat::Constant(ns,1,2);
+      sys_t::operating_region = region_t<ns> (zero, two);
+      control_region = region_t<nu> (zero, two);
+      observation_region = region_t<no> (zero, two);
+
       if(ns == 1)
       {
-        init_state<<0;
-        init_var<<0.1;
-        goal_region = region_t<ns> (mat::Constant(ns,1,-0.9), mat::Constant(ns,1,0.2));
-        light_regions.push_back(region_t<ns> (mat::Constant(ns,1,0.9), mat::Constant(ns,1,0.2)));
+        init_state = vec(1); 
+        init_state(0) = 0;
+        init_var = mat(1,1); 
+        init_var(0,0) = 0.1;
+        goal_region = region_t<ns> ((vec)mat::Constant(ns,1,-0.9), (vec)mat::Constant(ns,1,0.2));
+        light_regions.push_back(region_t<ns> ((vec)mat::Constant(ns,1,0.9), (vec)mat::Constant(ns,1,0.2)));
       }
       else if(ns == 2)
       {
@@ -32,7 +45,8 @@ class lightdark_t : public system_t<ns, nu, no>
         abort();
       }
     }
-    
+    ~lightdark_t(){};
+
     vec sample_state()
     {
       vec s = Zero(ns);
@@ -47,7 +61,7 @@ class lightdark_t : public system_t<ns, nu, no>
         int p2 = RANDF*light_regions.size();
         r = light_regions[p2];
       }
-      for(int i=0; i< ns; i++)
+      for(size_t i=0; i< ns; i++)
         s(i) = r.c(i) + r.s(i)*(RANDF-0.5);
       return s;
     }
@@ -55,7 +69,7 @@ class lightdark_t : public system_t<ns, nu, no>
     {
       vec u = Zero(nu);
       region_t<nu>& r = control_region;
-      for(int i=0; i< ns; i++)
+      for(size_t i=0; i< ns; i++)
         u(i) = r.c(i) + r.s(i)*(RANDF-0.5);
       return u;
     }
@@ -71,7 +85,7 @@ class lightdark_t : public system_t<ns, nu, no>
     vec get_key(const vec& s)
     {
       vec k = s - operating_region.c;
-      for(int i=0; i<ns; i++)
+      for(size_t i=0; i<ns; i++)
         k(i) = k(i)/operating_region.s(i) + 0.5;
       return k;
     }

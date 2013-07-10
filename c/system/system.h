@@ -15,10 +15,13 @@ class system_t{
     region_t<nu> control_region;
     region_t<no> observation_region;
     vector<region_t<ns> > obstacles;
-    
+
     vec init_state;
     mat init_var;
-    
+  
+    system_t(){};
+    ~system_t(){};
+
     bool is_in_goal(vec& s)
     {
       return goal_region.is_inside(s);
@@ -33,11 +36,11 @@ class system_t{
       }
       return false;
     }
-    
+
     virtual vec sample_state() = 0;
     virtual vec sample_control() = 0;
     virtual vec sample_observation() = 0;
-    virtual vec sample_observation(const vec& s) = 0;
+    virtual vec get_observation(const vec& s) = 0;
     virtual vec get_key(const vec& s) = 0;
 
     virtual vec get_fdt(const vec& s, const vec& u, float dt=1.0) = 0;
@@ -51,15 +54,16 @@ class region_t{
   public:
     vec c;
     vec s;
-    region_t(vec& c_in, vec& s_in)
+    region_t(){};
+    region_t(vec c_in, vec s_in)
     {
       c = c_in;
       s = s_in;
     }
-    bool is_inside(vec& state)
+    bool is_inside(const vec& state)
     {
       vec diff = (state - c)/2.0;
-      for(int i=0; i<dim; i++)
+      for(size_t i=0; i<dim; i++)
       {
         if( (diff(i) > s(i)/2) || (diff(i) < -s(i)/2) )
           return false;
