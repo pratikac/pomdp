@@ -2,7 +2,7 @@
 #define __simulator_h__
 
 
-#include "pomdp.h"
+#include "model.h"
 
 
 class simulator_t{

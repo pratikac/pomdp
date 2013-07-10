@@ -9,6 +9,9 @@
 #include <algorithm>
 #include <set>
 #include <queue>
+#include <unistd.h>
+#include <cstdio>
+#include <cstdlib>
 
 #include <sys/time.h>
 

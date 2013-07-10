@@ -4,7 +4,7 @@
 #include "utils.h"
 #include "kdtree.h"
 
-#include "pomdp.h"
+#include "model.h"
 #include "belief_tree.h"
 #include "simulator.h"
 

@@ -8,17 +8,36 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-  
-  string fname = "";
-  model_t m;
-  if(argc > 1)
-    fname = argv[1];
-  else
+  int c;
+  int num_samples = 25, backup_per_sample = 5;
+  int num_sim = 20, num_steps = 300;
+  char* fname = NULL;
+  while( (c = getopt(argc, argv, "f:n:b:s:t:")) != -1)
   {
-    cout<<"no input file or model"<<endl;
-    exit(0);
+    switch(c)
+    {
+      case 'f':
+        fname = optarg;
+        break;
+      case 'n':
+        num_samples = atoi(optarg);
+        break;
+      case 'b':
+        backup_per_sample = atoi(optarg);
+        break;
+      case 's':
+        num_sim = atoi(optarg);
+        break;
+      case 't':
+        num_steps = atoi(optarg);
+        break;
+      default:
+        abort();
+    }
   }
-  if(fname != "")
+  
+  model_t m;
+  if(fname)
     readMDP(&(fname[0]), m);
   else
     m = create_example();
@@ -30,10 +49,10 @@ int main(int argc, char** argv)
   
   tt timer;
   timer.tic();
-  for(int i=0; i<25; i++)
+  for(int i=0; i<num_samples; i++)
   {
     pbvi.sample_belief_nodes();
-    for(int j=0; j< 10; j++)
+    for(int j=0; j< backup_per_sample; j++)
       pbvi.backup_belief_nodes();
 
     //pbvi.print_alpha_vectors();
@@ -42,9 +61,9 @@ int main(int argc, char** argv)
   cout<<"reward: "<< pbvi.belief_tree->root->value_lower_bound<<endl;
   //pbvi.belief_tree->print(pbvi.belief_tree->root);
   
-  vec sim_stats(20);
-  for(int i=0; i<20; i++)
-    sim_stats(i) = pbvi.simulate(300);
+  vec sim_stats(num_sim);
+  for(int i=0; i<num_sim; i++)
+    sim_stats(i) = pbvi.simulate(num_steps);
   cout<<"mean: "<< sim_stats.mean() << endl;
   return 0;
 }
