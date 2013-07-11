@@ -9,6 +9,8 @@ class pbvi_t : public solver_t{
     typedef struct kdres kdres_t;
 
     float insert_distance;
+  
+    pbvi_t(){}
 
     pbvi_t(belief_t& b_root, model_t* model_in) : solver_t(b_root, model_in)
     {

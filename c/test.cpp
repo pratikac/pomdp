@@ -70,7 +70,7 @@ int test_solver(int argc, char** argv)
 
 int test_ipomdp(int argc, char** argv)
 {
-  ipomdp_t<lightdark_t<1,1,1> > ipomdp;
+  ipomdp_t<lightdark_t<1,1,1>, pbvi_t> ipomdp;
   return 0;
 }
 

@@ -36,8 +36,14 @@ class solver_t{
     kdtree_t* feature_tree;
 
     vector<alpha_t*> alpha_vectors;
+  
+    solver_t(){}
 
     solver_t(belief_t& b_root, model_t* model_in)
+    {
+      initialise_solver(b_root, model_in);
+    }
+    int initialise_solver(belief_t& b_root, model_t* model_in)
     {
       belief_tree = new belief_tree_t(b_root);
       model = model_in;
@@ -45,6 +51,7 @@ class solver_t{
       insert_into_feature_tree(belief_tree->root);
 
       initiate_alpha_vector();
+      return 0;
     }
 
     int initiate_alpha_vector()
