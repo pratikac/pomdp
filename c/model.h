@@ -123,6 +123,15 @@ class model_t
       pr(pr_in), b0(b0_in){
     }
     
+    int normalize_mat()
+    {
+      for(size_t i=0; i<pt.size(); i++)
+      {
+        for(int j=0; j<ns; j++)
+          pt[i].row(j) = pt[i].row(j)/pt[i].row(j).sum();
+      }
+    }
+
     void print()
     {
       cout<<"states: "<<ns<<endl;

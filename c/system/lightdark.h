@@ -3,11 +3,11 @@
 
 #include "system.h"
 
-template<size_t ns, size_t nu, size_t no>
-class lightdark_t : public system_t<ns, nu, no>
+template<size_t ds, size_t du, size_t ddo>
+class lightdark_t : public system_t<ds, du, ddo>
 {
   public:
-    typedef system_t<ns,nu,no> sys_t;
+    typedef system_t<ds,du,ddo> sys_t;
     using sys_t::operating_region;
     using sys_t::goal_region;
     using sys_t::control_region;
@@ -16,26 +16,26 @@ class lightdark_t : public system_t<ns, nu, no>
     using sys_t::init_state;
     using sys_t::init_var;
 
-    vector<region_t<ns> > light_regions;
+    vector<region_t<ds> > light_regions;
 
     lightdark_t()
     {
-      vec zero = Zero(ns);
-      vec two = mat::Constant(ns,1,2);
-      sys_t::operating_region = region_t<ns> (zero, two);
-      control_region = region_t<nu> (zero, two);
-      observation_region = region_t<no> (zero, two);
+      vec zero = Zero(ds);
+      vec two = mat::Constant(ds,1,2);
+      sys_t::operating_region = region_t<ds> (zero, two);
+      control_region = region_t<du> (zero, two);
+      observation_region = region_t<ddo> (zero, two);
 
-      if(ns == 1)
+      if(ds == 1)
       {
         init_state = vec(1); 
         init_state(0) = 0;
         init_var = mat(1,1); 
         init_var(0,0) = 0.1;
-        goal_region = region_t<ns> ((vec)mat::Constant(ns,1,-0.9), (vec)mat::Constant(ns,1,0.2));
-        light_regions.push_back(region_t<ns> ((vec)mat::Constant(ns,1,0.9), (vec)mat::Constant(ns,1,0.2)));
+        goal_region = region_t<ds> ((vec)mat::Constant(ds,1,-0.9), (vec)mat::Constant(ds,1,0.2));
+        light_regions.push_back(region_t<ds> ((vec)mat::Constant(ds,1,0.9), (vec)mat::Constant(ds,1,0.2)));
       }
-      else if(ns == 2)
+      else if(ds == 2)
       {
 
       }
@@ -49,8 +49,8 @@ class lightdark_t : public system_t<ns, nu, no>
 
     vec sample_state()
     {
-      vec s = Zero(ns);
-      region_t<ns>& r = operating_region;
+      vec s = Zero(ds);
+      region_t<ds>& r = operating_region;
       float p = RANDF;
       if(p < 0.1)
       {
@@ -61,15 +61,15 @@ class lightdark_t : public system_t<ns, nu, no>
         int p2 = RANDF*light_regions.size();
         r = light_regions[p2];
       }
-      for(size_t i=0; i< ns; i++)
+      for(size_t i=0; i< ds; i++)
         s(i) = r.c(i) + r.s(i)*(RANDF-0.5);
       return s;
     }
     vec sample_control()
     {
-      vec u = Zero(nu);
-      region_t<nu>& r = control_region;
-      for(size_t i=0; i< ns; i++)
+      vec u = Zero(du);
+      region_t<du>& r = control_region;
+      for(size_t i=0; i< ds; i++)
         u(i) = r.c(i) + r.s(i)*(RANDF-0.5);
       return u;
     }
@@ -85,7 +85,7 @@ class lightdark_t : public system_t<ns, nu, no>
     vec get_key(const vec& s)
     {
       vec k = s - operating_region.c;
-      for(size_t i=0; i<ns; i++)
+      for(size_t i=0; i<ds; i++)
         k(i) = k(i)/operating_region.s(i) + 0.5;
       return k;
     }
@@ -95,7 +95,7 @@ class lightdark_t : public system_t<ns, nu, no>
     }
     vec get_FFdt(const vec& s, const vec& u, float dt=1.0)
     {
-      return Identity(ns,ns)*0.1;
+      return Identity(ds,ds)*0.1;
     }
     mat get_GG(const vec& s)
     {
@@ -109,9 +109,9 @@ class lightdark_t : public system_t<ns, nu, no>
         }
       }
       if(is_light)
-        return Identity(no,no)*0.01;
+        return Identity(ddo,ddo)*0.01;
       else
-        return Identity(no,no)*100;
+        return Identity(ddo,ddo)*100;
     }
     float get_ht(const vec& s, const vec& u, const float r)
     {

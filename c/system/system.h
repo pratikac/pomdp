@@ -8,13 +8,17 @@
 
 template<size_t dim> class region_t;
 
-template<size_t ns, size_t nu, size_t no>
+template<size_t tds, size_t tdu, size_t tddo>
 class system_t{
   public:
-    region_t<ns> operating_region, goal_region;
-    region_t<nu> control_region;
-    region_t<no> observation_region;
-    vector<region_t<ns> > obstacles;
+    const static int ds = tds;
+    const static int du = tdu;
+    const static int ddo = tddo;
+    
+    region_t<ds> operating_region, goal_region;
+    region_t<du> control_region;
+    region_t<ddo> observation_region;
+    vector<region_t<ds> > obstacles;
 
     vec init_state;
     mat init_var;
@@ -36,6 +40,19 @@ class system_t{
       }
       return false;
     }
+    bool is_in_obstacle(vec& s1, vec& s2)
+    {
+      vec r;
+      float t = 0;
+      while(t < 1)
+      {
+        r = s1 + (s2-s1)*t;
+        if(is_in_obstacle(r))
+          return true;
+        t += 0.1;
+      }
+      return false;
+    }
 
     virtual vec sample_state() = 0;
     virtual vec sample_control() = 0;
@@ -44,9 +61,17 @@ class system_t{
     virtual vec get_key(const vec& s) = 0;
 
     virtual vec get_fdt(const vec& s, const vec& u, float dt=1.0) = 0;
-    virtual vec get_FFdt(const vec& s, const vec&u, float dt=1.0) = 0;
+    virtual vec get_FFdt(const vec& s, const vec& u, float dt=1.0) = 0;
     virtual mat get_GG(const vec& s) = 0;
     virtual float get_ht(const vec& s, const vec& u, const float r) = 0;
+
+    virtual float get_observation_prob(vec& s, vec& o)
+    {
+      // calculate P(o | s, a)
+      mat GG = get_GG(s);
+      vec os = get_observation(s);
+      return normal_val(os, GG, o);
+    }
 };
 
 template<size_t dim>
