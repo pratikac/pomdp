@@ -44,7 +44,7 @@ class system_t{
     {
       vec r;
       float t = 0;
-      while(t < 1)
+      while(t < 1.1)
       {
         r = s1 + (s2-s1)*t;
         if(is_in_obstacle(r))
@@ -56,6 +56,7 @@ class system_t{
 
     virtual vec sample_state() = 0;
     virtual vec sample_control() = 0;
+    virtual vec zero_control() { return vec::Zero(du); }
     virtual vec sample_observation() = 0;
     virtual vec get_observation(const vec& s) = 0;
     virtual vec get_key(const vec& s) = 0;

@@ -21,6 +21,7 @@ class ipomdp_t{
     vector<vec> S;
     vector<vec> U;
     vector<vec> O;
+    vector<int> linear;
     
     float ht, r, gamma, epsilon;
 
@@ -39,11 +40,16 @@ class ipomdp_t{
       no = nu;
 
       ht = 0.1;
-      r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ns);
+      r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
       gamma = 0.99;
       epsilon = 1e-15;
 
       tree = kd_create(ns);
+
+      // linear stores [0, 1, 2, .... n-1] (for kdtree hack)
+      linear = vector<int>(ns,0);
+      for(int i=0; i<ns; i++)
+        linear[i] = i;
     }
     ~ipomdp_t()
     {
@@ -57,15 +63,16 @@ class ipomdp_t{
         vec s = system.sample_state();
         S.push_back(s);
         vec key = system.get_key(s);
-        kd_insertf(tree, key.data(), i);
+        kd_insertf(tree, key.data(), &linear[i]);
       }
-      r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ns);
+      r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
       return 0;
     }
     int sample_controls()
     {
-      for(int i=num; i<nu; i++)
+      for(int i=num; i<nu-1; i++)
         U.push_back(system.sample_control());
+      U.push_back(system.zero_control());
       return 0;
     }
     int sample_observations()
@@ -100,13 +107,13 @@ class ipomdp_t{
 
       get_holding_time();
       
-      get_b0();
-
       return 0;
     }
     
     int get_P()
     {
+      model.pt = vector<mat>(nu, mat::Zero(ns,ns));
+
       kdres* res = NULL;
       for(int i=0; i<ns; i++)
       {
@@ -125,7 +132,7 @@ class ipomdp_t{
             mat FFdt = system.get_FFdt(s,u,ht);
 
             vec probs = vec::Zero(ns);
-            float pos[ds] = {0};
+            float pos[ds];
             while(!kd_res_end(res))
             {
               int* skindex = (int*)kd_res_itemf(res,pos);
@@ -146,7 +153,8 @@ class ipomdp_t{
 
     int get_Q()
     {
-      mat Q = vec::Zero(ns,no);
+      model.po = vector<mat>(nu, mat::Zero(ns,no));
+      mat Q = mat::Zero(ns,no);
       for(int i=0; i<ns; i++)
       {
         for(int j=0; j<no; j++)
@@ -160,6 +168,7 @@ class ipomdp_t{
     
     int get_R()
     {
+      model.pr = vector<mat>(nu, mat::Zero(ns,ns));
       for(int i=0; i<nu; i++)
       {
         for(int j=0; j<ns; j++)
@@ -173,6 +182,8 @@ class ipomdp_t{
 
     int create_model()
     {
+      sample_all();
+      
       get_P();
       get_Q();
       get_R();
@@ -181,9 +192,23 @@ class ipomdp_t{
       model.na = nu;
       model.no = no;
       model.discount = gamma;
-      model.b0 = get_b0();
+      model.b0.p = get_b0();
       model.normalize_mat();
 
+      return 0;
+    }
+    
+    int solve_model()
+    {
+      solver = solver_t(model.b0, &model);
+
+      for(int i=0; i<20; i++)
+      {
+        solver.sample_belief_nodes();
+        for(int j=0; j<5; j++)
+          solver.backup_belief_nodes();
+      }
+      cout<<"reward: "<< solver.belief_tree->root->value_lower_bound << endl;
       return 0;
     }
 };

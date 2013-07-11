@@ -4,8 +4,9 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include "linalg.h"
 #include <string.h>
+#include "linalg.h"
+#include "utils.h"
 using namespace std;
 
 #define RANDF   (rand()/(RAND_MAX+1.0))
@@ -140,27 +141,55 @@ class model_t
       return 0;
     }
 
-    void print()
+    void print(string fname="")
     {
-      cout<<"states: "<<ns<<endl;
-      cout<<"actions: "<<na<<endl;
-      cout<<"observations: "<< no << endl;
-      cout<<"transition_probabilities: "<<endl;
-      for(int i=0; i<na; i++)
+      if(fname == "")
       {
-        cout<<"aid: "<<i<<": ("<<pt[i].rows()<<","<<pt[i].cols()<<")"<<endl;
-      }
-      cout<<"observation_probabilities: "<<endl;
-      for(int i=0; i<na; i++)
-      {
-        cout<<"aid: "<<i<<": ("<<po[i].rows()<<","<<po[i].cols()<<")"<<endl;
-      }
+        cout<<"states: "<<ns<<endl;
+        cout<<"actions: "<<na<<endl;
+        cout<<"observations: "<< no << endl;
+        cout<<"transition_probabilities: "<<endl;
+        for(int i=0; i<na; i++)
+        {
+          cout<<"aid: "<<i<<": ("<<pt[i].rows()<<","<<pt[i].cols()<<")"<<endl;
+        }
+        cout<<"observation_probabilities: "<<endl;
+        for(int i=0; i<na; i++)
+        {
+          cout<<"aid: "<<i<<": ("<<po[i].rows()<<","<<po[i].cols()<<")"<<endl;
+        }
 
-      cout<<"initial_belief: "<<b0.p.transpose()<<endl;
-      cout<<"discount: "<<discount<<endl;
-      cout<<"reward_function: "<<endl;
-      for(int i=0; i<na; i++)
-        cout<<"aid: "<<i<<": ("<<pr[i].rows()<<","<<pr[i].cols()<<")"<<endl;
+        cout<<"initial_belief: "<<b0.p.transpose()<<endl;
+        cout<<"discount: "<<discount<<endl;
+        cout<<"reward_function: "<<endl;
+        for(int i=0; i<na; i++)
+          cout<<"aid: "<<i<<": ("<<pr[i].rows()<<","<<pr[i].cols()<<")"<<endl;
+      }
+      else
+      {
+        ofstream fout(fname);
+        fout<<"states: "<<ns<<endl;
+        fout<<"actions: "<<na<<endl;
+        fout<<"observations: "<< no << endl;
+        fout<<"transition_probabilities: "<<endl;
+        for(int i=0; i<na; i++)
+        {
+          fout<<"aid: "<<i<< endl << pt[i] <<endl;
+        }
+        fout<<"observation_probabilities: "<<endl;
+        for(int i=0; i<na; i++)
+        {
+          fout<<"aid: "<<i<< endl << po[i] <<endl;
+        }
+
+        fout<<"initial_belief: "<<b0.p.transpose()<<endl;
+        fout<<"discount: "<<discount<<endl;
+        fout<<"reward_function: "<<endl;
+        for(int i=0; i<na; i++)
+          fout<<"aid: "<<i<< endl << pr[i] <<endl;
+        
+        fout.close();
+      }
     }
     
     int multinomial_sampling(const vec& arr)
