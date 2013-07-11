@@ -72,6 +72,9 @@ class system_t{
       vec os = get_observation(s);
       return normal_val(os, GG, o);
     }
+
+    // R(s2 | s1, a)
+    virtual float get_reward(vec& s1, vec& u, vec& s2) = 0;
 };
 
 template<size_t dim>

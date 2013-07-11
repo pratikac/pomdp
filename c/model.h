@@ -130,6 +130,14 @@ class model_t
         for(int j=0; j<ns; j++)
           pt[i].row(j) = pt[i].row(j)/pt[i].row(j).sum();
       }
+      for(size_t i=0; i<po.size(); i++)
+      {
+        for(int j=0; j<ns; j++)
+        {
+          po[i].row(j) = po[i].row(j)/po[i].row(j).sum();
+        }
+      }
+      return 0;
     }
 
     void print()

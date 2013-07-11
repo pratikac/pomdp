@@ -14,8 +14,4 @@ typedef SparseVector<float> spvec;
 
 typedef Triplet<float> triplet;
 
-#define One(x)          vec::Constant(x,1,1)
-#define Zero(x)         vec::Zero(x)
-#define Identity(x,y)   mat::Identity(x,y)
-
 #endif

@@ -15,16 +15,19 @@ class lightdark_t : public system_t<ds, du, ddo>
     using sys_t::obstacles;
     using sys_t::init_state;
     using sys_t::init_var;
+    using sys_t::is_in_goal;
+    using sys_t::is_in_obstacle;
 
     vector<region_t<ds> > light_regions;
 
     lightdark_t()
     {
-      vec zero = Zero(ds);
+      vec zero = vec::Zero(ds);
       vec two = mat::Constant(ds,1,2);
       sys_t::operating_region = region_t<ds> (zero, two);
       control_region = region_t<du> (zero, two);
       observation_region = region_t<ddo> (zero, two);
+      
 
       if(ds == 1)
       {
@@ -49,7 +52,7 @@ class lightdark_t : public system_t<ds, du, ddo>
 
     vec sample_state()
     {
-      vec s = Zero(ds);
+      vec s = vec::Zero(ds);
       region_t<ds>& r = operating_region;
       float p = RANDF;
       if(p < 0.1)
@@ -67,7 +70,7 @@ class lightdark_t : public system_t<ds, du, ddo>
     }
     vec sample_control()
     {
-      vec u = Zero(du);
+      vec u = vec::Zero(du);
       region_t<du>& r = control_region;
       for(size_t i=0; i< ds; i++)
         u(i) = r.c(i) + r.s(i)*(RANDF-0.5);
@@ -95,7 +98,7 @@ class lightdark_t : public system_t<ds, du, ddo>
     }
     vec get_FFdt(const vec& s, const vec& u, float dt=1.0)
     {
-      return Identity(ds,ds)*0.1;
+      return mat::Identity(ds,ds)*0.1;
     }
     mat get_GG(const vec& s)
     {
@@ -109,15 +112,36 @@ class lightdark_t : public system_t<ds, du, ddo>
         }
       }
       if(is_light)
-        return Identity(ddo,ddo)*0.01;
+        return mat::Identity(ddo,ddo)*0.01;
       else
-        return Identity(ddo,ddo)*100;
+        return mat::Identity(ddo,ddo)*100;
     }
     float get_ht(const vec& s, const vec& u, const float r)
     {
       return r*r/(r*get_fdt(s,u,1).norm() + get_FFdt(s,u,1).norm());
     }
+    
+    float get_reward(vec& s1, vec& u, vec& s2)
+    {
+      bool gs1 = is_in_goal(s1);
+      bool gs2 = is_in_goal(s2);
 
+      if(gs1)
+      {
+        if(gs2)
+          return -u.norm();
+        else
+          return -1000;
+      }
+      else
+      {
+        if(gs2)
+          return 1000;
+        else
+          return -u.norm();
+      }
+      return 0;
+    }
 };
 
 #endif

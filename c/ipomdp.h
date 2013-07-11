@@ -87,7 +87,10 @@ class ipomdp_t{
     }
     vec get_b0()
     {
-      return 0;
+      vec t = vec::Zero(ns);
+      for(int i=0; i<ns; i++)
+        t(i) = normal_val(system.init_state, system.init_var, S[i]);
+      return t/t.sum();
     }
     int sample_all()
     {
@@ -121,7 +124,7 @@ class ipomdp_t{
             vec fdt = system.get_fdt(s,u,ht);
             mat FFdt = system.get_FFdt(s,u,ht);
 
-            vec probs = Zero(ns);
+            vec probs = vec::Zero(ns);
             float pos[ds] = {0};
             while(!kd_res_end(res))
             {
@@ -132,7 +135,7 @@ class ipomdp_t{
               
               kd_res_next(res);
             }
-            model.pt_t[j].row(i) = probs.transpose();
+            model.pt[j].row(i) = probs.transpose();
             kd_res_rewind(res);
           }
         }
@@ -143,7 +146,7 @@ class ipomdp_t{
 
     int get_Q()
     {
-      mat Q = mat::Zero(ns,no);
+      mat Q = vec::Zero(ns,no);
       for(int i=0; i<ns; i++)
       {
         for(int j=0; j<no; j++)
@@ -157,7 +160,14 @@ class ipomdp_t{
     
     int get_R()
     {
-
+      for(int i=0; i<nu; i++)
+      {
+        for(int j=0; j<ns; j++)
+        {
+          for(int k=0; k<ns; k++)
+            model.pr[i](j,k) = system.get_reward(S[j], U[i], S[k]);
+        }
+      }
       return 0;
     }
 

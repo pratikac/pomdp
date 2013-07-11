@@ -15,6 +15,8 @@
 
 #include <sys/time.h>
 
+#include "linalg.h"
+
 #define debug(x) \
   std::cout<<"DBG("<<__FILE__<<":"<<__LINE__<<") "<<x<<std::endl
 #define SQ(x)   (x)*(x)
@@ -36,4 +38,11 @@ typedef struct tt{
   }
 }tt;
 
+float normal_val(vec& m, mat& v, vec& s)
+{
+  float t1 = 1.0/pow(2*M_PI, m.rows()/2.0)/sqrt(v.determinant());
+  float t2 = exp(-0.5*(m-s).transpose()* v.inverse() * (m-s));
+
+  return t1*t2;
+}
 #endif
