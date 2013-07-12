@@ -41,9 +41,9 @@ class solver_t{
 
     solver_t(belief_t& b_root, model_t* model_in)
     {
-      initialise_solver(b_root, model_in);
+      initialise(b_root, model_in);
     }
-    int initialise_solver(belief_t& b_root, model_t* model_in)
+    int initialise(belief_t& b_root, model_t* model_in)
     {
       belief_tree = new belief_tree_t(b_root);
       model = model_in;
@@ -219,7 +219,8 @@ class solver_t{
         for(int o=0; o<no; o++)
           t0.col(o) = alpha_a_o[a][o]->grad;
 
-        vec t1 = (model->po[a].transpose() * t0.transpose()). diagonal();
+        // check this, this looks fishy
+        vec t1 = (model->po[a] * (t0.transpose())). diagonal();
         t1 = model->get_step_reward(a) + model->discount*model->pt[a]*t1;
         alpha_t t2(a, t1);
         float t3 = t2.get_value(bn->b);

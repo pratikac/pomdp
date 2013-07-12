@@ -33,11 +33,11 @@ class ipomdp_t{
       ddo = system.ddo;
 
       nsm = 0;
-      ns = 10;
+      ns = 5;
       num = 0;
-      nu = 2; //2.0*log(ns);
+      nu = 4; //2.0*log(ns);
       nom = 0;
-      no = 2;
+      no = 4;
 
       ht = 0.1;
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
@@ -223,13 +223,17 @@ class ipomdp_t{
     
     int solve_model()
     {
-      solver = solver_t(model.b0, &model);
+      solver.initialise(model.b0, &model);
 
       for(int i=0; i<20; i++)
       {
         solver.sample_belief_nodes();
         for(int j=0; j<5; j++)
+        {
           solver.backup_belief_nodes();
+          cout<<"\t : "<< j << endl;
+        }
+        cout<<"i: "<< i<< " rew: " << solver.belief_tree->root->value_lower_bound << endl;
       }
       cout<<"reward: "<< solver.belief_tree->root->value_lower_bound << endl;
       return 0;

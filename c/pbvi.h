@@ -14,7 +14,7 @@ class pbvi_t : public solver_t{
 
     pbvi_t(belief_t& b_root, model_t* model_in) : solver_t(b_root, model_in)
     {
-      insert_distance = 0;
+      insert_distance = 0.01;
     }
 
     bool check_insert_into_belief_tree(belief_node_t* par, edge_t* e)
