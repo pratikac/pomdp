@@ -39,10 +39,6 @@ class solver_t{
   
     solver_t(){}
 
-    solver_t(belief_t& b_root, model_t* model_in)
-    {
-      initialise(b_root, model_in);
-    }
     int initialise(belief_t& b_root, model_t* model_in)
     {
       belief_tree = new belief_tree_t(b_root);

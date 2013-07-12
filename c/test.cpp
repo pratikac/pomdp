@@ -44,8 +44,8 @@ int test_solver(int argc, char** argv)
   m.print();
   getchar();
 
-  belief_t b0 = m.b0;
-  pbvi_t pbvi(b0, &m);
+  pbvi_t pbvi;
+  pbvi.initialise(m.b0, &m);
   
   tt timer;
   timer.tic();

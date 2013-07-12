@@ -259,7 +259,7 @@ class ipomdp_t{
     
     int solve_model()
     {
-      solver.initialise(model.b0, &model);
+      solver.initialise(model.b0, &model, 0.1);
 
       for(int i=0; i<20; i++)
       {
