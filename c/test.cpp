@@ -54,7 +54,7 @@ int test_solver(int argc, char** argv)
     pbvi.sample_belief_nodes();
     for(int j=0; j< backup_per_sample; j++)
       pbvi.backup_belief_nodes();
-
+    cout<<"i: "<< i << endl;
     //pbvi.print_alpha_vectors();
   }
   cout<<timer.toc()<<"[ms]"<<endl;
@@ -73,7 +73,7 @@ int test_ipomdp(int argc, char** argv)
   //srand(time(NULL));
   ipomdp_t<lightdark_t<1,1,1>, pbvi_t> ipomdp;
   ipomdp.create_model();
-  ipomdp.model.print("model.pomdp");
+  ipomdp.print();
   ipomdp.solve_model();
   return 0;
 }

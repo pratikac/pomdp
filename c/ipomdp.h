@@ -69,6 +69,7 @@ class ipomdp_t{
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
       return 0;
     }
+    
     int sample_controls()
     {
       for(int i=num; i<nu-1; i++)
@@ -220,6 +221,41 @@ class ipomdp_t{
 
       return 0;
     }
+
+    int print()
+    {
+      ofstream fout;
+      fout.open("model.pomdp");
+
+      fout<<"states: "<<ns<<endl;
+      for(int i=0; i<ns; i++)
+        fout<< i<< " -- " << S[i].transpose() << endl;
+      fout<<"actions: "<<nu<<endl;
+      for(int i=0; i<nu; i++)
+        fout<< i<< " -- " << U[i].transpose() << endl;
+      fout<<"observations: "<< no << endl;
+      for(int i=0; i<no; i++)
+        fout<< i<< " -- " << O[i].transpose() << endl;
+      fout<<"transition_probabilities: "<<endl;
+      for(int i=0; i<nu; i++)
+      {
+        fout<<"aid: "<<i<< endl << model.pt[i] <<endl;
+      }
+      fout<<"observation_probabilities: "<<endl;
+      for(int i=0; i<nu; i++)
+      {
+        fout<<"aid: "<<i<< endl << model.po[i] <<endl;
+      }
+
+      fout<<"initial_belief: "<< model.b0.p.transpose()<<endl;
+      fout<<"discount: "<< model.discount <<endl;
+      fout<<"reward_function: "<<endl;
+      for(int i=0; i<nu; i++)
+        fout<<"aid: "<<i<< endl << model.pr[i] <<endl;
+
+      fout.close();
+      return 0;
+    }
     
     int solve_model()
     {
@@ -231,9 +267,10 @@ class ipomdp_t{
         for(int j=0; j<5; j++)
         {
           solver.backup_belief_nodes();
-          cout<<"\t : "<< j << endl;
+          //cout<<"\t : "<< j << endl;
         }
         cout<<"i: "<< i<< " rew: " << solver.belief_tree->root->value_lower_bound << endl;
+        //solver.print_alpha_vectors();
       }
       cout<<"reward: "<< solver.belief_tree->root->value_lower_bound << endl;
       return 0;

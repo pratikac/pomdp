@@ -34,8 +34,8 @@ class lightdark_t : public system_t<ds, du, ddo>
         init_state(0) = 0;
         init_var = mat(1,1); 
         init_var(0,0) = 0.1;
-        goal_region = region_t<ds> ((vec)mat::Constant(ds,1,-0.9), (vec)mat::Constant(ds,1,0.2));
-        light_regions.push_back(region_t<ds> ((vec)mat::Constant(ds,1,0.9), (vec)mat::Constant(ds,1,0.2)));
+        goal_region = region_t<ds> ((vec)mat::Constant(ds,1,-0.8), (vec)mat::Constant(ds,1,0.4));
+        light_regions.push_back(region_t<ds> ((vec)mat::Constant(ds,1,0.8), (vec)mat::Constant(ds,1,0.4)));
       }
       else if(ds == 2)
       {
@@ -54,11 +54,11 @@ class lightdark_t : public system_t<ds, du, ddo>
       vec s = vec::Zero(ds);
       region_t<ds>* r = &operating_region;
       float p = RANDF;
-      if(p < 0.1)
+      if(p < 0.2)
       {
         r = &goal_region;
       }
-      else if(p < 0.2)
+      else if(p < 0.4)
       {
         int p2 = RANDF*light_regions.size();
         r = &light_regions[p2];

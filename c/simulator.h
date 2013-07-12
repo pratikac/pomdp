@@ -20,7 +20,7 @@ class simulator_t{
     int find_best_action(belief_t& b)
     {
       float t1 = -FLT_MAX;
-      int id = -1;
+      int id = 0;
       for(auto& av : alpha_vectors)
       {
         float t2 = av->get_value(b);

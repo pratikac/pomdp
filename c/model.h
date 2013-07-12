@@ -245,7 +245,8 @@ class model_t
     
     float get_step_reward(const int& sid, const int& aid)
     {
-      return (pr[aid].array()*pt[aid].array()).rowwise().sum()(sid);
+      mat t1 = (pr[aid].array())*(pt[aid].array());
+      return (t1.rowwise()).sum()(sid);
     }
 
     vec get_step_reward(const int& aid)
