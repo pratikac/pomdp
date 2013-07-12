@@ -86,9 +86,10 @@ class lightdark_t : public system_t<ds, du, ddo>
     }
     vec get_key(const vec& s)
     {
-      vec k = s - operating_region.c;
+      vec k = (s - operating_region.c);
       for(size_t i=0; i<ds; i++)
         k(i) = k(i)/operating_region.s(i) + 0.5;
+      
       return k;
     }
     vec get_fdt(const vec& s, const vec& u, float dt=1.0)

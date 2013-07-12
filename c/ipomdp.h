@@ -62,8 +62,9 @@ class ipomdp_t{
       {
         vec s = system.sample_state();
         S.push_back(s);
-        vec key = system.get_key(s);
-        kd_insertf(tree, key.data(), &linear[i]);
+        float* key = system.get_key(s).data();
+        kd_insertf(tree, key, &linear[i]);
+        //cout<<"inserted: "<< s <<" -- " << key << " -- " << linear[i] << endl;
       }
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
       return 0;
@@ -109,22 +110,39 @@ class ipomdp_t{
       
       return 0;
     }
+   
+    int test_kd_tree()
+    {
+      for(int i=0; i<ns; i++)
+      {
+        cout<<i<< " -- "<<S[i]<<" -- "<<system.get_key(S[i])<< endl;
+        float* key = system.get_key(S[i]).data();
+        kdres* res = kd_nearest_rangef(tree, key, r);
+        while(!kd_res_end(res))
+        {
+          float pos[ds];
+          int* index = (int*)kd_res_itemf(res, pos);
+          cout<<"\t: "<< S[*index] << endl;
+          kd_res_next(res);
+        }
+        kd_res_free(res);
+      }
+      getchar();
+      return 0;
+    }
     
     int get_P()
     {
-      for(int i=0; i<ns; i++)
-        cout<<i<< "--"<<S[i]<<endl;
-
       model.pt = vector<mat>(nu, mat::Zero(ns,ns));
 
       for(int i=0; i<ns; i++)
       {
         vec& s = S[i];
-
-        kdres* res = kd_nearest_rangef(tree, system.get_key(s).data(), r);
+        float* key = system.get_key(s).data();
+        kdres* res = kd_nearest_rangef(tree, key, r);
         if(kd_res_size(res) == 0)
         {
-          cout<< s.transpose()<< "-"<< system.get_key(s).transpose()<< endl;
+          //cout<< s.transpose()<< " - "<< system.get_key(s).transpose()<< " -- " << r << endl;
           continue;
         }
         else
@@ -147,8 +165,7 @@ class ipomdp_t{
               kd_res_next(res);
             }
             model.pt[j].row(i) = probs.transpose();
-            cout<<i<<" "<<j<< endl << probs.transpose() << endl;
-            getchar();
+            //cout<<i<<" "<<j<< endl << probs.transpose() << endl;
             kd_res_rewind(res);
           }
         }

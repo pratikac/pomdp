@@ -70,10 +70,10 @@ int test_solver(int argc, char** argv)
 
 int test_ipomdp(int argc, char** argv)
 {
+  //srand(time(NULL));
   ipomdp_t<lightdark_t<1,1,1>, pbvi_t> ipomdp;
   ipomdp.create_model();
   ipomdp.model.print("model.pomdp");
-  getchar();
   ipomdp.solve_model();
   return 0;
 }
