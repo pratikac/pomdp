@@ -35,9 +35,9 @@ class ipomdp_t{
       nsm = 0;
       ns = 10;
       num = 0;
-      nu = 2.0*log(ns);
+      nu = 2; //2.0*log(ns);
       nom = 0;
-      no = nu;
+      no = 2;
 
       ht = 0.1;
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
@@ -48,7 +48,7 @@ class ipomdp_t{
 
       // linear stores [0, 1, 2, .... n-1] (for kdtree hack)
       linear = vector<int>(ns,0);
-      for(int i=0; i<ns; i++)
+      for(int i=nsm; i<ns; i++)
         linear[i] = i;
     }
     ~ipomdp_t()
@@ -112,37 +112,43 @@ class ipomdp_t{
     
     int get_P()
     {
+      for(int i=0; i<ns; i++)
+        cout<<i<< "--"<<S[i]<<endl;
+
       model.pt = vector<mat>(nu, mat::Zero(ns,ns));
 
-      kdres* res = NULL;
       for(int i=0; i<ns; i++)
       {
         vec& s = S[i];
 
-        res = kd_nearest_rangef(tree, system.get_key(s).data(), r);
+        kdres* res = kd_nearest_rangef(tree, system.get_key(s).data(), r);
         if(kd_res_size(res) == 0)
+        {
+          cout<< s.transpose()<< "-"<< system.get_key(s).transpose()<< endl;
           continue;
+        }
         else
         {
-          kd_res_rewind(res);
           for(int j=0; j<nu; j++)
           {
             vec& u = U[j];
-            vec fdt = system.get_fdt(s,u,ht);
+            vec sfdt = s + system.get_fdt(s,u,ht);
             mat FFdt = system.get_FFdt(s,u,ht);
 
             vec probs = vec::Zero(ns);
             float pos[ds];
             while(!kd_res_end(res))
             {
-              int* skindex = (int*)kd_res_itemf(res,pos);
+              int* skindex = (int*)kd_res_itemf(res, pos);
               vec& sk = S[*skindex];
               if(!system.is_in_obstacle(s,sk))
-                probs(*skindex) = normal_val(s, FFdt, sk);
+                probs(*skindex) = normal_val(sfdt, FFdt, sk);
               
               kd_res_next(res);
             }
             model.pt[j].row(i) = probs.transpose();
+            cout<<i<<" "<<j<< endl << probs.transpose() << endl;
+            getchar();
             kd_res_rewind(res);
           }
         }

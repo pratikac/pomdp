@@ -52,19 +52,19 @@ class lightdark_t : public system_t<ds, du, ddo>
     vec sample_state()
     {
       vec s = vec::Zero(ds);
-      region_t<ds> r = operating_region;
+      region_t<ds>* r = &operating_region;
       float p = RANDF;
       if(p < 0.1)
       {
-        r = goal_region;
+        r = &goal_region;
       }
       else if(p < 0.2)
       {
         int p2 = RANDF*light_regions.size();
-        r = light_regions[p2];
+        r = &light_regions[p2];
       }
       for(size_t i=0; i< ds; i++)
-        s(i) = r.c(i) + r.s(i)*(RANDF-0.5);
+        s(i) = r->c(i) + r->s(i)*(RANDF-0.5);
       return s;
     }
     vec sample_control()
