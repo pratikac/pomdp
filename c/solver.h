@@ -36,7 +36,8 @@ class solver_t{
     kdtree_t* feature_tree;
 
     vector<alpha_t*> alpha_vectors;
-  
+    vec mdp_value_function;
+
     solver_t(){}
 
     int initialise(belief_t& b_root, model_t* model_in)
@@ -47,6 +48,7 @@ class solver_t{
       insert_into_feature_tree(belief_tree->root);
 
       initiate_alpha_vector();
+      calculate_mdp_policy();
       return 0;
     }
 
@@ -67,6 +69,35 @@ class solver_t{
       vec tmp = vec::Constant(model->ns, max_val/(1.0 - model->discount));
       alpha_t* first_alpha = new alpha_t(best_action, tmp);
       alpha_vectors.push_back(first_alpha);
+      return 0;
+    }
+
+    int calculate_mdp_policy()
+    {
+      int ns = model->ns;
+      int na = model->na;
+      mdp_value_function = vec::Zero(ns); //mat::Constant(ns,1,-FLT_MAX);
+      vec mp = mdp_value_function;
+      int c = 0;
+      bool is_converged = false;
+      while(!is_converged)
+      {
+        mp = mdp_value_function; 
+        mat t1 = mat::Zero(ns,na);
+        mat t2 = t1;
+        for(int i=0; i<na; i++)
+        {
+          for(int j=0; j<ns; j++)
+            t1(j,i) = model->get_step_reward(j, i);
+        }
+        for(int i=0; i<na; i++)
+          t2.col(i) = t1.col(i) + model->discount*((model->pt[i].transpose())*mp);
+        
+        mdp_value_function = t2.rowwise().maxCoeff();
+        is_converged = (mp-mdp_value_function).norm() < 0.1;
+        c++;
+      }
+      cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
       return 0;
     }
 
@@ -105,6 +136,10 @@ class solver_t{
       int oid = model->no*RANDF;
       belief_t b = model->next_belief(par->b, aid, oid);
       belief_node_t* bn = new belief_node_t(b, par);
+      
+      bn->value_upper_bound = bn->b.p.dot(mdp_value_function);
+      bn->value_lower_bound = calculate_belief_value(bn->b);
+      
       return new edge_t(bn, aid, oid);
     }
     
@@ -234,6 +269,32 @@ class solver_t{
       return 0;
     }
     
+    virtual int bellman_update(belief_node_t* bn)
+    {
+      if(bn->children.size() == 0)
+        return 0;
+
+      vector<float> t1(model->na,0);
+      for(auto& ce : bn->children)
+      {
+        belief_node_t* cbn = ce->end;
+        float t2 = model->get_p_o_given_b(bn->b, ce->aid, ce->oid);
+        t1[ce->aid] += t2*cbn->value_upper_bound;
+      }
+      float max_value = -FLT_MAX;
+      for(int a=0; a<model->na; a++)
+      {
+        if(t1[a] != 0)
+        {
+          t1[a] += model->get_expected_step_reward(bn->b, a);
+          if(t1[a] > max_value)
+            max_value = t1[a];
+        }
+      }
+      bn->value_upper_bound = max_value;
+      return 0;
+    }
+
     float calculate_belief_value(belief_t& b)
     {
       float max_val = -FLT_MAX;
@@ -250,6 +311,21 @@ class solver_t{
     {
       for(auto& bn : belief_tree->nodes)
         backup(bn);
+      return 0;
+    }
+   
+    virtual int bellman_update_node(belief_node_t* bn)
+    {
+      for(auto& ce : bn->children)
+        bellman_update_node(ce->end);
+      bellman_update(bn);
+      return 0;
+    }
+    
+    virtual int bellman_update_tree()
+    {
+      // do dfs and bellman updates while coming up
+      bellman_update_node(belief_tree->root);
       return 0;
     }
 

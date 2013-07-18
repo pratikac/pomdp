@@ -121,7 +121,7 @@ class lightdark_t : public system_t<ds, du, ddo>
       return r*r/(r*get_fdt(s,u,1).norm() + get_FFdt(s,u,1).norm());
     }
     
-    float get_reward(vec& s1, vec& u, vec& s2)
+    float get_reward(vec& s1, vec& u, vec& s2, float dt)
     {
       bool gs1 = is_in_goal(s1);
       bool gs2 = is_in_goal(s2);
@@ -129,7 +129,7 @@ class lightdark_t : public system_t<ds, du, ddo>
       if(gs1)
       {
         if(gs2)
-          return -u.norm();
+          return -u.norm()*dt;
         else
           return -1000;
       }
@@ -138,7 +138,7 @@ class lightdark_t : public system_t<ds, du, ddo>
         if(gs2)
           return 1000;
         else
-          return -u.norm();
+          return -u.norm()*dt;
       }
       return 0;
     }

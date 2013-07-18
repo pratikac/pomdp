@@ -47,8 +47,8 @@ class ipomdp_t{
       tree = kd_create(ns);
 
       // linear stores [0, 1, 2, .... n-1] (for kdtree hack)
-      linear = vector<int>(ns,0);
-      for(int i=nsm; i<ns; i++)
+      linear = vector<int>(1000,0);
+      for(int i=0; i<1000; i++)
         linear[i] = i;
     }
     ~ipomdp_t()
@@ -198,14 +198,20 @@ class ipomdp_t{
         for(int j=0; j<ns; j++)
         {
           for(int k=0; k<ns; k++)
-            model.pr[i](j,k) = system.get_reward(S[j], U[i], S[k]);
+          {
+            float t1 = system.get_reward(S[j], U[i], S[k], ht);
+            model.pr[i](j,k) = t1;
+          }
         }
       }
       return 0;
     }
 
-    int create_model()
+    int create_model(int ns_, int nu_, int no_)
     {
+      ns = ns_;
+      nu = nu_;
+      no = no_;
       sample_all();
       
       get_P();
@@ -215,13 +221,14 @@ class ipomdp_t{
       model.ns = ns;
       model.na = nu;
       model.no = no;
-      model.discount = gamma;
+      model.discount = exp(-0.1*ht);
+      cout<<"ht, model.discount: "<< ht<<" "<<model.discount << endl;
       model.b0.p = get_b0();
       model.normalize_mat();
 
       return 0;
     }
-
+    
     int print()
     {
       ofstream fout;
@@ -261,7 +268,7 @@ class ipomdp_t{
     {
       solver.initialise(model.b0, &model, 0.1);
 
-      for(int i=0; i<20; i++)
+      for(int i=0; i<40; i++)
       {
         solver.sample_belief_nodes();
         for(int j=0; j<5; j++)

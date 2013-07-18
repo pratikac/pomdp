@@ -54,12 +54,14 @@ int test_solver(int argc, char** argv)
     pbvi.sample_belief_nodes();
     for(int j=0; j< backup_per_sample; j++)
       pbvi.backup_belief_nodes();
+    
+    pbvi.bellman_update_tree();
     cout<<"i: "<< i << endl;
     //pbvi.print_alpha_vectors();
   }
   cout<<timer.toc()<<"[ms]"<<endl;
   cout<<"reward: "<< pbvi.belief_tree->root->value_lower_bound<<endl;
-  //pbvi.belief_tree->print(pbvi.belief_tree->root);
+  pbvi.belief_tree->print(pbvi.belief_tree->root);
   
   vec sim_stats(num_sim);
   for(int i=0; i<num_sim; i++)
@@ -71,16 +73,19 @@ int test_solver(int argc, char** argv)
 int test_ipomdp(int argc, char** argv)
 {
   //srand(time(NULL));
-  ipomdp_t<lightdark_t<1,1,1>, pbvi_t> ipomdp;
-  ipomdp.create_model();
-  ipomdp.print();
-  ipomdp.solve_model();
+  int ilist[10] = {10, 50, 100, 150, 200, 250, 300, 350, 400, 450};
+  for(int i=0; i<2; i++)
+  {
+    ipomdp_t<lightdark_t<1,1,1>, pbvi_t> ipomdp;
+    ipomdp.create_model(ilist[i],4,4);
+    ipomdp.solve_model();
+  }
   return 0;
 }
 
 int main(int argc, char** argv)
 {
-  //test_solver(argc, argv);
-  test_ipomdp(argc, argv);
+  test_solver(argc, argv);
+  //test_ipomdp(argc, argv);
   return 0;
 }

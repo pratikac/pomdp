@@ -73,10 +73,20 @@ class belief_tree_t{
 
     void print(belief_node_t* bn, string prefix="")
     {
-      bn->b.print(prefix, bn->value_lower_bound);
+      bn->b.print(prefix, bn->value_lower_bound, bn->value_upper_bound);
       prefix += "\t";
       for(auto& bne : bn->children)
         print(bne->end, prefix);
+    }
+
+    bool all_children_leaves(belief_node_t* bn)
+    {
+      for(auto& ce : bn->children)
+      {
+        if(ce->end->children.size() > 0)
+          return false;
+      }
+      return true;
     }
 };
 

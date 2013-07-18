@@ -53,6 +53,7 @@ class pbvi_t : public solver_t{
         insert_into_belief_tree(p.first, p.second);
       return nodes_to_insert.size();
     }
+
 };
 
 

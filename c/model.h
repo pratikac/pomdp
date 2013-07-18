@@ -28,10 +28,10 @@ class belief_t{
     {
       p = p/p.sum();
     }
-    void print(string prefix="", float val=-FLT_MAX/2) const
+    void print(string prefix="", float val1=-FLT_MAX/2, float val2=-FLT_MAX/2) const
     {
-      if(val > -FLT_MAX/2)
-        cout<<prefix<<"["<<p.transpose()<<"]:"<<val<<endl;
+      if(val1 > -FLT_MAX/2)
+        cout<<prefix<<"["<<p.transpose()<<"]:"<<val1<<" "<< val2 << endl;
       else 
         cout<<prefix<<"["<<p.transpose()<<"]"<<endl;
     }
@@ -213,6 +213,14 @@ class model_t
     {
       vec t1 = pt[aid].row(sid).transpose();
       return multinomial_sampling(t1);
+    }
+
+    belief_t delta_belief(int sid)
+    {
+      belief_t newb;
+      newb.p = vec::Zero(ns);
+      newb.p(sid) = 1;
+      return newb;
     }
 
     belief_t next_belief(belief_t& b, int aid=-1, int oid=-1)
