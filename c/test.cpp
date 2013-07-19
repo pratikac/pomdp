@@ -76,7 +76,7 @@ int test_ipomdp(int argc, char** argv)
   int ilist[10] = {10, 50, 100, 150, 200, 250, 300, 350, 400, 450};
   for(int i=0; i<2; i++)
   {
-    ipomdp_t<lightdark_t<1,1,1>, pbvi_t> ipomdp;
+    ipomdp_t<lightdark_t<1,1,1>, sarsop_t> ipomdp;
     ipomdp.create_model(ilist[i],4,4);
     ipomdp.solve_model();
   }
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   pbvi_t pbvi;
   sarsop_t sarsop;
 
-  test_solver(argc, argv, sarsop);
-  //test_ipomdp(argc, argv);
+  //test_solver(argc, argv, sarsop);
+  test_ipomdp(argc, argv);
   return 0;
 }

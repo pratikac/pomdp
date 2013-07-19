@@ -268,7 +268,7 @@ class ipomdp_t{
     {
       solver.initialise(model.b0, &model, 0.1);
 
-      for(int i=0; i<40; i++)
+      for(int i=0; i<20; i++)
       {
         solver.sample_belief_nodes();
         for(int j=0; j<5; j++)

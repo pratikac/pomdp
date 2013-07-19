@@ -91,13 +91,13 @@ class solver_t{
             t1(j,i) = model->get_step_reward(j, i);
         }
         for(int i=0; i<na; i++)
-          t2.col(i) = t1.col(i) + model->discount*((model->pt[i].transpose())*mp);
+          t2.col(i) = t1.col(i) + model->discount*model->pt[i]*mp;
         
         mdp_value_function = t2.rowwise().maxCoeff();
-        is_converged = (mp-mdp_value_function).norm() < 0.1;
+        is_converged = (mp-mdp_value_function).norm() < 1;
         c++;
       }
-      cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
+      //cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
       return 0;
     }
 
