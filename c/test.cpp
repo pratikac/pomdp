@@ -1,4 +1,5 @@
 #include "pbvi.h"
+#include "sarsop.h"
 #include "simulator.h"
 #include "parser/mdp.h"
 
@@ -6,7 +7,7 @@
 
 using namespace std;
 
-int test_solver(int argc, char** argv)
+int test_solver(int argc, char** argv, solver_t& solver)
 {
   int c;
   int num_samples = 25, backup_per_sample = 5;
@@ -44,28 +45,27 @@ int test_solver(int argc, char** argv)
   m.print();
   getchar();
 
-  pbvi_t pbvi;
-  pbvi.initialise(m.b0, &m);
+  solver.initialise(m.b0, &m);
   
   tt timer;
   timer.tic();
   for(int i=0; i<num_samples; i++)
   {
-    pbvi.sample_belief_nodes();
+    solver.sample_belief_nodes();
     for(int j=0; j< backup_per_sample; j++)
-      pbvi.backup_belief_nodes();
+      solver.backup_belief_nodes();
     
-    pbvi.bellman_update_tree();
+    solver.bellman_update_tree();
     cout<<"i: "<< i << endl;
     //pbvi.print_alpha_vectors();
   }
   cout<<timer.toc()<<"[ms]"<<endl;
-  cout<<"reward: "<< pbvi.belief_tree->root->value_lower_bound<<endl;
-  pbvi.belief_tree->print(pbvi.belief_tree->root);
+  cout<<"reward: "<< solver.belief_tree->root->value_lower_bound<<endl;
+  //solver.belief_tree->print(solver.belief_tree->root);
   
   vec sim_stats(num_sim);
   for(int i=0; i<num_sim; i++)
-    sim_stats(i) = pbvi.simulate(num_steps);
+    sim_stats(i) = solver.simulate(num_steps);
   cout<<"mean: "<< sim_stats.mean() << endl;
   return 0;
 }
@@ -85,7 +85,10 @@ int test_ipomdp(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-  test_solver(argc, argv);
+  pbvi_t pbvi;
+  sarsop_t sarsop;
+
+  test_solver(argc, argv, sarsop);
   //test_ipomdp(argc, argv);
   return 0;
 }

@@ -19,10 +19,14 @@ class belief_node_t{
     belief_node_t* parent;
     set<edge_t*> children;
 
-    belief_node_t() : value_lower_bound(-FLT_MAX), value_upper_bound(FLT_MAX), parent(nullptr)
+    int depth,index;
+    
+    belief_node_t() : value_lower_bound(-FLT_MAX), value_upper_bound(FLT_MAX), 
+          parent(nullptr), depth(0), index(-1)
     {}
     
-    belief_node_t(belief_t& b_in, belief_node_t* par=nullptr) : value_lower_bound(-FLT_MAX), value_upper_bound(FLT_MAX)
+    belief_node_t(belief_t& b_in, belief_node_t* par=nullptr) : value_lower_bound(-FLT_MAX), 
+          value_upper_bound(FLT_MAX), depth(0), index(-1)
     {
       b = b_in;
       parent = par;
@@ -54,6 +58,7 @@ class belief_tree_t{
     belief_tree_t(belief_t& b_root)
     {
       root = new belief_node_t(b_root);
+      root->index = 0;
       nodes.push_back(root);
     }
 
@@ -65,6 +70,7 @@ class belief_tree_t{
 
     int insert(belief_node_t* par, edge_t* e)
     {
+      e->end->index = nodes.size();
       nodes.push_back(e->end);
       e->end->parent = par;
       par->children.insert(e);
@@ -79,7 +85,7 @@ class belief_tree_t{
         print(bne->end, prefix);
     }
 
-    bool all_children_leaves(belief_node_t* bn)
+    bool all_children_are_leaves(belief_node_t* bn)
     {
       for(auto& ce : bn->children)
       {
@@ -87,6 +93,34 @@ class belief_tree_t{
           return false;
       }
       return true;
+    }
+
+    int prune_below(belief_node_t* bn)
+    {
+      if(bn->parent)
+      {
+        for(auto ce = bn->parent->children.begin(); ce != bn->parent->children.end(); ce++)
+        {
+          if((*ce)->end == bn)
+          {
+            bn->parent->children.erase(ce);
+            break;
+          }
+        }
+      }
+      prune(bn);
+      return 0;
+    }
+    
+    int prune(belief_node_t* bn)
+    {
+      for(auto& ce : bn->children)
+        prune(ce->end);
+      
+      nodes.erase(nodes.begin()+bn->index);
+      delete bn;
+      
+      return 0;
     }
 };
 

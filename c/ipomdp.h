@@ -212,8 +212,8 @@ class ipomdp_t{
       ns = ns_;
       nu = nu_;
       no = no_;
-      sample_all();
       
+      sample_all();
       get_P();
       get_Q();
       get_R();

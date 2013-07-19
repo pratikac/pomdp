@@ -38,7 +38,7 @@ class solver_t{
     vector<alpha_t*> alpha_vectors;
     vec mdp_value_function;
 
-    solver_t(){}
+    solver_t() : model(nullptr), belief_tree(nullptr), feature_tree(nullptr){}
 
     int initialise(belief_t& b_root, model_t* model_in)
     {
@@ -134,9 +134,11 @@ class solver_t{
     {
       int aid = model->na*RANDF;
       int oid = model->no*RANDF;
+      
       belief_t b = model->next_belief(par->b, aid, oid);
       belief_node_t* bn = new belief_node_t(b, par);
-      
+      bn->depth = par->depth + 1;
+
       bn->value_upper_bound = bn->b.p.dot(mdp_value_function);
       bn->value_lower_bound = calculate_belief_value(bn->b);
       
@@ -185,7 +187,7 @@ class solver_t{
       // 1. don't push if too similar to any alpha vector
       for(auto& pav : alpha_vectors)
       {
-        if( (a->grad - pav->grad).norm() < 0.01)
+        if( (a->grad - pav->grad).norm() < 0.1)
           return 1;
       }
       // 2. prune set
