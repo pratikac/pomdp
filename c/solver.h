@@ -326,6 +326,47 @@ class solver_t{
       bn->value_upper_bound = max_value;
       return 0;
     }
+    
+    virtual int bellman_update_tree(belief_node_t* bn)
+    {
+      if(bn->children.size() == 0)
+        return 0;
+
+      vector<float> t1(model->na,0);
+      for(auto& ce : bn->children)
+      {
+        belief_node_t* cbn = ce->end;
+        float t2 = model->get_p_o_given_b(bn->b, ce->aid, ce->oid);
+        t1[ce->aid] += t2*cbn->value_upper_bound;
+      }
+      float max_value = -FLT_MAX;
+      for(int a=0; a<model->na; a++)
+      {
+        if(t1[a] != 0)
+        {
+          t1[a] += model->get_expected_step_reward(bn->b, a);
+          if(t1[a] > max_value)
+            max_value = t1[a];
+        }
+      }
+      bn->value_upper_bound = max_value;
+      return 0;
+    }
+    
+    virtual int bellman_update_node_tree(belief_node_t* bn)
+    {
+      for(auto& ce : bn->children)
+        bellman_update_node(ce->end);
+      bellman_update(bn);
+      return 0;
+    }
+    
+    virtual int bellman_update_nodes_tree()
+    {
+      // do dfs and bellman updates while coming up
+      bellman_update_node(belief_tree->root);
+      return 0;
+    }
 
     float calculate_belief_value(belief_t& b)
     {
@@ -356,7 +397,7 @@ class solver_t{
     virtual int update_nodes()
     {
       backup_belief_nodes();
-      bellman_update_nodes();
+      bellman_update_nodes_tree();
       return 0;
     }
 
