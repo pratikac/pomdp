@@ -94,8 +94,10 @@ class solver_t{
           t2.col(i) = t1.col(i) + model->discount*model->pt[i]*mp;
         
         mdp_value_function = t2.rowwise().maxCoeff();
-        is_converged = (mp-mdp_value_function).norm() < 1;
+        is_converged = (mp-mdp_value_function).norm() < 100;
         c++;
+        if(c > 100)
+          cout<<"more than 100 mdp value iterations"<<endl;
       }
       //cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
       return 0;
