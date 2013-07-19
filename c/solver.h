@@ -356,7 +356,7 @@ class solver_t{
     virtual int bellman_update_node_tree(belief_node_t* bn)
     {
       for(auto& ce : bn->children)
-        bellman_update_node(ce->end);
+        bellman_update_node_tree(ce->end);
       bellman_update(bn);
       return 0;
     }
@@ -364,7 +364,7 @@ class solver_t{
     virtual int bellman_update_nodes_tree()
     {
       // do dfs and bellman updates while coming up
-      bellman_update_node(belief_tree->root);
+      bellman_update_node_tree(belief_tree->root);
       return 0;
     }
 
