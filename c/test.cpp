@@ -55,7 +55,7 @@ int test_solver(int argc, char** argv, solver_t& solver)
     for(int j=0; j< backup_per_sample; j++)
       solver.backup_belief_nodes();
     
-    solver.bellman_update_tree();
+    solver.bellman_update_nodes();
     cout<<"i: "<< i << endl;
     //pbvi.print_alpha_vectors();
   }

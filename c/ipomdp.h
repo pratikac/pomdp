@@ -266,21 +266,21 @@ class ipomdp_t{
     
     int solve_model()
     {
-      solver.initialise(model.b0, &model, 0.1);
+      solver.initialise(model.b0, &model, 0.1, 0.1);
 
-      for(int i=0; i<50; i++)
+      for(int i=0; i<1000; i++)
       {
         solver.sample_belief_nodes();
-        for(int j=0; j<10; j++)
-        {
-          solver.backup_belief_nodes();
-          //cout<<"\t : "<< j << endl;
-        }
-        if(i%5 == 0)
-          cout<<"i: "<< i<< " rew: " << solver.belief_tree->root->value_lower_bound << endl;
+        solver.update_nodes();
+        
+        if(i%10 == 0)
+          cout<<i << "\t"<<solver.belief_tree->root->value_upper_bound<<"\t"<<solver.belief_tree->root->value_lower_bound << endl;
         //solver.print_alpha_vectors();
+        
+        if(solver.is_converged())
+          break;
       }
-      cout<<"reward: "<< solver.belief_tree->root->value_lower_bound << endl;
+      cout<<"reward: "<< solver.belief_tree->root->value_upper_bound<<" "<<solver.belief_tree->root->value_lower_bound << endl;
       return 0;
     }
 };
