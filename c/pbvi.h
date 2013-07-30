@@ -25,7 +25,7 @@ class pbvi_t : public solver_t{
     bool check_insert_into_belief_tree(belief_node_t* par, edge_t* e)
     {
       belief_node_t* bn = e->end;
-      kdres_t* kdres = kd_nearestf(feature_tree, get_key(bn));
+      kdres_t* kdres = kd_nearest(feature_tree, get_key(bn));
       bool to_insert = false;
       if(kd_res_end(kdres))
         to_insert = true;

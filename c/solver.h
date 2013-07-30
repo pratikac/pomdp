@@ -117,15 +117,15 @@ class solver_t{
         delete pav;
     }
 
-    virtual float* get_key(belief_node_t* bn)
+    virtual double* get_key(belief_node_t* bn)
     {
       return bn->b.p.data();
     }
 
     int insert_into_feature_tree(belief_node_t* bn)
     {
-      float* key = get_key(bn);
-      kd_insertf(feature_tree, key, bn);
+      double* key = get_key(bn);
+      kd_insert(feature_tree, key, bn);
       return 0;
     }
 
@@ -287,15 +287,15 @@ class solver_t{
     float projected_belief_upper_bound(belief_t& b)
     {
       int ns = model->ns;
-      float* key = b.p.data();
+      double* key = b.p.data();
       size_t num_nodes = belief_tree->nodes.size();
       float radius = 2.5*pow(log(num_nodes)/(float)num_nodes, 1.0/(float)ns);
-      kdres* res = kd_nearest_rangef(feature_tree, key, radius);
+      kdres* res = kd_nearest_range(feature_tree, key, radius);
       vector< pair<float, belief_node_t*> > dists;
       while(!kd_res_end(res))
       {
         float pos[ns];
-        belief_node_t* bnn = (belief_node_t*)kd_res_itemf(res, pos);
+        belief_node_t* bnn = (belief_node_t*)kd_res_item(res, pos);
         dists.push_back(make_pair((bnn->b.p - b.p).norm(), bnn));
         kd_res_next(res);
       }

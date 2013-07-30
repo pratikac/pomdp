@@ -62,8 +62,8 @@ class ipomdp_t{
       {
         vec s = system.sample_state();
         S.push_back(s);
-        float* key = system.get_key(s).data();
-        kd_insertf(tree, key, &linear[i]);
+        double* key = system.get_key(s).data();
+        kd_insert(tree, key, &linear[i]);
         //cout<<"inserted: "<< s <<" -- " << key << " -- " << linear[i] << endl;
       }
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
@@ -139,8 +139,8 @@ class ipomdp_t{
       for(int i=0; i<ns; i++)
       {
         vec& s = S[i];
-        float* key = system.get_key(s).data();
-        kdres* res = kd_nearest_rangef(tree, key, r);
+        double* key = system.get_key(s).data();
+        kdres* res = kd_nearest_range(tree, key, r);
         if(kd_res_size(res) == 0)
         {
           //cout<< s.transpose()<< " - "<< system.get_key(s).transpose()<< " -- " << r << endl;
@@ -155,10 +155,10 @@ class ipomdp_t{
             mat FFdt = system.get_FFdt(s,u,ht);
 
             vec probs = vec::Zero(ns);
-            float pos[ds];
+            double pos[ds];
             while(!kd_res_end(res))
             {
-              int* skindex = (int*)kd_res_itemf(res, pos);
+              int* skindex = (int*)kd_res_item(res, pos);
               vec& sk = S[*skindex];
               if(!system.is_in_obstacle(s,sk))
                 probs(*skindex) = normal_val(sfdt, FFdt, sk);
