@@ -1,6 +1,7 @@
 #ifndef __linalg_h__
 #define __linalg_h__
 
+#include <unistd.h>
 #include <Eigen/Dense>
 #include <Eigen/SparseCore>
 #include <Eigen/MatrixFunctions>

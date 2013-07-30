@@ -11,6 +11,7 @@ typedef struct kdres kdres;
 template<class system_t, class solver_t>
 class ipomdp_t{
   public:
+    
     int ns, nsm, nu, num, no, nom;
     int ds, du, ddo;
 
