@@ -74,7 +74,7 @@ int test_ipomdp(int argc, char** argv)
 {
   //srand(time(NULL));
   int ilist[10] = {10, 50, 100, 150, 200, 250, 300, 350, 400, 450};
-  for(int i=0; i<10; i++)
+  for(int i=2; i<3; i++)
   {
     ipomdp_t<lightdark_t<1,1,1>, sarsop_t> ipomdp;
     ipomdp.create_model(ilist[i],4,4);
