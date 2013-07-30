@@ -39,7 +39,7 @@ class solver_t{
     vec mdp_value_function;
 
     solver_t() : model(nullptr), belief_tree(nullptr), feature_tree(nullptr){}
-
+  
     int initialise(belief_t& b_root, model_t* model_in)
     {
       belief_tree = new belief_tree_t(b_root);
@@ -55,7 +55,7 @@ class solver_t{
       
       return 0;
     }
-
+    
     int initiate_alpha_vector()
     {
       // create first alpha vector by blind policy
@@ -283,6 +283,7 @@ class solver_t{
       return p1.second < p2.second;
     }
     
+#if 0
     float projected_belief_upper_bound(belief_t& b)
     {
       int ns = model->ns;
@@ -305,6 +306,30 @@ class solver_t{
       belief_node_t* b2 = dists[1].second;
       return (b1->value_upper_bound + b2->value_upper_bound)/2.0;
     }
+#else
+    float projected_belief_upper_bound(belief_t& b)
+    {
+      int ns = model->ns;
+      vec& bp = b.p;
+      float t1 = mdp_value_function.dot(bp);
+      float min_val = FLT_MAX/2;
+      for(auto& bn : belief_tree->nodes)
+      {
+        vec& bnbp = bn->b.p;
+        float t4 = -FLT_MAX/2;
+        float t3 = bp.dot(bnbp)*bn->value_upper_bound;
+        for(int s=0; s<ns; s++){
+          float t2 = t1 - mdp_value_function(s)*bp(s);
+          t2 += t3;
+          if(t2 > t4)
+            t4 = t2;
+        }
+        if(t4 < min_val)
+          min_val = t4;
+      }
+      return min_val;
+    }
+#endif
 
     virtual int bellman_update(belief_node_t* bn)
     {
@@ -397,7 +422,7 @@ class solver_t{
     virtual int update_nodes()
     {
       backup_belief_nodes();
-      bellman_update_nodes_tree();
+      bellman_update_nodes();
       return 0;
     }
 
