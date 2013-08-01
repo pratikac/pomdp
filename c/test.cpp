@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   pbvi_t pbvi;
   sarsop_t sarsop;
 
-  //test_solver(argc, argv, sarsop);
-  test_ipomdp(argc, argv);
+  test_solver(argc, argv, sarsop);
+  //test_ipomdp(argc, argv);
   return 0;
 }

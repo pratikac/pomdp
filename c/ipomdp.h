@@ -34,18 +34,16 @@ class ipomdp_t{
       ddo = system.ddo;
 
       nsm = 0;
-      ns = 5;
+      ns = 0;
       num = 0;
-      nu = 4; //2.0*log(ns);
+      nu = 0; //2.0*log(ns);
       nom = 0;
-      no = 4;
+      no = 0;
 
       ht = 0.1;
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
       gamma = 0.99;
       epsilon = 1e-15;
-
-      tree = kd_create(ns);
 
       // linear stores [0, 1, 2, .... n-1] (for kdtree hack)
       linear = vector<int>(1000,0);
@@ -63,7 +61,8 @@ class ipomdp_t{
       {
         vec s = system.sample_state();
         S.push_back(s);
-        double* key = system.get_key(s).data();
+        vec t1 = system.get_key(s);
+        double* key = t1.data();
         kd_insert(tree, key, &linear[i]);
         //cout<<"inserted: "<< s <<" -- " << key << " -- " << linear[i] << endl;
       }
@@ -214,6 +213,8 @@ class ipomdp_t{
       nu = nu_;
       no = no_;
       
+      tree = kd_create(ns);
+
       sample_all();
       get_P();
       get_Q();
