@@ -1,5 +1,5 @@
-#ifndef __pomdp_h__
-#define __pomdp_h__
+#ifndef __model_h__
+#define __model_h__
 
 #include <iostream>
 #include <vector>

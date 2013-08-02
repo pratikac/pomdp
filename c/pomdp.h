@@ -1,10 +1,9 @@
 #ifndef __pomdp_h__
 #define __pomdp_h__
 
-#include "model.h"
+#include "create_model.h"
 #include "pbvi.h"
 #include "sarsop.h"
-#include "system/lightdark.h"
 
 typedef struct kdtree kdtree;
 typedef struct kdres kdres;
@@ -43,7 +42,6 @@ class bpomdp_t{
       cout<<"reward: "<< solver.belief_tree->root->value_upper_bound<<" "<<solver.belief_tree->root->value_lower_bound << endl;
       return 0;
     }
-}
 };
 
 template<class system_t, class solver_t>

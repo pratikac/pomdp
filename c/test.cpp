@@ -1,6 +1,3 @@
-#include "pbvi.h"
-#include "sarsop.h"
-#include "simulator.h"
 #include "parser/mdp.h"
 
 #include "pomdp.h"
@@ -76,9 +73,8 @@ int test_bpomdp(int argc, char** argv)
   int ilist[10] = {10, 50, 100, 150, 200, 250, 300, 350, 400, 450};
   for(int i=3; i<4; i++)
   {
-    bpomdp_t<lightdark_t<1,1,1>, sarsop_t> bpomdp;
-    bpomdp.create_model(ilist[i],4,4);
-    bpomdp.solve_model();
+    bpomdp_t<lightdark_t<1,1,1>, sarsop_t> bpomdp(ilist[i],4,4);
+    bpomdp.solve();
   }
   return 0;
 }

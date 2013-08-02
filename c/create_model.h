@@ -1,6 +1,10 @@
 #ifndef __create_model_h__
 #define __create_model_h__
 
+#include "model.h"
+#include "solver.h"
+#include "system/lightdark.h"
+
 template<class system_t>
 class create_model_t{
   public:
