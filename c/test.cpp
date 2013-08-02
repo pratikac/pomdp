@@ -3,7 +3,7 @@
 #include "simulator.h"
 #include "parser/mdp.h"
 
-#include "ipomdp.h"
+#include "pomdp.h"
 
 using namespace std;
 
@@ -70,15 +70,15 @@ int test_solver(int argc, char** argv, solver_t& solver)
   return 0;
 }
 
-int test_ipomdp(int argc, char** argv)
+int test_bpomdp(int argc, char** argv)
 {
   //srand(time(NULL));
   int ilist[10] = {10, 50, 100, 150, 200, 250, 300, 350, 400, 450};
   for(int i=3; i<4; i++)
   {
-    ipomdp_t<lightdark_t<1,1,1>, sarsop_t> ipomdp;
-    ipomdp.create_model(ilist[i],4,4);
-    ipomdp.solve_model();
+    bpomdp_t<lightdark_t<1,1,1>, sarsop_t> bpomdp;
+    bpomdp.create_model(ilist[i],4,4);
+    bpomdp.solve_model();
   }
   return 0;
 }
@@ -89,6 +89,7 @@ int main(int argc, char** argv)
   sarsop_t sarsop;
 
   //test_solver(argc, argv, sarsop);
-  test_ipomdp(argc, argv);
+  test_bpomdp(argc, argv);
+
   return 0;
 }

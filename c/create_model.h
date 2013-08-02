@@ -1,23 +1,15 @@
-#ifndef __ipomdp_h__
-#define __ipomdp_h__
+#ifndef __create_model_h__
+#define __create_model_h__
 
-#include "model.h"
-#include "pbvi.h"
-#include "system/lightdark.h"
-
-typedef struct kdtree kdtree;
-typedef struct kdres kdres;
-
-template<class system_t, class solver_t>
-class ipomdp_t{
+template<class system_t>
+class create_model_t{
   public:
-    
-    int ns, nsm, nu, num, no, nom;
-    int ds, du, ddo;
 
-    system_t system;
+    int ns, nu, no;
+    int ds, du, ddo;
+    
     model_t model;
-    solver_t solver;
+    system_t system;
     
     vector<vec> S;
     vector<vec> U;
@@ -27,19 +19,16 @@ class ipomdp_t{
     float ht, r, gamma, epsilon;
 
     kdtree* tree;
-
-    ipomdp_t(){
+    
+    create_model_t(){
       ds = system.ds;
       du = system.du;
       ddo = system.ddo;
-
-      nsm = 0;
+      
       ns = 0;
-      num = 0;
       nu = 0; //2.0*log(ns);
-      nom = 0;
       no = 0;
-
+      
       ht = 0.1;
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
       gamma = 0.99;
@@ -50,14 +39,14 @@ class ipomdp_t{
       for(int i=0; i<1000; i++)
         linear[i] = i;
     }
-    ~ipomdp_t()
-    {
+
+    ~create_model_t(){
       kd_free(tree);
-    };
-   
+    }
+    
     int sample_states()
     {
-      for(int i=nsm; i<ns; i++)
+      for(int i=0; i<ns; i++)
       {
         vec s = system.sample_state();
         S.push_back(s);
@@ -72,14 +61,14 @@ class ipomdp_t{
     
     int sample_controls()
     {
-      for(int i=num; i<nu-1; i++)
+      for(int i=0; i<nu-1; i++)
         U.push_back(system.sample_control());
       U.push_back(system.zero_control());
       return 0;
     }
     int sample_observations()
     {
-      for(int i=nom; i<no; i++)
+      for(int i=0; i<no; i++)
         O.push_back(system.sample_observation());
       return 0;
     }
@@ -211,7 +200,7 @@ class ipomdp_t{
       return 0;
     }
 
-    int create_model(int ns_, int nu_, int no_)
+    int initialise(int ns_, int nu_, int no_)
     {
       ns = ns_;
       nu = nu_;
@@ -234,7 +223,7 @@ class ipomdp_t{
 
       return 0;
     }
-    
+
     int print()
     {
       ofstream fout;
@@ -269,26 +258,7 @@ class ipomdp_t{
       fout.close();
       return 0;
     }
-    
-    int solve_model()
-    {
-      solver.initialise(model.b0, &model, 0.1, 0.1);
-
-      for(int i=0; i<1000; i++)
-      {
-        solver.sample_belief_nodes();
-        solver.update_nodes();
-        
-        if(i%10 == 0)
-          cout<<i << "\t"<<solver.belief_tree->root->value_upper_bound<<"\t"<<solver.belief_tree->root->value_lower_bound << endl;
-        //solver.print_alpha_vectors();
-        
-        if(solver.is_converged())
-          break;
-      }
-      cout<<"reward: "<< solver.belief_tree->root->value_upper_bound<<" "<<solver.belief_tree->root->value_lower_bound << endl;
-      return 0;
-    }
 };
 
 #endif
+

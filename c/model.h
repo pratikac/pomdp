@@ -116,6 +116,16 @@ class model_t
     belief_t b0;
     
     model_t(){
+      ns = 0;
+      na = 0;
+      no = 0;
+      
+      pt.clear();
+      po.clear();
+      pr.clear();
+      discount = -1;
+      
+      b0 = belief_t();
     }
     
     model_t(int ns_in,int na_in, int no_in, pt_t& pt_in, po_t& po_in, float d_in,
