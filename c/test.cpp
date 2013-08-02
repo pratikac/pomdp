@@ -53,11 +53,11 @@ int test_solver(int argc, char** argv, solver_t& solver)
   {
     solver.sample_belief_nodes();
     for(int j=0; j< backup_per_sample; j++)
-      solver.backup_belief_nodes();
+      solver.update_nodes();
     
-    solver.bellman_update_nodes();
     cout<<"i: "<< i << endl;
-    //pbvi.print_alpha_vectors();
+    //solver.print_alpha_vectors();
+    //getchar();
   }
   cout<<timer.toc()<<"[ms]"<<endl;
   cout<<"reward: "<< solver.belief_tree->root->value_lower_bound<<endl;
@@ -74,7 +74,7 @@ int test_ipomdp(int argc, char** argv)
 {
   //srand(time(NULL));
   int ilist[10] = {10, 50, 100, 150, 200, 250, 300, 350, 400, 450};
-  for(int i=2; i<3; i++)
+  for(int i=0; i<1; i++)
   {
     ipomdp_t<lightdark_t<1,1,1>, sarsop_t> ipomdp;
     ipomdp.create_model(ilist[i],4,4);
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
   pbvi_t pbvi;
   sarsop_t sarsop;
 
-  test_solver(argc, argv, sarsop);
-  //test_ipomdp(argc, argv);
+  //test_solver(argc, argv, sarsop);
+  test_ipomdp(argc, argv);
   return 0;
 }

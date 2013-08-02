@@ -259,8 +259,10 @@ class solver_t{
       {
         mat t0(ns, no);
         for(int o=0; o<no; o++)
-          t0.col(o) = alpha_a_o[a][o]->grad;
-
+        {
+          vec t5 = alpha_a_o[a][o]->grad;
+          t0.col(o) = t5;
+        }
         // check this, this looks fishy
         vec t1 = (model->po[a] * (t0.transpose())). diagonal();
         t1 = model->get_step_reward(a) + model->discount*model->pt[a]*t1;

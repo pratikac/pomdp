@@ -247,7 +247,7 @@ class model_t
      */
     float get_expected_step_reward(const belief_t& b, const int& aid)
     {
-      vec t1 = (pr[aid].array()*pt[aid].array()).rowwise().sum().transpose(); 
+      vec t1 = ((pr[aid].array())*(pt[aid].array())).rowwise().sum(); 
       return t1.dot(b.p);
     }
     

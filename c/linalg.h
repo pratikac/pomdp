@@ -7,11 +7,11 @@
 #include <Eigen/MatrixFunctions>
 using namespace Eigen;
 
+typedef VectorXd vec;
 typedef MatrixXd mat;
 typedef MatrixXf matf;
 typedef MatrixXi mati;
 typedef VectorXf vecf;
-typedef VectorXd vec;
 typedef SparseMatrix<float> spmat;
 typedef SparseVector<float> spvec;
 

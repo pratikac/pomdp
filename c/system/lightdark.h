@@ -17,7 +17,7 @@ class lightdark_t : public system_t<ds, du, ddo>
     using sys_t::init_var;
     using sys_t::is_in_goal;
     using sys_t::is_in_obstacle;
-
+    
     vector<region_t<ds> > light_regions;
 
     lightdark_t()

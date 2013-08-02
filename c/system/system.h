@@ -12,9 +12,9 @@ template<size_t tds, size_t tdu, size_t tddo>
 class system_t{
   public:
     
-    const static int ds = tds;
-    const static int du = tdu;
-    const static int ddo = tddo;
+    constexpr static size_t ds = tds;
+    constexpr static size_t du = tdu;
+    constexpr static size_t ddo = tddo;
     
     region_t<ds> operating_region, goal_region;
     region_t<du> control_region;

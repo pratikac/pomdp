@@ -94,6 +94,7 @@ class ipomdp_t{
       ht = 0.99*ht;
       return 0;
     }
+    
     vec get_b0()
     {
       vec t = vec::Zero(ns);
@@ -101,6 +102,7 @@ class ipomdp_t{
         t(i) = normal_val(system.init_state, system.init_var, S[i]);
       return t/t.sum();
     }
+    
     int sample_all()
     {
       sample_states();
@@ -117,7 +119,8 @@ class ipomdp_t{
       for(int i=0; i<ns; i++)
       {
         cout<<i<< " -- "<<S[i]<<" -- "<<system.get_key(S[i])<< endl;
-        float* key = system.get_key(S[i]).data();
+        vec keyv = system.get_key(S[i]);
+        float* key = keyv.data();
         kdres* res = kd_nearest_rangef(tree, key, r);
         while(!kd_res_end(res))
         {
@@ -139,7 +142,8 @@ class ipomdp_t{
       for(int i=0; i<ns; i++)
       {
         vec& s = S[i];
-        double* key = system.get_key(s).data();
+        vec keyv = system.get_key(s);
+        double* key = keyv.data();
         kdres* res = kd_nearest_range(tree, key, r);
         if(kd_res_size(res) == 0)
         {
@@ -212,8 +216,8 @@ class ipomdp_t{
       ns = ns_;
       nu = nu_;
       no = no_;
-      
-      tree = kd_create(ns);
+
+      tree = kd_create(ds);
 
       sample_all();
       get_P();
