@@ -79,13 +79,24 @@ int test_bpomdp(int argc, char** argv)
   return 0;
 }
 
+int test_ipomdp(int argc, char** argv)
+{
+  ipomdp_t<lightdark_t<1,1,1>, sarsop_t> ipomdp(10,4,4);
+  ipomdp.solve();
+
+  ipomdp.refine(12, 4, 4);
+  ipomdp.project_beliefs();
+  ipomdp.project_alpha_vectors();
+  return 0;
+}
 int main(int argc, char** argv)
 {
   pbvi_t pbvi;
   sarsop_t sarsop;
 
   //test_solver(argc, argv, sarsop);
-  test_bpomdp(argc, argv);
+  //test_bpomdp(argc, argv);
+  test_ipomdp(argc, argv);
 
   return 0;
 }

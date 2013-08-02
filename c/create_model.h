@@ -11,46 +11,51 @@ class create_model_t{
 
     int ns, nu, no;
     int ds, du, ddo;
-    
+
     model_t model;
     system_t system;
-    
+
     vector<vec> S;
     vector<vec> U;
     vector<vec> O;
     vector<int> linear;
-    
+
     float ht, r, gamma, epsilon;
 
     kdtree* tree;
-    
+
     create_model_t(){
       ds = system.ds;
       du = system.du;
       ddo = system.ddo;
-      
+
       ns = 0;
-      nu = 0; //2.0*log(ns);
+      nu = 0;
       no = 0;
-      
+
       ht = 0.1;
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
       gamma = 0.99;
       epsilon = 1e-15;
+      tree = nullptr;
 
       // linear stores [0, 1, 2, .... n-1] (for kdtree hack)
       linear = vector<int>(1000,0);
       for(int i=0; i<1000; i++)
         linear[i] = i;
+
+      // sample zero control
+      U.push_back(system.zero_control());
+      nu = 1;
     }
 
     ~create_model_t(){
       kd_free(tree);
     }
-    
-    int sample_states()
+
+    int sample_states(int hw)
     {
-      for(int i=0; i<ns; i++)
+      for(int i=ns; i<ns+hw; i++)
       {
         vec s = system.sample_state();
         S.push_back(s);
@@ -59,23 +64,26 @@ class create_model_t{
         kd_insert(tree, key, &linear[i]);
         //cout<<"inserted: "<< s <<" -- " << key << " -- " << linear[i] << endl;
       }
+      ns += hw;
       r = 2.5*pow(log(ns)/(float)ns, 1.0/(float)ds);
       return 0;
     }
-    
-    int sample_controls()
+
+    int sample_controls(int hw)
     {
-      for(int i=0; i<nu-1; i++)
+      for(int i=nu; i<nu+hw; i++)
         U.push_back(system.sample_control());
-      U.push_back(system.zero_control());
+      nu += hw;
       return 0;
     }
-    int sample_observations()
+    int sample_observations(int hw)
     {
-      for(int i=0; i<no; i++)
+      for(int i=no; i<no+hw; i++)
         O.push_back(system.sample_observation());
+      no += hw;
       return 0;
     }
+
     int get_holding_time()
     {
       ht = 1000;
@@ -87,7 +95,7 @@ class create_model_t{
       ht = 0.99*ht;
       return 0;
     }
-    
+
     vec get_b0()
     {
       vec t = vec::Zero(ns);
@@ -95,39 +103,18 @@ class create_model_t{
         t(i) = normal_val(system.init_state, system.init_var, S[i]);
       return t/t.sum();
     }
-    
-    int sample_all()
+
+    int sample_all(int hws, int hwu, int hwo)
     {
-      sample_states();
-      sample_controls();
-      sample_observations();
+      sample_states(hws);
+      sample_controls(hwu);
+      sample_observations(hwo);
 
       get_holding_time();
-      
+
       return 0;
     }
-   
-    int test_kd_tree()
-    {
-      for(int i=0; i<ns; i++)
-      {
-        cout<<i<< " -- "<<S[i]<<" -- "<<system.get_key(S[i])<< endl;
-        vec keyv = system.get_key(S[i]);
-        float* key = keyv.data();
-        kdres* res = kd_nearest_rangef(tree, key, r);
-        while(!kd_res_end(res))
-        {
-          float pos[ds];
-          int* index = (int*)kd_res_itemf(res, pos);
-          cout<<"\t: "<< S[*index] << endl;
-          kd_res_next(res);
-        }
-        kd_res_free(res);
-      }
-      getchar();
-      return 0;
-    }
-    
+
     int get_P()
     {
       model.pt = vector<mat>(nu, mat::Zero(ns,ns));
@@ -159,7 +146,7 @@ class create_model_t{
               vec& sk = S[*skindex];
               if(!system.is_in_obstacle(s,sk))
                 probs(*skindex) = normal_val(sfdt, FFdt, sk);
-              
+
               kd_res_next(res);
             }
             model.pt[j].row(i) = probs.transpose();
@@ -183,10 +170,10 @@ class create_model_t{
       }
       for(int i=0; i<nu; i++)
         model.po[i] = Q;
-      
+
       return 0;
     }
-    
+
     int get_R()
     {
       model.pr = vector<mat>(nu, mat::Zero(ns,ns));
@@ -204,19 +191,16 @@ class create_model_t{
       return 0;
     }
 
-    int initialise(int ns_, int nu_, int no_)
+    int refine(int hws, int hwu, int hwo)
     {
-      ns = ns_;
-      nu = nu_;
-      no = no_;
+      if(!tree)
+        tree = kd_create(ds);
 
-      tree = kd_create(ds);
-
-      sample_all();
+      sample_all(hws, hwu, hwo);
       get_P();
       get_Q();
       get_R();
-      
+
       model.ns = ns;
       model.na = nu;
       model.no = no;

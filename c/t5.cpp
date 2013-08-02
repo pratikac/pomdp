@@ -3,7 +3,7 @@
 #include <Eigen/Dense>
 #include <Eigen/Eigenvalues>
 
-#include "eiquadprog.hpp"
+#include "quadprog.h"
 
 using namespace std;
 using namespace Eigen;

@@ -17,10 +17,13 @@
 #include <sys/time.h>
 
 #include "linalg.h"
+#include "quadprog.h"
 
 #define debug(x) \
   std::cout<<"DBG("<<__FILE__<<":"<<__LINE__<<") "<<x<<std::endl
+
 #define SQ(x)   (x)*(x)
+#define RANDF   (rand()/(RAND_MAX+1.0))
 
 typedef struct tt{
   struct timeval _time;

@@ -8,9 +8,6 @@
 #include "belief_tree.h"
 #include "simulator.h"
 
-
-#define RANDF   (rand()/(RAND_MAX+1.0))
-
 class solver_t;
 class policy_t;
 
@@ -34,11 +31,13 @@ class solver_t{
     model_t* model;
     belief_tree_t* belief_tree;
     kdtree_t* feature_tree;
-
+    
+    float blind_action_reward;
     vector<alpha_t*> alpha_vectors;
     vec mdp_value_function;
 
-    solver_t() : model(nullptr), belief_tree(nullptr), feature_tree(nullptr){}
+    solver_t() : model(nullptr), belief_tree(nullptr), feature_tree(nullptr),
+              blind_action_reward(0){}
   
     int initialise(belief_t& b_root, model_t* model_in)
     {
@@ -70,7 +69,8 @@ class solver_t{
           best_action = a;
         }
       }
-      vec tmp = vec::Constant(model->ns, max_val/(1.0 - model->discount));
+      blind_action_reward = max_val/(1.0 - model->discount);
+      vec tmp = vec::Constant(model->ns, blind_action_reward);
       alpha_t* first_alpha = new alpha_t(best_action, tmp);
       alpha_vectors.push_back(first_alpha);
       return 0;
