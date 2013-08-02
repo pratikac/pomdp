@@ -106,7 +106,7 @@ class solver_t{
           cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
         }
       }
-      cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
+      //cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
       return 0;
     }
 
