@@ -107,6 +107,11 @@ class ipomdp_t{
       //cout<<"old belief: "<< endl << bpp.transpose() << endl;
       //cout<<"new belief: "<< endl << bn.b.p.transpose() << endl;
       //getchar();
+      
+      // recalculate the value, upper bound will be done later
+      // because we cannot project unless all the beliefs are
+      // of the same dimension
+      bn.value_lower_bound = solver.calculate_belief_value(bn.b);
     }
 
     void project_beliefs()
@@ -156,10 +161,10 @@ class ipomdp_t{
     void refine(int hws, int hwu, int hwo)
     {
       create_model.refine(hws, hwu, hwo);
-      project_beliefs();
-      project_alpha_vectors();
-      
       solver.calculate_mdp_policy();
+      project_alpha_vectors();
+      project_beliefs();
+      
       solver_iteration();
     }
 

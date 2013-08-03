@@ -149,7 +149,7 @@ class solver_t{
       bn->depth = par->depth + 1;
 
       bn->value_upper_bound = bn->b.p.dot(mdp_value_function);
-      bn->value_lower_bound = bellman_update(bn);
+      bn->value_lower_bound = calculate_belief_value(bn->b);
       
       return new edge_t(bn, aid, oid);
     }
