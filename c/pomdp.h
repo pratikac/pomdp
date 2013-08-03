@@ -67,7 +67,7 @@ class ipomdp_t{
 
       mat A = mat::Zero(ns,ns);
       vec b = vec::Zero(ns);
-      vec t = vec::Random(ns, ds).array().abs();
+      vec t = mat::Random(ns,ds).array().abs();
       vec ones = mat::Constant(ns,1,1);
 
       for(int i=0; i<ns; i++){
@@ -96,15 +96,29 @@ class ipomdp_t{
       vec ci0 = vec::Zero(ns);
 
       vec y(ns);
-      solve_quadprog(Gc, g0, CE, ce0, CI, ci0, y);
-
-      bn.b.p = y;
+      float val = solve_quadprog(Gc, g0, CE, ce0, CI, ci0, y);
+      
+      vec bpp = bn.b.p;
+      bn.b.p = y.array().abs();
+      bn.b.normalize();
+      
+      //cout<<"val: "<< val << endl;
+      //cout<<"t: "<< t << endl;
+      //cout<<"old belief: "<< endl << bpp.transpose() << endl;
+      //cout<<"new belief: "<< endl << bn.b.p.transpose() << endl;
+      //getchar();
     }
 
     void project_beliefs()
     {
+      kd_free(solver.feature_tree);
+      solver.feature_tree = kd_create(model->ns);
+      
       for(auto& bn : solver.belief_tree->nodes)
+      {
         project_belief(*bn);
+        solver.insert_into_feature_tree(bn);
+      }
     }
 
     void project_alpha_vectors()
@@ -117,33 +131,44 @@ class ipomdp_t{
         t1.head(nsp) = pa->grad;
         for(int i=nsp; i<ns; i++)
           t1(i) = solver.blind_action_reward; 
+        
+        pa->grad = t1;
       }
     }
     
-    void refine(int hws, int hwu, int hwo)
+    void solver_iteration()
     {
-      create_model.refine(hws, hwu, hwo);
-    }
-
-    int solve()
-    {
-      solver.initialise(model->b0, model, 0.1, 0.1);
-
-      for(int i=0; i<1000; i++)
+      for(int i=0; i<200; i++)
       {
         solver.sample_belief_nodes();
         solver.update_nodes();
-        
+
         if(i%10 == 0)
           cout<<i << "\t"<<solver.belief_tree->root->value_upper_bound<<"\t"<<solver.belief_tree->root->value_lower_bound << endl;
         //solver.print_alpha_vectors();
-        
+
         if(solver.is_converged())
           break;
       }
       cout<<"reward: "<< solver.belief_tree->root->value_upper_bound<<" "<<solver.belief_tree->root->value_lower_bound << endl;
-      return 0;
     }
+
+    void refine(int hws, int hwu, int hwo)
+    {
+      create_model.refine(hws, hwu, hwo);
+      project_beliefs();
+      project_alpha_vectors();
+      
+      solver.calculate_mdp_policy();
+      solver_iteration();
+    }
+
+    void solve()
+    {
+      solver.initialise(model->b0, model, 0.1, 0.1);
+      solver_iteration();
+    }
+
 };
 
 #endif

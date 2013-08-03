@@ -84,9 +84,7 @@ int test_ipomdp(int argc, char** argv)
   ipomdp_t<lightdark_t<1,1,1>, sarsop_t> ipomdp(10,4,4);
   ipomdp.solve();
 
-  ipomdp.refine(12, 4, 4);
-  ipomdp.project_beliefs();
-  ipomdp.project_alpha_vectors();
+  ipomdp.refine(2, 0, 0);
   return 0;
 }
 int main(int argc, char** argv)

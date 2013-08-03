@@ -14,7 +14,12 @@ class sarsop_t : public pbvi_t{
       int best_aid = -1;
       for(int a=0; a< model->na; a++)
       {
+#if 0
+        belief_t t2 = model->next_belief(b,a,-1);
+        float t1 = projected_belief_upper_bound(t2);
+#else
         float t1 = model->next_belief(b,a,-1).p.dot(mdp_value_function);
+#endif
         if(t1 > max_val)
         {
           max_val = t1;
