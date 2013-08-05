@@ -135,15 +135,16 @@ class ipomdp_t{
         vec t1(ns);
         t1.head(nsp) = pa->grad;
         for(int i=nsp; i<ns; i++)
-          t1(i) = solver.blind_action_reward; 
+          t1(i) = -FLT_MAX/2; //solver.blind_action_reward; 
         
         pa->grad = t1;
       }
+      solver.initiate_alpha_vector();
     }
     
-    void solver_iteration()
+    void solver_iteration(int hw=100)
     {
-      for(int i=0; i<200; i++)
+      for(int i=0; i<hw; i++)
       {
         solver.sample_belief_nodes();
         solver.update_nodes();
@@ -158,20 +159,22 @@ class ipomdp_t{
       cout<<"reward: "<< solver.belief_tree->root->value_upper_bound<<" "<<solver.belief_tree->root->value_lower_bound << endl;
     }
 
-    void refine(int hws, int hwu, int hwo)
+    void refine(int hws, int hwu, int hwo, int hw=100)
     {
       create_model.refine(hws, hwu, hwo);
-      solver.calculate_mdp_policy();
       project_alpha_vectors();
-      project_beliefs();
       
-      solver_iteration();
+      solver.calculate_mdp_policy();
+      project_beliefs();
+      solver.bellman_update_nodes();
+
+      solver_iteration(hw);
     }
 
-    void solve()
+    void solve(int hw=100)
     {
       solver.initialise(model->b0, model, 0.1, 0.1);
-      solver_iteration();
+      solver_iteration(hw);
     }
 
 };

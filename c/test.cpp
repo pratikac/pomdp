@@ -81,10 +81,17 @@ int test_bpomdp(int argc, char** argv)
 
 int test_ipomdp(int argc, char** argv)
 {
-  ipomdp_t<lightdark_t<1,1,1>, sarsop_t> ipomdp(10,4,4);
-  ipomdp.solve();
+  typedef ipomdp_t<lightdark_t<1,1,1>, sarsop_t> sarsop_lightdark_t;
+  sarsop_lightdark_t ipomdp(100,4,4);
+  ipomdp.solve(50);
+  ipomdp.refine(50, 0, 0, 50);
 
-  ipomdp.refine(2, 0, 0);
+  sarsop_lightdark_t ipomdp1(150,4,4);
+  ipomdp1.solve(200);
+  /*
+  for(int i=0; i< 5; i++)
+    ipomdp.refine(5, 0, 0);
+  */
   return 0;
 }
 int main(int argc, char** argv)
