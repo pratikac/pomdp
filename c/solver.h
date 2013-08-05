@@ -193,11 +193,19 @@ class solver_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
+      if(!alpha_vectors.size())
+      {
+        alpha_vectors.push_back(a);
+        return 0;
+      }
       // 1. don't push if too similar to any alpha vector
       for(auto& pav : alpha_vectors)
       {
         if( (a->grad - pav->grad).norm() < 0.1)
+        {
+          delete a;
           return 1;
+        }
       }
       // 2. prune set
       set<alpha_t*> surviving_vectors;

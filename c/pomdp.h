@@ -4,6 +4,7 @@
 #include "create_model.h"
 #include "pbvi.h"
 #include "sarsop.h"
+#include "quadprog.h"
 
 typedef struct kdtree kdtree;
 typedef struct kdres kdres;
@@ -96,7 +97,7 @@ class ipomdp_t{
       vec ci0 = vec::Zero(ns);
 
       vec y(ns);
-      float val = solve_quadprog(Gc, g0, CE, ce0, CI, ci0, y);
+      solve_quadprog(Gc, g0, CE, ce0, CI, ci0, y);
       
       vec bpp = bn.b.p;
       bn.b.p = y.array().abs();
@@ -116,7 +117,8 @@ class ipomdp_t{
 
     void project_beliefs()
     {
-      kd_free(solver.feature_tree);
+      if(solver.feature_tree)
+        kd_free(solver.feature_tree);
       solver.feature_tree = kd_create(model->ns);
       
       for(auto& bn : solver.belief_tree->nodes)
@@ -125,9 +127,10 @@ class ipomdp_t{
         solver.insert_into_feature_tree(bn);
       }
     }
-
+    
     void project_alpha_vectors()
     {
+#if 0
       int ns = model->ns;
       for(auto& pa : solver.alpha_vectors)
       {
@@ -139,7 +142,12 @@ class ipomdp_t{
         
         pa->grad = t1;
       }
+#else
+      for(auto& pa : solver.alpha_vectors)
+        delete pa;
+      solver.alpha_vectors.clear();
       solver.initiate_alpha_vector();
+#endif
     }
     
     void solver_iteration(int hw=100)
@@ -166,6 +174,7 @@ class ipomdp_t{
       
       solver.calculate_mdp_policy();
       project_beliefs();
+      solver.initiate_alpha_vector();
       solver.bellman_update_nodes();
 
       solver_iteration(hw);
