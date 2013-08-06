@@ -80,7 +80,7 @@ class solver_t{
     {
       int ns = model->ns;
       int na = model->na;
-      mdp_value_function = vec::Zero(ns); //mat::Constant(ns,1,-FLT_MAX/2);
+      mdp_value_function = vec::Constant(ns, 0);
       vec mp = mdp_value_function;
       int c = 0;
       bool is_converged = false;
@@ -98,12 +98,12 @@ class solver_t{
           t2.col(i) = t1.col(i) + model->discount*model->pt[i]*mp;
 
         mdp_value_function = t2.rowwise().maxCoeff();
-        is_converged = (mp-mdp_value_function).norm() < 100;
+        is_converged = (mp-mdp_value_function).norm() < 0.1;
         c++;
-        if(c > 100)
+        if(c > 1000)
         {
-          cout<<"more than 100 mdp value iterations"<<endl;
-          cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
+          cout<<"more than 1000 mdp value iterations"<<endl;
+          //cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
         }
       }
       //cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;

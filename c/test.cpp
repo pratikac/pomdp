@@ -69,11 +69,15 @@ int test_solver(int argc, char** argv, solver_t& solver)
 
 int test_bpomdp(int argc, char** argv)
 {
+  typedef bpomdp_t<lightdark_t<1,1,1>, sarsop_t> sarsop_lightdark_t;
+  typedef bpomdp_t<singleint_t<1,1,1>, sarsop_t> sarsop_singleint_t;
+  typedef bpomdp_t<singleint_t<1,1,1>, pbvi_t> pbvi_singleint_t;
+  
   //srand(time(NULL));
   int ilist[10] = {10, 50, 100, 150, 200, 250, 300, 350, 400, 450};
   for(int i=3; i<4; i++)
   {
-    bpomdp_t<lightdark_t<1,1,1>, sarsop_t> bpomdp(ilist[i],4,4);
+    sarsop_lightdark_t bpomdp(ilist[i],4,4);
     bpomdp.solve();
   }
   return 0;
@@ -82,13 +86,15 @@ int test_bpomdp(int argc, char** argv)
 int test_ipomdp(int argc, char** argv)
 {
   typedef ipomdp_t<lightdark_t<1,1,1>, sarsop_t> sarsop_lightdark_t;
-  sarsop_lightdark_t ipomdp(50,4,4);
-  ipomdp.solve(500);
-  for(int i=0; i< 10; i++)
-    ipomdp.refine(50, 0, 0, 50);
+  typedef ipomdp_t<singleint_t<1,1,1>, sarsop_t> sarsop_singleint_t;
+  typedef ipomdp_t<singleint_t<1,1,1>, pbvi_t> pbvi_singleint_t;
+  
+  sarsop_lightdark_t pomdp(100, 4, 4);
+  pomdp.solve();
+  pomdp.refine(25, 1, 1);
+  pomdp.refine(25, 1, 1);
+  pomdp.refine(25, 1, 1);
 
-  //sarsop_lightdark_t ipomdp1(150,4,4);
-  //ipomdp1.solve(200);
   return 0;
 }
 int main(int argc, char** argv)

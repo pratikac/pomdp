@@ -4,6 +4,7 @@
 #include "model.h"
 #include "solver.h"
 #include "system/lightdark.h"
+#include "system/singleint.h"
 
 template<class system_t>
 class create_model_t{
@@ -204,8 +205,8 @@ class create_model_t{
       model.ns = ns;
       model.na = nu;
       model.no = no;
-      model.discount = exp(-0.1*ht);
-      cout<<"ht, model.discount: "<< ht<<" "<<model.discount << endl;
+      model.discount = 0.99; //exp(-0.05*ht);
+      cout<<"ns: " << ns << " ht: "<< ht << " discount: " << model.discount << endl;
       model.b0.p = get_b0();
       model.normalize_mat();
 

@@ -157,17 +157,18 @@ class ipomdp_t{
         solver.sample_belief_nodes();
         solver.update_nodes();
 
-        if(i%10 == 0)
-          cout<<i << "\t"<<solver.belief_tree->root->value_upper_bound<<"\t"<<solver.belief_tree->root->value_lower_bound << endl;
-        //solver.print_alpha_vectors();
-
+        if(hw >= 1){
+          if(i%1 == 0)
+            cout<<i << "\t"<<solver.belief_tree->root->value_upper_bound<<"\t"<<solver.belief_tree->root->value_lower_bound << endl;
+          //solver.print_alpha_vectors();
+        }
         if(solver.is_converged())
           break;
       }
       cout<<"reward: "<< solver.belief_tree->root->value_upper_bound<<" "<<solver.belief_tree->root->value_lower_bound << endl;
     }
 
-    void refine(int hws, int hwu, int hwo, int hw=100)
+    void refine(int hws, int hwu, int hwo, int hw=1000)
     {
       create_model.refine(hws, hwu, hwo);
       project_alpha_vectors();
@@ -180,9 +181,11 @@ class ipomdp_t{
       solver_iteration(hw);
     }
 
-    void solve(int hw=100)
+    void solve(int hw=1000)
     {
-      solver.initialise(model->b0, model, 0.1, 0.1);
+      float convergence_threshold = 0.1;
+      float insert_distance = 0.1;
+      solver.initialise(model->b0, model, insert_distance, convergence_threshold);
       solver_iteration(hw);
     }
 
