@@ -1,6 +1,6 @@
 #include "parser/mdp.h"
 
-#include "pomdp.h"
+#include "pomdp/pomdp.h"
 
 using namespace std;
 

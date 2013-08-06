@@ -3,8 +3,8 @@
 
 #include "model.h"
 #include "solver.h"
-#include "system/lightdark.h"
-#include "system/singleint.h"
+#include "lightdark.h"
+#include "singleint.h"
 
 template<class system_t>
 class create_model_t{

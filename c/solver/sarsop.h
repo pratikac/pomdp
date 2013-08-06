@@ -1,7 +1,7 @@
 #ifndef __sarsop_h__
 #define __sarsop_h__
 
-#include "solver.h"
+#include "solver/solver.h"
 
 class sarsop_t : public pbvi_t{
   public:

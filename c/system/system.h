@@ -1,8 +1,8 @@
 #ifndef __system_h__
 #define __system_h__
 
-#include "../linalg.h"
-#include "../utils.h"
+#include "linalg.h"
+#include "utils.h"
 
 #define RANDF   (rand()/(RAND_MAX+1.0))
 
