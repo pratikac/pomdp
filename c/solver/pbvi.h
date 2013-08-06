@@ -47,10 +47,13 @@ class pbvi_t : public solver_t{
       for(auto& bn : belief_tree->nodes)
       {
         edge_t* e_bn = sample_child_belief(bn);
-        if(!check_insert_into_belief_tree(bn, e_bn))
+        if(e_bn)
+        {
+          if(!check_insert_into_belief_tree(bn, e_bn))
           delete e_bn;
         else
           nodes_to_insert.push_back(make_pair(bn, e_bn));
+        }
       }
       for(auto& p : nodes_to_insert)
         insert_into_belief_tree(p.first, p.second);

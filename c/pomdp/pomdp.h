@@ -108,11 +108,6 @@ class ipomdp_t{
       //cout<<"old belief: "<< endl << bpp.transpose() << endl;
       //cout<<"new belief: "<< endl << bn.b.p.transpose() << endl;
       //getchar();
-      
-      // recalculate the value, upper bound will be done later
-      // because we cannot project unless all the beliefs are
-      // of the same dimension
-      bn.value_lower_bound = solver.calculate_belief_value(bn.b);
     }
 
     void project_beliefs()
@@ -146,7 +141,7 @@ class ipomdp_t{
       for(auto& pa : solver.alpha_vectors)
         delete pa;
       solver.alpha_vectors.clear();
-      solver.initiate_alpha_vector();
+      solver.initialise_blind_policy();
 #endif
     }
     
@@ -157,8 +152,8 @@ class ipomdp_t{
         solver.sample_belief_nodes();
         solver.update_nodes();
 
-        if(hw >= 1){
-          if(i%1 == 0)
+        if(hw >= 100){
+          if(i%10 == 0)
             cout<<i << "\t"<<solver.belief_tree->root->value_upper_bound<<"\t"<<solver.belief_tree->root->value_lower_bound << endl;
           //solver.print_alpha_vectors();
         }
@@ -173,10 +168,10 @@ class ipomdp_t{
       create_model.refine(hws, hwu, hwo);
       project_alpha_vectors();
       
-      solver.calculate_mdp_policy();
+      solver.calculate_initial_upper_bound();
       project_beliefs();
-      solver.initiate_alpha_vector();
-      solver.bellman_update_nodes();
+      solver.prune_alpha();
+      solver.update_bounds();
 
       solver_iteration(hw);
     }

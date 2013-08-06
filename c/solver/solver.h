@@ -47,7 +47,7 @@ class solver_t{
       feature_tree = kd_create(model->ns);
       insert_into_feature_tree(belief_tree->root);
 
-      initiate_alpha_vector();
+      initialise_blind_policy();
       calculate_initial_upper_bound();
 
       belief_tree->root->value_lower_bound = calculate_belief_value(belief_tree->root->b);
@@ -56,24 +56,36 @@ class solver_t{
       return 0;
     }
     
-    int initiate_alpha_vector()
+    int initialise_blind_policy()
     {
-      // create first alpha vector by blind policy
-      float max_val = -FLT_MAX;
-      int best_action = -1;
-      for(int a=0; a<model->na; a++)
+      int ns = model->ns;
+      int na = model->na;
+      float t1 = FLT_MAX/2;
+      for(int a=0; a<na; a++)
       {
-        float t1 = model->get_step_reward(a).minCoeff();
-        if(t1 > max_val)
-        {
-          max_val = t1;
-          best_action = a;
-        }
+        float t2 = model->get_step_reward(a).minCoeff();
+        if(t2 < t1)
+          t1 = t2;
       }
-      blind_action_reward = max_val/(1.0 - model->discount);
-      vec tmp = vec::Constant(model->ns, blind_action_reward);
-      alpha_t* first_alpha = new alpha_t(best_action, tmp);
-      alpha_vectors.push_back(first_alpha);
+      blind_action_reward = t1/(1-model->discount);
+      mat Qlas = mat::Constant(ns, na, blind_action_reward);
+      
+      mat Qlasc = Qlas;
+      bool is_converged = false;
+      while(!is_converged){
+
+        for(int a=0; a<na; a++)
+          Qlas.col(a) = model->get_step_reward(a) + model->discount*model->pt[a]*Qlasc.col(a);
+        is_converged = (Qlas-Qlasc).norm() < 0.1;
+        Qlasc = Qlas;
+      }
+      for(int a=0; a<na; a++)
+      {
+        vec t3 = Qlas.col(a);
+        alpha_t* alpha = new alpha_t(a, t3);
+        insert_alpha(alpha);
+      }
+      cout<<"blind policy initialized"<<endl;
       return 0;
     }
     
@@ -130,7 +142,7 @@ class solver_t{
         if(t2 > t1)
           t1 = t2;
       }
-      mat Qas = mat::Constant(ns, na, t1);
+      mat Qas = mat::Constant(ns, na, t1/(1-model->discount));
       
       mat Qasc = Qas;
       bool is_converged = false;
@@ -202,7 +214,8 @@ class solver_t{
       for(auto& bn : belief_tree->nodes)
       {
         edge_t* e_bn = sample_child_belief(bn);
-        nodes_to_insert.push_back(make_pair(bn, e_bn));
+        if(e_bn)
+          nodes_to_insert.push_back(make_pair(bn, e_bn));
       }
       for(auto& p : nodes_to_insert)
         insert_into_belief_tree(p.first, p.second);
@@ -235,47 +248,50 @@ class solver_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
-      if(!alpha_vectors.size())
-      {
-        alpha_vectors.push_back(a);
-        return 0;
-      }
       // 1. don't push if too similar to any alpha vector
       for(auto& pav : alpha_vectors)
       {
-        if( (a->grad - pav->grad).norm() < 0.1)
+        bool too_similar = (a->grad-pav->grad).norm() < 0.1;
+        bool pointwise_dominated = (a->grad-pav->grad).maxCoeff() < 0;
+        if(too_similar || pointwise_dominated)
         {
           delete a;
           return 1;
         }
       }
-      // 2. prune set
-      set<alpha_t*> surviving_vectors;
-      int broke_out = 0;
-#if 1
-      for(auto& pav : alpha_vectors)
+      alpha_vectors.push_back(a);
+      return 0;
+    }
+    
+    virtual int prune_alpha()
+    {
+      vector<bool> not_dominated(alpha_vectors.size(), true);
+
+      for(size_t a1=0; a1<alpha_vectors.size(); a1++)
       {
-        int res = find_greater_alpha(*a, *pav);
-        if(res == -1)
+        for(size_t a2=0; a2<alpha_vectors.size(); a2++)
         {
-          delete a;
-          broke_out = 1;
-          break;
-        }
-        else if(res == 1)
-          surviving_vectors.insert(a);
-        else if(res == 0)
-        {
-          surviving_vectors.insert(pav);
-          surviving_vectors.insert(a);
+          if(a1 != a2)
+          {
+            if(not_dominated[a2])
+            {
+              int res = find_greater_alpha(*alpha_vectors[a1], *alpha_vectors[a2]);
+              if(res == 1)
+                not_dominated[a1] = false;
+            }
+          }
         }
       }
-      if(!broke_out)
-        alpha_vectors = vector<alpha_t*>(surviving_vectors.begin(), surviving_vectors.end());
-#else
-      alpha_vectors.push_back(a);
-#endif
-      return broke_out;
+      vector<alpha_t*> surviving_vectors;
+      for(size_t a1=0; a1<alpha_vectors.size(); a1++)
+      {
+        if(not_dominated[a1])
+          surviving_vectors.push_back(alpha_vectors[a1]);
+        else
+          delete alpha_vectors[a1];
+      }
+      alpha_vectors = surviving_vectors;
+      return 0;
     }
 
     virtual int backup(belief_node_t* bn)
@@ -464,6 +480,7 @@ class solver_t{
     {
       for(auto& bn : belief_tree->nodes)
         backup(bn);
+      prune_alpha();
       return 0;
     }
    
@@ -479,6 +496,12 @@ class solver_t{
       backup_belief_nodes();
       bellman_update_nodes();
       return 0;
+    }
+
+    void update_bounds()
+    {
+      for(auto& bn : belief_tree->nodes)
+        bn->value_lower_bound = calculate_belief_value(bn->b);
     }
 
     virtual bool is_converged(float threshold)
