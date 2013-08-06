@@ -232,6 +232,12 @@ class model_t
       newb.p(sid) = 1;
       return newb;
     }
+    
+    mat get_p_a_o(int aid=-1, int oid=-1)
+    {
+      mat t1 = po[aid].col(oid).replicate(1,ns);
+      return pt[aid].array() * (t1.transpose().array());
+    }
 
     belief_t next_belief(belief_t& b, int aid=-1, int oid=-1)
     {
@@ -266,7 +272,7 @@ class model_t
       mat t1 = (pr[aid].array())*(pt[aid].array());
       return (t1.rowwise()).sum()(sid);
     }
-
+    
     vec get_step_reward(const int& aid)
     {
       mat t1 = pr[aid].array()*pt[aid].array();

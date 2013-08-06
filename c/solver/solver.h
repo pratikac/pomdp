@@ -34,7 +34,8 @@ class solver_t{
     
     float blind_action_reward;
     vector<alpha_t*> alpha_vectors;
-    vec mdp_value_function;
+    mat Qas;
+    vec simplex_upper_bound;
 
     solver_t() : model(nullptr), belief_tree(nullptr), feature_tree(nullptr),
               blind_action_reward(0){}
@@ -47,10 +48,10 @@ class solver_t{
       insert_into_feature_tree(belief_tree->root);
 
       initiate_alpha_vector();
-      calculate_mdp_policy();
+      calculate_initial_upper_bound();
 
       belief_tree->root->value_lower_bound = calculate_belief_value(belief_tree->root->b);
-      belief_tree->root->value_upper_bound = mdp_value_function.dot(belief_tree->root->b.p);
+      belief_tree->root->value_upper_bound = simplex_upper_bound.dot(belief_tree->root->b.p);
       
       return 0;
     }
@@ -75,18 +76,24 @@ class solver_t{
       alpha_vectors.push_back(first_alpha);
       return 0;
     }
+    
+    void calculate_initial_upper_bound()
+    {
+      //calculate_mdp_policy();
+      calculate_fib_policy();
+    }
 
     int calculate_mdp_policy()
     {
       int ns = model->ns;
       int na = model->na;
-      mdp_value_function = vec::Constant(ns, 0);
-      vec mp = mdp_value_function;
+      simplex_upper_bound = vec::Constant(ns, 0);
+      vec mp = simplex_upper_bound;
       int c = 0;
       bool is_converged = false;
       while(!is_converged)
       {
-        mp = mdp_value_function; 
+        mp = simplex_upper_bound; 
         mat t1 = mat::Zero(ns,na);
         mat t2 = t1;
         for(int i=0; i<na; i++)
@@ -97,19 +104,54 @@ class solver_t{
         for(int i=0; i<na; i++)
           t2.col(i) = t1.col(i) + model->discount*model->pt[i]*mp;
 
-        mdp_value_function = t2.rowwise().maxCoeff();
-        is_converged = (mp-mdp_value_function).norm() < 0.1;
+        simplex_upper_bound = t2.rowwise().maxCoeff();
+        is_converged = (mp-simplex_upper_bound).norm() < 0.1;
         c++;
         if(c > 1000)
         {
           cout<<"more than 1000 mdp value iterations"<<endl;
-          //cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
+          //cout<< "mdp_value: "<< endl << simplex_upper_bound.transpose() << endl;
         }
       }
-      //cout<< "mdp_value: "<< endl << mdp_value_function.transpose() << endl;
+      //cout<< "mdp_value: "<< endl << simplex_upper_bound.transpose() << endl;
       return 0;
     }
+    
+    int calculate_fib_policy()
+    {
+      int ns = model->ns;
+      int na = model->na;
+      int no = model->no;
 
+      float t1 = -FLT_MAX/2;
+      for(int a=0; a<na; a++)
+      {
+        float t2 = model->get_step_reward(a).maxCoeff();
+        if(t2 > t1)
+          t1 = t2;
+      }
+      mat Qas = mat::Constant(ns, na, t1);
+      
+      mat Qasc = Qas;
+      bool is_converged = false;
+      while(!is_converged){
+        for(int a=0; a<na; a++)
+        {
+          Qas.col(a) = model->get_step_reward(a);
+          for(int o1=0; o1<no; o1++)
+          {
+            vec t3 = model->get_p_a_o(a,o1)*Qasc.rowwise().maxCoeff();
+            Qas.col(a) += model->discount*t3;
+          }
+        }
+        is_converged = (Qasc-Qas).norm() < 0.1;
+        Qasc = Qas;
+      }
+      cout<<"fib converged"<<endl;
+      simplex_upper_bound = Qas.rowwise().maxCoeff();
+      return 0;
+    }
+    
     virtual ~solver_t()
     {
       if(feature_tree)
@@ -148,7 +190,7 @@ class solver_t{
       belief_node_t* bn = new belief_node_t(b, par);
       bn->depth = par->depth + 1;
 
-      bn->value_upper_bound = bn->b.p.dot(mdp_value_function);
+      bn->value_upper_bound = bn->b.p.dot(simplex_upper_bound);
       bn->value_lower_bound = calculate_belief_value(bn->b);
       
       return new edge_t(bn, aid, oid);
@@ -324,7 +366,7 @@ class solver_t{
     {
       int ns = model->ns;
       vec& bp = b.p;
-      float t1 = mdp_value_function.dot(bp);
+      float t1 = simplex_upper_bound.dot(bp);
       float min_val = FLT_MAX/2;
       for(auto& bn : belief_tree->nodes)
       {
@@ -332,7 +374,7 @@ class solver_t{
         float t4 = -FLT_MAX/2;
         float t3 = bp.dot(bnbp)*bn->value_upper_bound;
         for(int s=0; s<ns; s++){
-          float t2 = t1 - mdp_value_function(s)*bp(s);
+          float t2 = t1 - simplex_upper_bound(s)*bp(s);
           t2 += t3;
           if(t2 > t4)
             t4 = t2;
