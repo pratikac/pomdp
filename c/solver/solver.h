@@ -378,6 +378,28 @@ class solver_t{
       return (b1->value_upper_bound + b2->value_upper_bound)/2.0;
     }
 #else
+    float sawtooth_project_upper_bound(belief_t& b)
+    {
+      int ns = model->ns;
+      float v = simplex_upper_bound.dot(b.p);
+      float t2 = FLT_MAX/2;
+      for(auto& bn : belief_tree->nodes)
+      {
+        float t1 = simplex_upper_bound.dot(bn->b.p);
+        float t3 = FLT_MAX/2;
+        for(int i=0; i<ns; i++)
+        {
+          float t4 = b.p(i)/bn->b.p(i);
+          if(t3 > t4)
+            t3 = t4;
+        }
+        t1 = v + (bn->value_upper_bound - t1)*t3;
+        if(t1 < t2)
+          t2 = t1;
+      }
+      return t2;
+    }
+    
     float projected_belief_upper_bound(belief_t& b)
     {
       int ns = model->ns;
@@ -413,7 +435,8 @@ class solver_t{
         for(int o=0; o< no; o++)
         {
           belief_t nb = model->next_belief(bn->b, a, o);
-          t1 += model->get_p_o_given_b(bn->b, a, o)*projected_belief_upper_bound(nb);
+          t1 += model->get_p_o_given_b(bn->b, a, o)*sawtooth_project_upper_bound(nb);
+          //t1 += model->get_p_o_given_b(bn->b, a, o)*projected_belief_upper_bound(nb);
         }
         t1 = model->get_expected_step_reward(bn->b, a) + model->discount*t1;
         if(t1 > max_value)
