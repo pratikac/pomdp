@@ -160,7 +160,7 @@ class ipomdp_t{
         solver.update_nodes();
 
         if(hw >= 1){
-          if(1){
+          if(i%10 == 0){
             cout<<"("<< solver.belief_tree->root->value_upper_bound<<","<<
               solver.belief_tree->root->value_lower_bound<<") av: "<< solver.alpha_vectors.size() << " bn: "<< 
               solver.belief_tree->nodes.size()<<endl;
