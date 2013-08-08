@@ -99,6 +99,13 @@ class ipomdp_t{
       vec y(ns);
       solve_quadprog(Gc, g0, CE, ce0, CI, ci0, y);
       
+      if( (((y-y).array() != (y-y).array()).any()) ||
+          (y.sum() < 0.5))
+      {
+        y = bn.b.p;
+        for(int i : range(nsp, ns))
+          y(i) = 0;
+      }
       vec bpp = bn.b.p;
       bn.b.p = y.array().abs();
       bn.b.normalize();

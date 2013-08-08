@@ -31,26 +31,31 @@ class solver_t{
     model_t* model;
     belief_tree_t* belief_tree;
     kdtree_t* feature_tree;
+    float insert_distance;
+    float convergence_threshold;
     
     float blind_action_reward;
     vector<alpha_t*> alpha_vectors;
-    mat Qas;
     vec simplex_upper_bound;
 
     solver_t() : model(nullptr), belief_tree(nullptr), feature_tree(nullptr),
               blind_action_reward(0){}
   
-    int initialise(belief_t& b_root, model_t* model_in)
+    int initialise(belief_t& b_root, model_t* model_in,
+        float insert_distance_in=0.01, float convergence_threshold_in=0.01)
     {
       belief_tree = new belief_tree_t(b_root);
       model = model_in;
       feature_tree = kd_create(model->ns);
       insert_into_feature_tree(belief_tree->root);
 
+      insert_distance = insert_distance_in;
+      convergence_threshold = convergence_threshold_in;
+
       initialise_blind_policy();
       calculate_initial_upper_bound();
 
-      belief_tree->root->value_lower_bound = calculate_belief_value(belief_tree->root->b);
+      belief_tree->root->value_lower_bound = calculate_lower_bound(belief_tree->root->b);
       belief_tree->root->value_upper_bound = simplex_upper_bound.dot(belief_tree->root->b.p);
       
       return 0;
@@ -85,16 +90,12 @@ class solver_t{
         alpha_t* alpha = new alpha_t(a, t3);
         insert_alpha(alpha);
       }
+      prune_alpha();
       cout<<"blind policy initialized"<<endl;
       return 0;
     }
     
-    void calculate_initial_upper_bound()
-    {
-      //calculate_mdp_policy();
-      calculate_fib_policy();
-    }
-
+    
     int calculate_mdp_policy()
     {
       int ns = model->ns;
@@ -164,6 +165,12 @@ class solver_t{
       return 0;
     }
     
+    void calculate_initial_upper_bound()
+    {
+      calculate_mdp_policy();
+      //calculate_fib_policy();
+    }
+
     virtual ~solver_t()
     {
       if(feature_tree)
@@ -202,8 +209,8 @@ class solver_t{
       belief_node_t* bn = new belief_node_t(b, par);
       bn->depth = par->depth + 1;
 
-      bn->value_upper_bound = bn->b.p.dot(simplex_upper_bound);
-      bn->value_lower_bound = calculate_belief_value(bn->b);
+      bn->value_upper_bound = calculate_upper_bound(bn->b);
+      bn->value_lower_bound = calculate_lower_bound(bn->b);
       
       return new edge_t(bn, aid, oid);
     }
@@ -221,7 +228,11 @@ class solver_t{
         insert_into_belief_tree(p.first, p.second);
       return nodes_to_insert.size();
     }
-
+    
+    virtual void prune_belief_tree()
+    {
+    }
+    
     int find_greater_alpha(const alpha_t& a1, const alpha_t& a2)
     {
       size_t tmp = 0;
@@ -290,6 +301,7 @@ class solver_t{
         else
           delete alpha_vectors[a1];
       }
+      //cout<<"prune_alpha:: were: "<< alpha_vectors.size() << " now: "<< surviving_vectors.size() << endl;
       alpha_vectors = surviving_vectors;
       return 0;
     }
@@ -344,40 +356,10 @@ class solver_t{
       //cout<<"inserted: "<<insert_alpha(new_alpha)<<endl;
       insert_alpha(new_alpha);
       
-      bn->value_lower_bound = calculate_belief_value(bn->b);
+      bn->value_lower_bound = calculate_lower_bound(bn->b);
       return 0;
     }
     
-    bool compare_belief_distance(pair<belief_node_t*, 
-        float>& p1, pair<belief_node_t*, float>& p2)
-    {
-      return p1.second < p2.second;
-    }
-    
-#if 0
-    float projected_belief_upper_bound(belief_t& b)
-    {
-      int ns = model->ns;
-      double* key = b.p.data();
-      size_t num_nodes = belief_tree->nodes.size();
-      float radius = 2.5*pow(log(num_nodes)/(float)num_nodes, 1.0/(float)ns);
-      kdres* res = kd_nearest_range(feature_tree, key, radius);
-      vector< pair<float, belief_node_t*> > dists;
-      while(!kd_res_end(res))
-      {
-        float pos[ns];
-        belief_node_t* bnn = (belief_node_t*)kd_res_item(res, pos);
-        dists.push_back(make_pair((bnn->b.p - b.p).norm(), bnn));
-        kd_res_next(res);
-      }
-      kd_res_free(res);
-      sort(dists.begin(), dists.end());
-      
-      belief_node_t* b1 = dists[0].second;
-      belief_node_t* b2 = dists[1].second;
-      return (b1->value_upper_bound + b2->value_upper_bound)/2.0;
-    }
-#else
     float sawtooth_project_upper_bound(belief_t& b)
     {
       int ns = model->ns;
@@ -422,7 +404,49 @@ class solver_t{
       }
       return min_val;
     }
-#endif
+    
+    float calculate_upper_bound(belief_t & b)
+    {
+      return sawtooth_project_upper_bound(b);
+    }
+
+    float calculate_lower_bound(belief_t& b)
+    {
+      float max_val = -FLT_MAX;
+      for(auto& av : alpha_vectors)
+      {
+        float t1 = av->get_value(b);
+        if(t1 > max_val)
+          max_val = t1;
+      }
+      return max_val;
+    }
+    
+    float calculate_Q_bound(belief_t& b, int aid, bool is_lower)
+    {
+      int na = model->na;
+      int no = model->no;
+      float t1 = 0; 
+      for(int o : range(0,no))
+      {
+        belief_t nb = model->next_belief(b, aid, o);
+        if(is_lower)
+          t1 += model->get_p_o_given_b(b, aid, o)*calculate_lower_bound(nb);
+        else
+          t1 += model->get_p_o_given_b(b, aid, o)*calculate_upper_bound(nb);
+      }
+      return model->get_expected_step_reward(b, aid) + model->discount*t1;
+    }
+
+    float calculate_Q_lower_bound(belief_t& b, int aid)
+    {
+      return calculate_Q_bound(b, aid, true);
+    }
+
+    float calculate_Q_upper_bound(belief_t& b, int aid)
+    {
+      return calculate_Q_bound(b, aid, false);
+    }
 
     virtual int bellman_update(belief_node_t* bn)
     {
@@ -435,7 +459,7 @@ class solver_t{
         for(int o=0; o< no; o++)
         {
           belief_t nb = model->next_belief(bn->b, a, o);
-          t1 += model->get_p_o_given_b(bn->b, a, o)*sawtooth_project_upper_bound(nb);
+          t1 += model->get_p_o_given_b(bn->b, a, o)*calculate_upper_bound(nb);
           //t1 += model->get_p_o_given_b(bn->b, a, o)*projected_belief_upper_bound(nb);
         }
         t1 = model->get_expected_step_reward(bn->b, a) + model->discount*t1;
@@ -487,18 +511,6 @@ class solver_t{
       return 0;
     }
 
-    float calculate_belief_value(belief_t& b)
-    {
-      float max_val = -FLT_MAX;
-      for(auto& av : alpha_vectors)
-      {
-        float t1 = av->get_value(b);
-        if(t1 > max_val)
-          max_val = t1;
-      }
-      return max_val;
-    }
-
     virtual int backup_belief_nodes()
     {
       for(auto& bn : belief_tree->nodes)
@@ -518,13 +530,14 @@ class solver_t{
     {
       backup_belief_nodes();
       bellman_update_nodes();
+      prune_belief_tree();
       return 0;
     }
 
     void update_bounds()
     {
       for(auto& bn : belief_tree->nodes)
-        bn->value_lower_bound = calculate_belief_value(bn->b);
+        bn->value_lower_bound = calculate_lower_bound(bn->b);
     }
 
     virtual bool is_converged(float threshold)

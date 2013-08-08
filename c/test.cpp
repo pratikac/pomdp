@@ -7,7 +7,7 @@ using namespace std;
 int test_solver(int argc, char** argv, solver_t& solver)
 {
   int c;
-  int num_samples = 25, backup_per_sample = 5;
+  int num_samples = 25, backup_per_sample = 2;
   int num_sim = 20, num_steps = 300;
   char* fname = NULL;
   while( (c = getopt(argc, argv, "f:n:b:s:t:")) != -1)
@@ -42,7 +42,7 @@ int test_solver(int argc, char** argv, solver_t& solver)
   m.print();
   getchar();
 
-  solver.initialise(m.b0, &m);
+  solver.initialise(m.b0, &m, 0.01, 0.01);
   
   tt timer;
   timer.tic();
@@ -52,7 +52,9 @@ int test_solver(int argc, char** argv, solver_t& solver)
     for(int j=0; j< backup_per_sample; j++)
       solver.update_nodes();
     
-    cout<<"i: "<< i << endl;
+    cout<<"i: "<< i <<" ("<< solver.belief_tree->root->value_upper_bound<<","<<
+      solver.belief_tree->root->value_lower_bound<<") av: "<< solver.alpha_vectors.size() << " bn: "<< 
+      solver.belief_tree->nodes.size()<<endl;
     //solver.print_alpha_vectors();
     //getchar();
   }
@@ -91,19 +93,21 @@ int test_ipomdp(int argc, char** argv)
   
   sarsop_lightdark_t pomdp(10, 4, 4);
 
-  pomdp.solve();
-  pomdp.refine(10, 1, 1);
+  pomdp.solve(50);
+  for(int i : range(0, 5))
+    pomdp.refine(10, 1, 1, 50);
 
   return 0;
 }
+
 int main(int argc, char** argv)
 {
   pbvi_t pbvi;
   sarsop_t sarsop;
 
-  //test_solver(argc, argv, sarsop);
+  test_solver(argc, argv, sarsop);
   //test_bpomdp(argc, argv);
-  test_ipomdp(argc, argv);
+  //test_ipomdp(argc, argv);
 
   return 0;
 }

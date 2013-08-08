@@ -23,7 +23,7 @@ $(BIN): $(OBJS)
 	@$(CPP) $(LDFLAGS) -o $(BIN) $(OBJS) $(LIBS)
 
 %.o: %.c
-	@echo "  [CC]   $@"
+	@echo "  [CC]     $@"
 	@$(CC) $(CFLAGS) $(INCS) -c $< -o $@
 
 %.o: %.cpp

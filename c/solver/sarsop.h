@@ -14,12 +14,8 @@ class sarsop_t : public pbvi_t{
       int best_aid = -1;
       for(int a=0; a< model->na; a++)
       {
-#if 0
         belief_t t2 = model->next_belief(b,a,-1);
-        float t1 = projected_belief_upper_bound(t2);
-#else
-        float t1 = model->next_belief(b,a,-1).p.dot(simplex_upper_bound);
-#endif
+        float t1 = calculate_upper_bound(t2);
         if(t1 > max_val)
         {
           max_val = t1;
@@ -38,7 +34,7 @@ class sarsop_t : public pbvi_t{
       {
         float t1 = model->get_p_o_given_b(b, aid, o);
         belief_t t2 = model->next_belief(b,aid,o);
-        float t3 = t2.p.dot(simplex_upper_bound) - calculate_belief_value(t2);
+        float t3 = calculate_upper_bound(t2) - calculate_lower_bound(t2);
         float t4 = t1*(t3 - 0.1*pow(model->discount, bn->depth+1));
         if(t4 > max_val)
         {
@@ -58,8 +54,8 @@ class sarsop_t : public pbvi_t{
       belief_node_t* bn = new belief_node_t(b, par);
       bn->depth = par->depth + 1;
       
-      bn->value_upper_bound = bn->b.p.dot(simplex_upper_bound);
-      bn->value_lower_bound = calculate_belief_value(bn->b);
+      bn->value_upper_bound = calculate_upper_bound(bn->b);
+      bn->value_lower_bound = calculate_lower_bound(bn->b);
       
       return new edge_t(bn, aid, oid);
     }
