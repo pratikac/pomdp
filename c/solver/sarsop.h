@@ -62,6 +62,8 @@ class sarsop_t : public pbvi_t{
     
     bool is_converged()
     {
+      return false;
+
       return fabs((belief_tree->root->value_upper_bound - 
           belief_tree->root->value_lower_bound)/belief_tree->root->value_lower_bound) < convergence_threshold;
     }

@@ -33,7 +33,7 @@ class lightdark_t : public system_t<ds, du, ddo>
         init_state = vec(1); 
         init_state(0) = 0;
         init_var = mat(1,1); 
-        init_var(0,0) = 0.1;
+        init_var(0,0) = 1;
         goal_region = region_t<ds> (vec::Constant(ds,-0.8), vec::Constant(ds,0.4));
         light_regions.push_back(region_t<ds> (vec::Constant(ds,0.8), vec::Constant(ds,0.4)));
       }
@@ -96,9 +96,9 @@ class lightdark_t : public system_t<ds, du, ddo>
     {
       return u*dt;
     }
-    vec get_FFdt(const vec& s, const vec& u, float dt=1.0)
+    mat get_FFdt(const vec& s, const vec& u, float dt=1.0)
     {
-      return mat::Identity(ds,ds)*0.1;
+      return mat::Identity(ds,ds)*0.01*dt;
     }
     mat get_GG(const vec& s)
     {

@@ -63,7 +63,7 @@ class system_t{
     virtual vec get_key(const vec& s) = 0;
 
     virtual vec get_fdt(const vec& s, const vec& u, float dt=1.0) = 0;
-    virtual vec get_FFdt(const vec& s, const vec& u, float dt=1.0) = 0;
+    virtual mat get_FFdt(const vec& s, const vec& u, float dt=1.0) = 0;
     virtual mat get_GG(const vec& s) = 0;
     virtual float get_ht(const vec& s, const vec& u, const float r) = 0;
 
