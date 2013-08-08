@@ -42,7 +42,7 @@ int test_solver(int argc, char** argv, solver_t& solver)
   m.print();
   getchar();
 
-  solver.initialise(m.b0, &m, 0.01, 0.01);
+  solver.initialise(m.b0, &m, 1e-10, 0.01);
   
   tt timer;
   timer.tic();
@@ -91,11 +91,11 @@ int test_ipomdp(int argc, char** argv)
   typedef ipomdp_t<singleint_t<1,1,1>, sarsop_t> sarsop_singleint_t;
   typedef ipomdp_t<singleint_t<1,1,1>, pbvi_t> pbvi_singleint_t;
   
-  sarsop_lightdark_t pomdp(10, 4, 4);
-
+  sarsop_lightdark_t pomdp(100, 4, 4);
   pomdp.solve(50);
-  for(int i : range(0, 5))
-    pomdp.refine(10, 1, 1, 50);
+  
+  //for(int i : range(0, 5))
+    //pomdp.refine(10, 0, 0, 50);
 
   return 0;
 }

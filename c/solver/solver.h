@@ -65,7 +65,7 @@ class solver_t{
     {
       int ns = model->ns;
       int na = model->na;
-      float t1 = FLT_MAX/2;
+      float t1 = FLT_MAX;
       for(int a=0; a<na; a++)
       {
         float t2 = model->get_step_reward(a).minCoeff();
@@ -81,7 +81,7 @@ class solver_t{
 
         for(int a=0; a<na; a++)
           Qlas.col(a) = model->get_step_reward(a) + model->discount*model->pt[a]*Qlasc.col(a);
-        is_converged = (Qlas-Qlasc).norm() < 0.1;
+        is_converged = (Qlas-Qlasc).array().abs().maxCoeff() < 0.1;
         Qlasc = Qlas;
       }
       for(int a=0; a<na; a++)
@@ -90,7 +90,6 @@ class solver_t{
         alpha_t* alpha = new alpha_t(a, t3);
         insert_alpha(alpha);
       }
-      prune_alpha();
       cout<<"blind policy initialized"<<endl;
       return 0;
     }
@@ -160,15 +159,15 @@ class solver_t{
         is_converged = (Qasc-Qas).norm() < 0.1;
         Qasc = Qas;
       }
-      cout<<"fib converged"<<endl;
+      //cout<<"fib converged"<<endl;
       simplex_upper_bound = Qas.rowwise().maxCoeff();
       return 0;
     }
     
     void calculate_initial_upper_bound()
     {
-      calculate_mdp_policy();
-      //calculate_fib_policy();
+      //calculate_mdp_policy();
+      calculate_fib_policy();
     }
 
     virtual ~solver_t()
@@ -235,23 +234,26 @@ class solver_t{
     
     int find_greater_alpha(const alpha_t& a1, const alpha_t& a2)
     {
-      size_t tmp = 0;
-      if(a1.grad.size() != a2.grad.size())
-        cout<<a1.grad.size()<<","<<a2.grad.size()<<endl;
+      int max = belief_tree->nodes.size();
+      if(max < 50)
+        return 0;
+
+      int tmp = 0;
+      assert(a1.grad.size() == a2.grad.size());
 
       vec gd = a1.grad - a2.grad;
-      float t1=0, e=0.01;
+      float t1=0, e=0;
       for(auto& bn : belief_tree->nodes)
       {
         t1 = gd.dot(bn->b.p);
         if(t1>e)
           tmp++;
-        else if(t1 < e)
+        else
           tmp--;
       }
-      if(tmp == belief_tree->nodes.size())
+      if(tmp == max)
         return 1;
-      else if(tmp == -belief_tree->nodes.size())
+      else if(tmp == -max)
         return -1;
       else
         return 0;
@@ -259,24 +261,28 @@ class solver_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
-      // 1. don't push if too similar to any alpha vector
+#if 0
+      float epsilon = 1e-10;
       for(auto& pav : alpha_vectors)
       {
-        bool too_similar = (a->grad-pav->grad).norm() < 0.1;
-        bool pointwise_dominated = (a->grad-pav->grad).maxCoeff() < 0;
-        if(too_similar || pointwise_dominated)
+        vec t1 = (a->grad-pav->grad);
+        float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
+        if((t1p <= -t1m) && (t1p < epsilon))
         {
           delete a;
           return 1;
         }
       }
+#else
       alpha_vectors.push_back(a);
       return 0;
+#endif
     }
     
     virtual int prune_alpha()
     {
-      vector<bool> not_dominated(alpha_vectors.size(), true);
+      float epsilon = 1e-10;
+      vector<int> not_dominated(alpha_vectors.size(), 1);
 
       for(size_t a1=0; a1<alpha_vectors.size(); a1++)
       {
@@ -286,9 +292,20 @@ class solver_t{
           {
             if(not_dominated[a2])
             {
+#if 0
               int res = find_greater_alpha(*alpha_vectors[a1], *alpha_vectors[a2]);
-              if(res == 1)
+              if( (res == 1) || (res==0) ){
                 not_dominated[a1] = false;
+                break;
+              }
+#else
+              vec t1 = alpha_vectors[a1]->grad - alpha_vectors[a2]->grad;
+              float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
+              if((t1p <= -t1m) && (t1p < epsilon)){
+                not_dominated[a1] = 0;
+                break;
+              }
+#endif
             }
           }
         }
@@ -424,7 +441,6 @@ class solver_t{
     
     float calculate_Q_bound(belief_t& b, int aid, bool is_lower)
     {
-      int na = model->na;
       int no = model->no;
       float t1 = 0; 
       for(int o : range(0,no))
