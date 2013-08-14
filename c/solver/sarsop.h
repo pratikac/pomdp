@@ -14,15 +14,7 @@ class sarsop_t : public solver_t{
       int best_aid = -1;
       for(int a=0; a< model->na; a++)
       {
-        float t4 = 0;
-        for(int o=0 : range(0, model->no))
-        {
-          belief_t t1 = model->next_belief(b,a,o);
-          float t2 = calculate_upper_bound(t1);
-          float t3 = model->get_p_o_given_b(b, a, o);
-          t4 += t3*t2;
-        }
-        t4 = model->get_expected_step_reward(b,a) + model->discount*t4;
+        float t4 = calculate_Q_upper_bound(b, a);
         if(t4 > max_val)
         {
           max_val = t4;
@@ -51,28 +43,13 @@ class sarsop_t : public solver_t{
       }
       return best_oid;
     }
-
-    edge_t* sample_child_belief(belief_node_t* par)
-    {
-      int aid = get_best_aid(par->b);
-      int oid = get_best_oid(par, aid); 
-
-      belief_t b = model->next_belief(par->b, aid, oid);
-      belief_node_t* bn = new belief_node_t(b, par);
-      bn->depth = par->depth + 1;
-      
-      bn->value_upper_bound = calculate_upper_bound(bn->b);
-      bn->value_lower_bound = calculate_lower_bound(bn->b);
-      
-      edge_t* toret = new edge_t(bn, aid, oid);
-      if(!check_insert_into_belief_tree(bn, toret))
-      {
-        delete toret;
-        return NULL;
-      }
-      return toret;
-    }
     
+    void sample_child_aid_oid(belief_node_t* par, int& aid, int& oid)
+    {
+      aid = get_best_aid(par->b);
+      oid = get_best_oid(par, aid); 
+    }
+
     bool is_converged()
     {
       return false;

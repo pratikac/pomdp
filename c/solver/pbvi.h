@@ -5,9 +5,6 @@
 
 class pbvi_t : public solver_t{
   public:
-    typedef struct kdtree kdtree_t;
-    typedef struct kdres kdres_t;
-
     pbvi_t(){}
 };
 

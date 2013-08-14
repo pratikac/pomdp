@@ -31,15 +31,17 @@ class solver_t{
     model_t* model;
     belief_tree_t* belief_tree;
     kdtree_t* feature_tree;
+    
     float insert_distance;
     float convergence_threshold;
-    
+    int updates_per_iter;
+
     float blind_action_reward;
     vector<alpha_t*> alpha_vectors;
     vec simplex_upper_bound;
 
     solver_t() : model(nullptr), belief_tree(nullptr), feature_tree(nullptr),
-              blind_action_reward(0){}
+              updates_per_iter(1), blind_action_reward(0){}
   
     int initialise(belief_t& b_root, model_t* model_in,
         float insert_distance_in=0.01, float convergence_threshold_in=0.01)
@@ -222,12 +224,17 @@ class solver_t{
       kd_res_free(kdres);
       return to_insert;
     }
+    
+    virtual void sample_child_aid_oid(belief_node_t* par, int& aid, int& oid)
+    {
+      aid = model->na*RANDF;
+      oid = model->no*RANDF;
+    }
 
     virtual edge_t* sample_child_belief(belief_node_t* par)
     {
-      int aid = model->na*RANDF;
-      int oid = model->no*RANDF;
-      
+      int aid, oid;
+      sample_child_aid_oid(par, aid, oid);
       belief_t b = model->next_belief(par->b, aid, oid);
       belief_node_t* bn = new belief_node_t(b, par);
       bn->depth = par->depth + 1;
@@ -258,8 +265,46 @@ class solver_t{
       return nodes_to_insert.size();
     }
     
-    virtual void prune_belief_tree()
+    void prune_belief_tree(belief_node_t* bn)
     {
+      int na = model->na;
+      vector<float> Qu(na, -FLT_MAX), Ql(na, -FLT_MAX);
+
+      for(auto& e : bn->children)
+      {
+        int a = e->aid;
+        if(Qu[a] < -FLT_MAX/2)
+          Qu[a] = calculate_Q_upper_bound(bn->b, a);
+        if(Ql[a] < -FLT_MAX/2)
+          Ql[a] = calculate_Q_lower_bound(bn->b, a);
+      }
+      vector<int> not_dominated(na, 1);
+      for(int a1 : range(0,na))
+      {
+        for(int a2 : range(0,na))
+        {
+          if( (a1 != a2) && not_dominated[a2])
+          {
+            if(Qu[a1] < Ql[a2])
+            {
+              not_dominated[a1] = 0;
+              break;
+            }
+          }
+        }
+      }
+      set<edge_t*> survivors;
+      for(auto& e : bn->children)
+      {
+        int a = e->aid;
+        if(!not_dominated[a])
+        {
+          prune_belief_tree(e->end);
+        }
+        else
+          survivors.insert(e);
+      }
+      bn->children = survivors;
     }
     
     int find_greater_alpha(const alpha_t& a1, const alpha_t& a2)
@@ -290,12 +335,13 @@ class solver_t{
     virtual int insert_alpha(alpha_t* a)
     {
 #if 1
-      float epsilon = 1e-3;
+      float epsilon = 1e-10;
       for(auto& pav : alpha_vectors)
       {
         vec t1 = (a->grad-pav->grad);
         float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
-        if((fabs(t1p) <= epsilon) && (fabs(t1m) <= epsilon))
+        if( ((t1p*t1m < 0) && (max(fabs(t1p), fabs(t1m)) < epsilon)) ||
+            pointwise_dominant(pav, a))
         {
           delete a;
           return 1;
@@ -311,7 +357,7 @@ class solver_t{
       float epsilon = 1e-10;
       vec t1 = a1->grad - a2->grad;
       float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
-      if((t1p <= -t1m) && (t1p < epsilon))
+      if((t1p*t1m > epsilon) && (t1m >epsilon))
         return true;
       return false;
     }
@@ -331,7 +377,7 @@ class solver_t{
               int res1 = find_greater_alpha(*alpha_vectors[a1], *alpha_vectors[a2]);
               bool res2 = pointwise_dominant(alpha_vectors[a1], alpha_vectors[a2]);
               //cout<<"res: "<< res << endl;
-              if(res2)
+              if(!res2)
               {
                 not_dominated[a1] = 0;
                 break;
@@ -349,11 +395,12 @@ class solver_t{
           delete alpha_vectors[a1];
       }
       //cout<<"prune_alpha:: were: "<< alpha_vectors.size() << " now: "<< surviving_vectors.size() << endl;
+      int num_pruned = alpha_vectors.size() - surviving_vectors.size();
       alpha_vectors = surviving_vectors;
-      return 0;
+      return num_pruned;
     }
 
-    virtual int backup(belief_node_t* bn)
+    void backup(belief_node_t* bn)
     {
       int ns = model->ns;
       int no = model->no;
@@ -404,7 +451,6 @@ class solver_t{
       insert_alpha(new_alpha);
       
       bn->value_lower_bound = calculate_lower_bound(bn->b);
-      return 0;
     }
     
     float sawtooth_project_upper_bound(belief_t& b)
@@ -494,7 +540,7 @@ class solver_t{
       return calculate_Q_bound(b, aid, false);
     }
 
-    virtual int bellman_update(belief_node_t* bn)
+    void bellman_update(belief_node_t* bn)
     {
       int na = model->na;
       int no = model->no;
@@ -513,13 +559,12 @@ class solver_t{
           max_value = t1;
       }
       bn->value_upper_bound = max_value;
-      return 0;
     }
     
-    virtual int bellman_update_tree(belief_node_t* bn)
+    void bellman_update_tree(belief_node_t* bn)
     {
       if(bn->children.size() == 0)
-        return 0;
+        return;
 
       vector<float> t1(model->na,0);
       for(auto& ce : bn->children)
@@ -539,45 +584,50 @@ class solver_t{
         }
       }
       bn->value_upper_bound = max_value;
-      return 0;
     }
     
-    virtual int bellman_update_node_tree(belief_node_t* bn)
+    void bellman_update_node_tree(belief_node_t* bn)
     {
       for(auto& ce : bn->children)
         bellman_update_node_tree(ce->end);
       bellman_update(bn);
-      return 0;
     }
     
-    virtual int bellman_update_nodes_tree()
+    void bellman_update_nodes_tree()
     {
       // do dfs and bellman updates while coming up
       bellman_update_node_tree(belief_tree->root);
-      return 0;
     }
 
-    virtual int backup_belief_nodes()
+    void backup_belief_nodes()
     {
       for(auto& bn : belief_tree->nodes)
         backup(bn);
-      prune_alpha();
-      return 0;
+      int num_pruned = prune_alpha();
+      cout<<"num_alpha_pruned: "<< num_pruned << endl;
     }
    
-    virtual int bellman_update_nodes()
+    void bellman_update_nodes()
     {
       for(auto& bn : belief_tree->nodes)
         bellman_update(bn);
-      return 0;
     }
     
-    virtual int update_nodes()
+    void update_nodes()
     {
       backup_belief_nodes();
       bellman_update_nodes();
-      prune_belief_tree();
-      return 0;
+
+      //int nbn = belief_tree->nodes.size();
+      prune_belief_tree(belief_tree->root);
+      //cout<<"num_belief_pruned: "<< belief_tree->nodes.size() - nbn << endl;
+    }
+    
+    void iterate()
+    {
+      sample_belief_nodes();
+      for(int i : range(0, updates_per_iter))
+        update_nodes();
     }
 
     void update_bounds()
@@ -586,7 +636,7 @@ class solver_t{
         bn->value_lower_bound = calculate_lower_bound(bn->b);
     }
 
-    virtual bool is_converged(float threshold)
+    virtual bool is_converged()
     {
       return false;
     }
