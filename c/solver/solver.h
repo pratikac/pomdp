@@ -199,6 +199,30 @@ class solver_t{
       return 0;
     }
 
+    bool check_insert_into_belief_tree(belief_node_t* par, edge_t* e)
+    {
+      belief_node_t* bn = e->end;
+      kdres_t* kdres = kd_nearest(feature_tree, get_key(bn));
+      bool to_insert = false;
+      if(kd_res_end(kdres))
+        to_insert = true;
+      else
+      {
+        belief_node_t* bnt = (belief_node_t*)kd_res_item_data(kdres);
+        if(bnt != bn)
+        {
+          float tmp = bnt->b.distance(bn->b);
+          //cout<<"tmp: "<< tmp << endl;
+          if(tmp > insert_distance)
+            to_insert = true;
+          else
+            to_insert = false;
+        }
+      }
+      kd_res_free(kdres);
+      return to_insert;
+    }
+
     virtual edge_t* sample_child_belief(belief_node_t* par)
     {
       int aid = model->na*RANDF;
@@ -211,7 +235,13 @@ class solver_t{
       bn->value_upper_bound = calculate_upper_bound(bn->b);
       bn->value_lower_bound = calculate_lower_bound(bn->b);
       
-      return new edge_t(bn, aid, oid);
+      edge_t* toret = new edge_t(bn, aid, oid);
+      if(!check_insert_into_belief_tree(bn, toret))
+      {
+        delete toret;
+        return NULL;
+      }
+      return toret;
     }
     
     virtual int sample_belief_nodes()
@@ -235,17 +265,15 @@ class solver_t{
     int find_greater_alpha(const alpha_t& a1, const alpha_t& a2)
     {
       int max = belief_tree->nodes.size();
-      if(max < 50)
-        return 0;
 
       int tmp = 0;
       assert(a1.grad.size() == a2.grad.size());
 
       vec gd = a1.grad - a2.grad;
-      float t1=0, e=0;
+      float e=0;
       for(auto& bn : belief_tree->nodes)
       {
-        t1 = gd.dot(bn->b.p);
+        float t1 = gd.dot(bn->b.p);
         if(t1>e)
           tmp++;
         else
@@ -261,27 +289,35 @@ class solver_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
-#if 0
-      float epsilon = 1e-10;
+#if 1
+      float epsilon = 1e-3;
       for(auto& pav : alpha_vectors)
       {
         vec t1 = (a->grad-pav->grad);
         float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
-        if((t1p <= -t1m) && (t1p < epsilon))
+        if((fabs(t1p) <= epsilon) && (fabs(t1m) <= epsilon))
         {
           delete a;
           return 1;
         }
       }
-#else
+#endif
       alpha_vectors.push_back(a);
       return 0;
-#endif
+    }
+    
+    bool pointwise_dominant(alpha_t* a1, alpha_t* a2)
+    {
+      float epsilon = 1e-10;
+      vec t1 = a1->grad - a2->grad;
+      float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
+      if((t1p <= -t1m) && (t1p < epsilon))
+        return true;
+      return false;
     }
     
     virtual int prune_alpha()
     {
-      float epsilon = 1e-10;
       vector<int> not_dominated(alpha_vectors.size(), 1);
 
       for(size_t a1=0; a1<alpha_vectors.size(); a1++)
@@ -292,20 +328,14 @@ class solver_t{
           {
             if(not_dominated[a2])
             {
-#if 0
-              int res = find_greater_alpha(*alpha_vectors[a1], *alpha_vectors[a2]);
-              if( (res == 1) || (res==0) ){
-                not_dominated[a1] = false;
-                break;
-              }
-#else
-              vec t1 = alpha_vectors[a1]->grad - alpha_vectors[a2]->grad;
-              float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
-              if((t1p <= -t1m) && (t1p < epsilon)){
+              int res1 = find_greater_alpha(*alpha_vectors[a1], *alpha_vectors[a2]);
+              bool res2 = pointwise_dominant(alpha_vectors[a1], alpha_vectors[a2]);
+              //cout<<"res: "<< res << endl;
+              if(res2)
+              {
                 not_dominated[a1] = 0;
                 break;
               }
-#endif
             }
           }
         }
@@ -565,6 +595,10 @@ class solver_t{
     {
       for(auto& av : alpha_vectors)
         av->print();
+    }
+    void print_belief_tree()
+    {
+      belief_tree->print(belief_tree->root);
     }
 
     virtual float simulate(int steps)

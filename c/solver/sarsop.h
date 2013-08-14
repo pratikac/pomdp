@@ -3,7 +3,7 @@
 
 #include "solver/solver.h"
 
-class sarsop_t : public pbvi_t{
+class sarsop_t : public solver_t{
   public:
 
     sarsop_t(){}
@@ -64,7 +64,13 @@ class sarsop_t : public pbvi_t{
       bn->value_upper_bound = calculate_upper_bound(bn->b);
       bn->value_lower_bound = calculate_lower_bound(bn->b);
       
-      return new edge_t(bn, aid, oid);
+      edge_t* toret = new edge_t(bn, aid, oid);
+      if(!check_insert_into_belief_tree(bn, toret))
+      {
+        delete toret;
+        return NULL;
+      }
+      return toret;
     }
     
     bool is_converged()
