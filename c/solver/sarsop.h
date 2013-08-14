@@ -14,11 +14,18 @@ class sarsop_t : public pbvi_t{
       int best_aid = -1;
       for(int a=0; a< model->na; a++)
       {
-        belief_t t2 = model->next_belief(b,a,-1);
-        float t1 = calculate_upper_bound(t2);
-        if(t1 > max_val)
+        float t4 = 0;
+        for(int o=0 : range(0, model->no))
         {
-          max_val = t1;
+          belief_t t1 = model->next_belief(b,a,o);
+          float t2 = calculate_upper_bound(t1);
+          float t3 = model->get_p_o_given_b(b, a, o);
+          t4 += t3*t2;
+        }
+        t4 = model->get_expected_step_reward(b,a) + model->discount*t4;
+        if(t4 > max_val)
+        {
+          max_val = t4;
           best_aid = a;
         }
       }
@@ -35,7 +42,7 @@ class sarsop_t : public pbvi_t{
         float t1 = model->get_p_o_given_b(b, aid, o);
         belief_t t2 = model->next_belief(b,aid,o);
         float t3 = calculate_upper_bound(t2) - calculate_lower_bound(t2);
-        float t4 = t1*(t3 - 0.1*pow(model->discount, bn->depth+1));
+        float t4 = t1*(t3 - convergence_threshold*pow(model->discount, bn->depth+1));
         if(t4 > max_val)
         {
           max_val = t4;

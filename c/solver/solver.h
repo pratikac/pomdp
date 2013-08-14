@@ -166,8 +166,8 @@ class solver_t{
     
     void calculate_initial_upper_bound()
     {
-      calculate_mdp_policy();
-      //calculate_fib_policy();
+      //calculate_mdp_policy();
+      calculate_fib_policy();
     }
 
     virtual ~solver_t()
