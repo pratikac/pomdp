@@ -79,7 +79,7 @@ class belief_tree_t{
 
     void print(belief_node_t* bn, string prefix="")
     {
-      //bn->b.print(prefix, bn->value_lower_bound, bn->value_upper_bound);
+      //bn->b.print(prefix, bn->value_upper_bound, bn->value_lower_bound);
       cout<<prefix<<bn<<" "<< bn->value_upper_bound<<", "<< bn->value_lower_bound<<endl;
       prefix += "\t";
       for(auto& bne : bn->children)

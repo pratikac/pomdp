@@ -65,6 +65,7 @@ class ipomdp_t{
       int ds = create_model.system.ds;
       int nsp = bn.b.p.rows();
 
+#if 0
       mat A = mat::Zero(ns,ns);
       vec b = vec::Zero(ns);
       vec t = mat::Random(ns,ds).array().abs();
@@ -114,6 +115,11 @@ class ipomdp_t{
       //cout<<"old belief: "<< endl << bpp.transpose() << endl;
       //cout<<"new belief: "<< endl << bn.b.p.transpose() << endl;
       //getchar();
+#else
+      vec t1 = vec::Zero(ns);
+      t1.head(nsp) = bn.b.p;
+      bn.b.p  = t1;
+#endif
     }
 
     void project_beliefs()
@@ -131,7 +137,7 @@ class ipomdp_t{
     
     void project_alpha_vectors()
     {
-#if 1
+#if 0
       int ns = model->ns;
       for(auto& pa : solver.alpha_vectors)
       {

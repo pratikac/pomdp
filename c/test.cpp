@@ -91,8 +91,9 @@ int test_ipomdp(int argc, char** argv)
   typedef ipomdp_t<singleint_t<1,1,1>, sarsop_t> sarsop_singleint_t;
   typedef ipomdp_t<singleint_t<1,1,1>, pbvi_t> pbvi_singleint_t;
   
-  sarsop_lightdark_t pomdp(25, 4, 4);
-  pomdp.solve(50);
+  sarsop_lightdark_t pomdp(7, 4, 4);
+  pomdp.solve(20);
+  //pomdp.refine(2,0,0,20);
   pomdp.solver.print_alpha_vectors();
 
   //for(int i : range(0, 5))
