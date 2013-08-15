@@ -49,7 +49,7 @@ class edge_t{
 
 class belief_tree_t{
   public:
-    vector<belief_node_t*> nodes;
+    set<belief_node_t*> nodes;
     belief_node_t* root;
 
     belief_tree_t() : root(nullptr)
@@ -59,7 +59,7 @@ class belief_tree_t{
     {
       root = new belief_node_t(b_root);
       root->index = 0;
-      nodes.push_back(root);
+      nodes.insert(root);
     }
 
     ~belief_tree_t()
@@ -71,7 +71,7 @@ class belief_tree_t{
     int insert(belief_node_t* par, edge_t* e)
     {
       e->end->index = nodes.size();
-      nodes.push_back(e->end);
+      nodes.insert(e->end);
       e->end->parent = par;
       par->children.insert(e);
       return 0;
@@ -118,7 +118,7 @@ class belief_tree_t{
       for(auto& ce : bn->children)
         prune(ce->end);
       
-      nodes.erase(nodes.begin()+bn->index);
+      nodes.erase(bn);
       delete bn;
       
       return 0;

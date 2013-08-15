@@ -268,16 +268,14 @@ class solver_t{
     void prune_belief_tree(belief_node_t* bn)
     {
       int na = model->na;
-      vector<float> Qu(na, -FLT_MAX), Ql(na, -FLT_MAX);
+      vector<float> Qu(na, FLT_MAX/2), Ql(na, -FLT_MAX/2);
       int dummy_oid_opt;
 
       for(auto& e : bn->children)
       {
         int a = e->aid;
-        if(Qu[a] < -FLT_MAX/2)
-          Qu[a] = calculate_Q_upper_bound(bn->b, a, dummy_oid_opt);
-        if(Ql[a] < -FLT_MAX/2)
-          Ql[a] = calculate_Q_lower_bound(bn->b, a, dummy_oid_opt);
+        Qu[a] = min(Qu[a], calculate_Q_upper_bound(bn->b, a, dummy_oid_opt));
+        Ql[a] = max(Ql[a], calculate_Q_lower_bound(bn->b, a, dummy_oid_opt));
       }
       vector<int> toremove(na, 0);
       for(int a2 : range(0,na))
@@ -306,11 +304,11 @@ class solver_t{
         int a = e->aid;
         if(toremove[a])
         {
-          if(e->end)
-            belief_tree->prune_below(e->end);
+          belief_tree->prune_below(e->end);
         }
       }
-      for(auto& e : children_copy)
+      
+      for(auto& e : bn->children)
       {
         prune_belief_tree(e->end);
       }
@@ -343,7 +341,7 @@ class solver_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
-      float epsilon = 1e-2;
+      float epsilon = 1e-6;
       bool toinsert = true;
       for(auto& pa : alpha_vectors)
       {
@@ -518,9 +516,9 @@ class solver_t{
       int no = model->no;
       float t1 = 0;
       
-      float t2 = -FLT_MAX/2;
+      float t2 = FLT_MAX/2;
       if(is_lower)
-        t2 = FLT_MAX/2;
+        t2 = -FLT_MAX/2;
       oid_opt = -1;
       for(int o : range(0,no))
       {
@@ -529,7 +527,7 @@ class solver_t{
         {
           float t3 = model->get_p_o_given_b(b, aid, o)*calculate_lower_bound(nb);
           t1 += t3;
-          if(t3 < t2){
+          if(t3 > t2){
             t2 = t3;
             oid_opt = o;
           }
@@ -538,7 +536,7 @@ class solver_t{
         {
           float t3 = model->get_p_o_given_b(b, aid, o)*calculate_upper_bound(nb);
           t1 += t3;
-          if(t3 > t2){
+          if(t3 < t2){
             t2 = t3;
             oid_opt = o;
           }
@@ -638,15 +636,30 @@ class solver_t{
       backup(bn);
     }
     
+    void prune_beliefs()
+    {
+      int nbn = belief_tree->nodes.size();
+      if(feature_tree)
+        kd_free(feature_tree);
+      feature_tree = kd_create(model->ns);
+      
+      for(auto& ce : belief_tree->root->children)
+        prune_belief_tree(ce->end);
+      
+      for(auto& bn : belief_tree->nodes)
+        insert_into_feature_tree(bn);
+
+      //cout<<"num_belief_pruned: "<< nbn - belief_tree->nodes.size() << endl;
+    }
+
     void update_nodes()
     {
       backup_belief_nodes();
-      //backup_belief_nodes_tree(belief_tree->root);
       bellman_update_nodes();
-
-      //int nbn = belief_tree->nodes.size();
-      //prune_belief_tree(belief_tree->root);
-      //cout<<"num_belief_pruned: "<< nbn - belief_tree->nodes.size() << endl;
+      
+      prune_beliefs();
+      backup_belief_nodes();
+      bellman_update_nodes();
     }
     
     void iterate()
