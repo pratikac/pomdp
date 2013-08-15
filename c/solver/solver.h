@@ -342,7 +342,21 @@ class solver_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
-      alpha_vectors.push_back(a);
+      float epsilon = 1e-2;
+      bool toinsert = true;
+      for(auto& pa : alpha_vectors)
+      {
+        float t1 = (a->grad - pa->grad).array().abs().maxCoeff();
+        if(t1< epsilon)
+        {
+          toinsert = false;
+          break;
+        }
+      }
+      if(toinsert)
+        alpha_vectors.push_back(a);
+      else
+        delete a;
       return 0;
     }
     
@@ -359,21 +373,17 @@ class solver_t{
     virtual int prune_alpha()
     {
       vector<int> dominates(alpha_vectors.size(), 1);
-
       for(size_t a1=0; a1<alpha_vectors.size(); a1++)
       {
         for(size_t a2=0; a2<alpha_vectors.size(); a2++)
         {
-          if(a1 != a2)
+          if((a1 != a2) && (dominates[a2] != 0))
           {
-            if(dominates[a2] != 0)
+            int res1 = find_greater_alpha(*alpha_vectors[a1], *alpha_vectors[a2]);
+            //cout<<"res: "<< res << endl;
+            if(res1 == 1)
             {
-              int res1 = find_greater_alpha(*alpha_vectors[a1], *alpha_vectors[a2]);
-              //cout<<"res: "<< res << endl;
-              if(res1 == 1)
-              {
-                dominates[a2] = 0;
-              }
+              dominates[a2] = 0;
             }
           }
         }
@@ -539,14 +549,7 @@ class solver_t{
       float max_value = -FLT_MAX;
       for(int a=0; a < na; a++)
       {
-        float t1 = 0;
-        for(int o=0; o< no; o++)
-        {
-          belief_t nb = model->next_belief(bn->b, a, o);
-          t1 += model->get_p_o_given_b(bn->b, a, o)*calculate_upper_bound(nb);
-          //t1 += model->get_p_o_given_b(bn->b, a, o)*projected_belief_upper_bound(nb);
-        }
-        t1 = model->get_expected_step_reward(bn->b, a) + model->discount*t1;
+        float t1 = calculate_Q_upper_bound(bn->b, a);
         if(t1 > max_value)
           max_value = t1;
       }
@@ -612,9 +615,9 @@ class solver_t{
       backup_belief_nodes();
       bellman_update_nodes();
 
-      int nbn = belief_tree->nodes.size();
-      prune_belief_tree(belief_tree->root);
-      cout<<"num_belief_pruned: "<< nbn - belief_tree->nodes.size() << endl;
+      //int nbn = belief_tree->nodes.size();
+      //prune_belief_tree(belief_tree->root);
+      //cout<<"num_belief_pruned: "<< nbn - belief_tree->nodes.size() << endl;
     }
     
     void iterate()

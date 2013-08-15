@@ -12,9 +12,9 @@ OBJS = $(C_OBJS) $(CPP_OBJS)
 INCS = -I ./ -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported -I ./utils/ -I ./solver/ -I ./pomdp/ -I ./system/
 LIBS = -L parser/ -lparser -lfl
 
-CFLAGS = -Wall -g -O3 -ggdb
-CPPFLAGS = -Wall -g -O0 -ggdb -std=c++11
-LDFLAGS =
+CFLAGS = -Wall -pg -g -O3 -ggdb
+CPPFLAGS = -Wall -pg -g -O3 -ggdb -std=c++11
+LDFLAGS = -pg
 
 all: $(BIN)
 
