@@ -278,34 +278,41 @@ class solver_t{
         if(Ql[a] < -FLT_MAX/2)
           Ql[a] = calculate_Q_lower_bound(bn->b, a);
       }
-      vector<int> not_dominated(na, 1);
-      for(int a1 : range(0,na))
+      vector<int> toremove(na, 0);
+      for(int a2 : range(0,na))
       {
-        for(int a2 : range(0,na))
+        if((toremove[a2] == 0) && (Qu[a2] > -FLT_MAX/2))
         {
-          if( (a1 != a2) && not_dominated[a2])
+          for(int a1 : range(0,na))
           {
-            if( ((Qu[a1] > -FLT_MAX/2) && (Ql[a2] > -FLT_MAX/2)) &&
-                (Qu[a1] < Ql[a2]))
+            if(a1 != a2)
             {
-              not_dominated[a1] = 0;
-              break;
+              if(Ql[a1] > -FLT_MAX/2)
+              {
+                if((Qu[a2] < Ql[a1]))
+                {
+                  toremove[a2] = 1;
+                  break;
+                }
+              }
             }
           }
         }
       }
-      set<edge_t*> survivors;
-      for(auto& e : bn->children)
+      set<edge_t*> children_copy = bn->children;
+      for(auto& e : children_copy)
       {
         int a = e->aid;
-        if(!not_dominated[a])
+        if(toremove[a])
         {
-          prune_belief_tree(e->end);
+          if(e->end)
+            belief_tree->prune_below(e->end);
         }
-        else
-          survivors.insert(e);
       }
-      bn->children = survivors;
+      for(auto& e : children_copy)
+      {
+        prune_belief_tree(e->end);
+      }
     }
     
     int find_greater_alpha(const alpha_t& a1, const alpha_t& a2)
@@ -316,7 +323,7 @@ class solver_t{
       assert(a1.grad.size() == a2.grad.size());
 
       vec gd = a1.grad - a2.grad;
-      float e=0;
+      float e=1e-3;
       for(auto& bn : belief_tree->nodes)
       {
         float t1 = gd.dot(bn->b.p);
@@ -351,7 +358,7 @@ class solver_t{
     
     virtual int prune_alpha()
     {
-      vector<int> not_dominated(alpha_vectors.size(), 1);
+      vector<int> dominates(alpha_vectors.size(), 1);
 
       for(size_t a1=0; a1<alpha_vectors.size(); a1++)
       {
@@ -359,15 +366,13 @@ class solver_t{
         {
           if(a1 != a2)
           {
-            if(not_dominated[a2])
+            if(dominates[a2] != 0)
             {
               int res1 = find_greater_alpha(*alpha_vectors[a1], *alpha_vectors[a2]);
-              bool res2 = pointwise_dominant(alpha_vectors[a1], alpha_vectors[a2]);
               //cout<<"res: "<< res << endl;
-              if(!res2)
+              if(res1 == 1)
               {
-                not_dominated[a1] = 0;
-                break;
+                dominates[a2] = 0;
               }
             }
           }
@@ -376,7 +381,7 @@ class solver_t{
       vector<alpha_t*> surviving_vectors;
       for(size_t a1=0; a1<alpha_vectors.size(); a1++)
       {
-        if(not_dominated[a1])
+        if(dominates[a1])
           surviving_vectors.push_back(alpha_vectors[a1]);
         else
           delete alpha_vectors[a1];
@@ -607,9 +612,9 @@ class solver_t{
       backup_belief_nodes();
       bellman_update_nodes();
 
-      //int nbn = belief_tree->nodes.size();
+      int nbn = belief_tree->nodes.size();
       prune_belief_tree(belief_tree->root);
-      //cout<<"num_belief_pruned: "<< nbn - belief_tree->nodes.size() << endl;
+      cout<<"num_belief_pruned: "<< nbn - belief_tree->nodes.size() << endl;
     }
     
     void iterate()
