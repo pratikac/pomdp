@@ -98,7 +98,7 @@ class lightdark_t : public system_t<ds, du, ddo>
     }
     mat get_FFdt(const vec& s, const vec& u, float dt=1.0)
     {
-      return mat::Identity(ds,ds)*0.01*dt;
+      return mat::Identity(ds,ds)*0.1*dt;
     }
     mat get_GG(const vec& s)
     {
@@ -112,7 +112,7 @@ class lightdark_t : public system_t<ds, du, ddo>
         }
       }
       if(is_light)
-        return mat::Identity(ddo,ddo)*0.01;
+        return mat::Identity(ddo,ddo)*0.001;
       else
         return mat::Identity(ddo,ddo)*100;
     }

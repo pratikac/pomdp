@@ -163,8 +163,8 @@ class ipomdp_t{
               solver.belief_tree->root->value_lower_bound<<") av: "<< solver.alpha_vectors.size() << " bn: "<< 
               solver.belief_tree->nodes.size()<<endl;
             //solver.print_alpha_vectors();
-            solver.print_belief_tree();
-            getchar();
+            //solver.print_belief_tree();
+            //getchar();
           }
         }
         if(solver.is_converged())

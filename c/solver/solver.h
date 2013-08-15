@@ -285,7 +285,8 @@ class solver_t{
         {
           if( (a1 != a2) && not_dominated[a2])
           {
-            if(Qu[a1] < Ql[a2])
+            if( ((Qu[a1] > -FLT_MAX/2) && (Ql[a2] > -FLT_MAX/2)) &&
+                (Qu[a1] < Ql[a2]))
             {
               not_dominated[a1] = 0;
               break;
@@ -334,27 +335,13 @@ class solver_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
-#if 1
-      float epsilon = 1e-10;
-      for(auto& pav : alpha_vectors)
-      {
-        vec t1 = (a->grad-pav->grad);
-        float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
-        if( ((t1p*t1m < 0) && (max(fabs(t1p), fabs(t1m)) < epsilon)) ||
-            pointwise_dominant(pav, a))
-        {
-          delete a;
-          return 1;
-        }
-      }
-#endif
       alpha_vectors.push_back(a);
       return 0;
     }
     
     bool pointwise_dominant(alpha_t* a1, alpha_t* a2)
     {
-      float epsilon = 1e-10;
+      float epsilon = 1e-3;
       vec t1 = a1->grad - a2->grad;
       float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
       if((t1p*t1m > epsilon) && (t1m >epsilon))
@@ -603,8 +590,10 @@ class solver_t{
     {
       for(auto& bn : belief_tree->nodes)
         backup(bn);
-      int num_pruned = prune_alpha();
-      cout<<"num_alpha_pruned: "<< num_pruned << endl;
+
+      int nalpha = alpha_vectors.size();
+      prune_alpha();
+      //cout<<"num_alpha_pruned: "<< nalpha - alpha_vectors.size() << endl;
     }
    
     void bellman_update_nodes()
@@ -620,7 +609,7 @@ class solver_t{
 
       //int nbn = belief_tree->nodes.size();
       prune_belief_tree(belief_tree->root);
-      //cout<<"num_belief_pruned: "<< belief_tree->nodes.size() - nbn << endl;
+      //cout<<"num_belief_pruned: "<< nbn - belief_tree->nodes.size() << endl;
     }
     
     void iterate()

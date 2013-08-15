@@ -43,15 +43,14 @@ int test_solver(int argc, char** argv, solver_t& solver)
   getchar();
 
   solver.initialise(m.b0, &m, 1e-10, 0.01);
-  
+  solver.updates_per_iter = backup_per_sample;
+
   tt timer;
   timer.tic();
   for(int i=0; i<num_samples; i++)
   {
-    solver.sample_belief_nodes();
-    for(int j=0; j< backup_per_sample; j++)
-      solver.update_nodes();
-    
+    solver.iterate();
+
     cout<<"i: "<< i <<" ("<< solver.belief_tree->root->value_upper_bound<<","<<
       solver.belief_tree->root->value_lower_bound<<") av: "<< solver.alpha_vectors.size() << " bn: "<< 
       solver.belief_tree->nodes.size()<<endl;
@@ -106,9 +105,9 @@ int main(int argc, char** argv)
   pbvi_t pbvi;
   sarsop_t sarsop;
 
-  //test_solver(argc, argv, sarsop);
+  test_solver(argc, argv, sarsop);
   //test_bpomdp(argc, argv);
-  test_ipomdp(argc, argv);
+  //test_ipomdp(argc, argv);
 
   return 0;
 }
