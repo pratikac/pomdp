@@ -12,8 +12,10 @@ typedef MatrixXd mat;
 typedef MatrixXf matf;
 typedef MatrixXi mati;
 typedef VectorXf vecf;
-typedef SparseMatrix<float> spmat;
-typedef SparseVector<float> spvec;
+typedef SparseMatrix<double> spmat;
+typedef SparseVector<double> spvec;
+typedef SparseMatrix<float> spmatf;
+typedef SparseVector<float> spvecf;
 
 typedef Triplet<float> triplet;
 

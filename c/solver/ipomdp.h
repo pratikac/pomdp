@@ -191,7 +191,7 @@ class ipomdp_t{
     void solve(int hw=1000)
     {
       float convergence_threshold = 0.1;
-      float insert_distance = 1e-6;
+      float insert_distance = 1e-2;
       solver.initialise(model->b0, model, insert_distance, convergence_threshold);
       solver_iteration(hw);
       

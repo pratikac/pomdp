@@ -13,8 +13,8 @@ INCS = -I ./ -I /home/pratik/apps -I /home/pratik/apps/Eigen/unsupported -I ./ut
 LIBS = -L parser/ -lparser -lfl
 
 CFLAGS = -Wall -pg -g -O3 -ggdb
-CPPFLAGS = -Wall -pg -g -O3 -ggdb -std=c++11
-LDFLAGS = -pg
+CPPFLAGS = -Wall -pg -g -O3 -ggdb -std=c++11 -fopenmp
+LDFLAGS = -pg -fopenmp
 
 all: $(BIN)
 
