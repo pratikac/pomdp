@@ -269,14 +269,15 @@ class solver_t{
     {
       int na = model->na;
       vector<float> Qu(na, -FLT_MAX), Ql(na, -FLT_MAX);
+      int dummy_oid_opt;
 
       for(auto& e : bn->children)
       {
         int a = e->aid;
         if(Qu[a] < -FLT_MAX/2)
-          Qu[a] = calculate_Q_upper_bound(bn->b, a);
+          Qu[a] = calculate_Q_upper_bound(bn->b, a, dummy_oid_opt);
         if(Ql[a] < -FLT_MAX/2)
-          Ql[a] = calculate_Q_lower_bound(bn->b, a);
+          Ql[a] = calculate_Q_lower_bound(bn->b, a, dummy_oid_opt);
       }
       vector<int> toremove(na, 0);
       for(int a2 : range(0,na))
@@ -409,46 +410,38 @@ class solver_t{
       int na = model->na;
 
       alpha_t* alpha_a_o[ns][no];
+      alpha_t* new_alpha = new alpha_t();
+      float max_val2 = -FLT_MAX;
       for(int a=0; a < na; a++)
       {
+        mat t0(ns, no);
         for(int o=0; o< no; o++)
         {
-          float max_val = -FLT_MAX;
+          float max_val1 = -FLT_MAX;
           belief_t nb = model->next_belief(bn->b, a, o);
           for(auto& pav : alpha_vectors)
           {
             float t1 = pav->get_value(nb);
-            if(t1 > max_val)
+            if(t1 > max_val1)
             {
-              max_val = t1;
+              max_val1 = t1;
               alpha_a_o[a][o] = pav;
             }
+          }
+          
+          t0.col(o) = alpha_a_o[a][o]->grad;
+          // check this, this looks fishy
+          vec t2 = (model->po[a] * (t0.transpose())). diagonal();
+          vec t3 = model->get_step_reward(a) + model->discount*model->pt[a]*t2;
+          float t4 = t3.dot(bn->b.p);
+          if(t4 > max_val2)
+          {
+            max_val2 = t4;
+            *new_alpha = alpha_t(a,t2);
           }
         }
       }
 
-      alpha_t* new_alpha = new alpha_t();
-      float max_val = -FLT_MAX;
-      for(int a=0; a< na; a++)
-      {
-        mat t0(ns, no);
-        for(int o=0; o<no; o++)
-        {
-          vec t5 = alpha_a_o[a][o]->grad;
-          t0.col(o) = t5;
-        }
-        // check this, this looks fishy
-        vec t1 = (model->po[a] * (t0.transpose())). diagonal();
-        t1 = model->get_step_reward(a) + model->discount*model->pt[a]*t1;
-        alpha_t t2(a, t1);
-        float t3 = t2.get_value(bn->b);
-
-        if(t3 > max_val)
-        {
-          max_val = t3;
-          *new_alpha = t2;
-        }
-      }
       //cout<<"inserted: "<<insert_alpha(new_alpha)<<endl;
       insert_alpha(new_alpha);
       
@@ -505,53 +498,79 @@ class solver_t{
       return sawtooth_project_upper_bound(b);
     }
 
-    float calculate_lower_bound(belief_t& b)
+    float calculate_lower_bound(belief_t& b, alpha_t* alpha_opt=NULL)
     {
       float max_val = -FLT_MAX;
       for(auto& av : alpha_vectors)
       {
         float t1 = av->get_value(b);
         if(t1 > max_val)
+        {
           max_val = t1;
+          alpha_opt = av;
+        }
       }
       return max_val;
     }
     
-    float calculate_Q_bound(belief_t& b, int aid, bool is_lower)
+    float calculate_Q_bound(belief_t& b, int aid, bool is_lower, int& oid_opt)
     {
       int no = model->no;
-      float t1 = 0; 
+      float t1 = 0;
+      
+      float t2 = -FLT_MAX/2;
+      if(is_lower)
+        t2 = FLT_MAX/2;
+      oid_opt = -1;
       for(int o : range(0,no))
       {
         belief_t nb = model->next_belief(b, aid, o);
         if(is_lower)
-          t1 += model->get_p_o_given_b(b, aid, o)*calculate_lower_bound(nb);
+        {
+          float t3 = model->get_p_o_given_b(b, aid, o)*calculate_lower_bound(nb);
+          t1 += t3;
+          if(t3 < t2){
+            t2 = t3;
+            oid_opt = o;
+          }
+        }
         else
-          t1 += model->get_p_o_given_b(b, aid, o)*calculate_upper_bound(nb);
+        {
+          float t3 = model->get_p_o_given_b(b, aid, o)*calculate_upper_bound(nb);
+          t1 += t3;
+          if(t3 > t2){
+            t2 = t3;
+            oid_opt = o;
+          }
+        }
       }
       return model->get_expected_step_reward(b, aid) + model->discount*t1;
     }
 
-    float calculate_Q_lower_bound(belief_t& b, int aid)
+    float calculate_Q_lower_bound(belief_t& b, int aid, int& oid_opt)
     {
-      return calculate_Q_bound(b, aid, true);
+      return calculate_Q_bound(b, aid, true, oid_opt);
     }
 
-    float calculate_Q_upper_bound(belief_t& b, int aid)
+    float calculate_Q_upper_bound(belief_t& b, int aid, int& oid_opt)
     {
-      return calculate_Q_bound(b, aid, false);
+      return calculate_Q_bound(b, aid, false, oid_opt);
     }
 
-    void bellman_update(belief_node_t* bn)
+    void bellman_update(belief_node_t* bn, int& aid_opt)
     {
       int na = model->na;
-      int no = model->no;
       float max_value = -FLT_MAX;
+      int dummy_oid_opt;
+      aid_opt = -1;
       for(int a=0; a < na; a++)
       {
-        float t1 = calculate_Q_upper_bound(bn->b, a);
+        float t1 = calculate_Q_upper_bound(bn->b, a, dummy_oid_opt);
         if(t1 > max_value)
+        {
           max_value = t1;
+          aid_opt = a;
+        }
       }
       bn->value_upper_bound = max_value;
     }
@@ -583,9 +602,10 @@ class solver_t{
     
     void bellman_update_node_tree(belief_node_t* bn)
     {
+      int dummy_aid_opt;
       for(auto& ce : bn->children)
         bellman_update_node_tree(ce->end);
-      bellman_update(bn);
+      bellman_update(bn, dummy_aid_opt);
     }
     
     void bellman_update_nodes_tree()
@@ -594,25 +614,34 @@ class solver_t{
       bellman_update_node_tree(belief_tree->root);
     }
 
+    void bellman_update_nodes()
+    {
+      int dummy_aid_opt;
+      for(auto& bn : belief_tree->nodes)
+        bellman_update(bn, dummy_aid_opt);
+    }
+
     void backup_belief_nodes()
     {
       for(auto& bn : belief_tree->nodes)
         backup(bn);
 
-      int nalpha = alpha_vectors.size();
+      //int nalpha = alpha_vectors.size();
       prune_alpha();
       //cout<<"num_alpha_pruned: "<< nalpha - alpha_vectors.size() << endl;
     }
-   
-    void bellman_update_nodes()
+
+    void backup_belief_nodes_tree(belief_node_t* bn)
     {
-      for(auto& bn : belief_tree->nodes)
-        bellman_update(bn);
+      for(auto& ce : bn->children)
+        backup_belief_nodes_tree(ce->end);
+      backup(bn);
     }
     
     void update_nodes()
     {
       backup_belief_nodes();
+      //backup_belief_nodes_tree(belief_tree->root);
       bellman_update_nodes();
 
       //int nbn = belief_tree->nodes.size();

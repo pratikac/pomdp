@@ -12,9 +12,10 @@ class sarsop_t : public solver_t{
     {
       float max_val = -FLT_MAX;
       int best_aid = -1;
+      int dummy_oid_opt;
       for(int a=0; a< model->na; a++)
       {
-        float t4 = calculate_Q_upper_bound(b, a);
+        float t4 = calculate_Q_upper_bound(b, a, dummy_oid_opt);
         if(t4 > max_val)
         {
           max_val = t4;
