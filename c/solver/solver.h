@@ -98,22 +98,23 @@ class solver_t{
       return to_insert;
     }
     
-    virtual void sample_child_aid_oid(belief_node_t* par, int& aid, int& oid)
+    virtual void sample_child_aid_oid(belief_node_t* par, int& aid, int& oid, float& excess_uncertainty)
     {
       aid = model->na*RANDF;
       oid = model->no*RANDF;
+      excess_uncertainty = 10;
     }
 
-    virtual edge_t* sample_child_belief(belief_node_t* par)
+    virtual edge_t* sample_child_belief(belief_node_t* par, float& excess_uncertainty)
     {
       int aid, oid;
-      sample_child_aid_oid(par, aid, oid);
+      sample_child_aid_oid(par, aid, oid, excess_uncertainty);
       belief_t b = model->next_belief(par->b, aid, oid);
       belief_node_t* bn = new belief_node_t(b, par);
       bn->depth = par->depth + 1;
 
       bounds.calculate(bn);
-
+      
       edge_t* toret = new edge_t(bn, aid, oid);
       if(!check_insert_into_belief_tree(bn, toret))
       {
@@ -123,12 +124,13 @@ class solver_t{
       return toret;
     }
     
-    virtual int sample_belief_nodes()
+    virtual int sample_belief_nodes(float epsilon=1)
     {
       vector<pair<belief_node_t*, edge_t*> > nodes_to_insert;
+      float excess_uncertainty;
       for(auto& bn : belief_tree->nodes)
       {
-        edge_t* e_bn = sample_child_belief(bn);
+        edge_t* e_bn = sample_child_belief(bn, excess_uncertainty);
         if(e_bn)
           nodes_to_insert.push_back(make_pair(bn, e_bn));
       }

@@ -153,9 +153,9 @@ class ipomdp_t{
     
     void project_alpha_vectors()
     {
-#if 0
+#if 1
       int ns = model->ns;
-      for(auto& pa : solver.alpha_vectors)
+      for(auto& pa : solver.bounds.alpha_vectors)
       {
         int nsp = pa->grad.rows();
         vec t1(ns);

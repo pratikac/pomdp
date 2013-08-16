@@ -272,8 +272,6 @@ class bounds_t{
 
       //cout<<"inserted: "<<insert_alpha(new_alpha)<<endl;
       insert_alpha(new_alpha);
-
-      bn->value_lower_bound = calculate_lower_bound(bn->b);
     }
 
     float sawtooth_project_upper_bound(belief_t& b)

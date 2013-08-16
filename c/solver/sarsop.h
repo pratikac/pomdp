@@ -25,7 +25,7 @@ class sarsop_t : public solver_t{
       return best_aid;
     }
 
-    int get_best_oid(belief_node_t* bn, int aid)
+    int get_best_oid(belief_node_t* bn, int aid, float& excess_uncertainty)
     {
       belief_t& b = bn->b;
       int best_oid = -1;
@@ -40,17 +40,49 @@ class sarsop_t : public solver_t{
         {
           max_val = t4;
           best_oid = o;
+          excess_uncertainty = pow(model->discount, bn->depth)*t3;
         }
       }
+      // returns excess_uncertainty at the root
       return best_oid;
     }
     
-    void sample_child_aid_oid(belief_node_t* par, int& aid, int& oid)
+    void sample_child_aid_oid(belief_node_t* par, int& aid, int& oid, float& excess_uncertainty)
     {
       aid = get_best_aid(par->b);
-      oid = get_best_oid(par, aid); 
+      oid = get_best_oid(par, aid, excess_uncertainty); 
     }
+    
+    int sample_belief_nodes(float epsilon=1)
+    {
+      belief_node_t* bn = belief_tree->root;
+      vector<pair<belief_node_t*, edge_t*> > nodes_to_insert;
+      bool tostop = false;
+      float excess_uncertainty = 1;
+      while(!tostop)
+      {
+        edge_t* e = sample_child_belief(bn, excess_uncertainty);
+        if(e)
+        {
+          nodes_to_insert.push_back(make_pair(bn, e));
+          //cout<<"excess_uncertainty: "<< excess_uncertainty << endl;
+          if(excess_uncertainty < epsilon)
+            tostop = true;
+          else
+            bn = e->end;
+        }
+        else
+        {
+          tostop = true;
+        }
+      }
 
+      for(auto& p : nodes_to_insert)
+        insert_into_belief_tree(p.first, p.second);
+      
+      return nodes_to_insert.size();
+    }
+    
     bool is_converged()
     {
       return false;

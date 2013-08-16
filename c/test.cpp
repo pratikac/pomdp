@@ -122,7 +122,7 @@ int test_ipomdp(int argc, char** argv)
     return 0;
   }
   pomdp.solve(steps);
-  pomdp.refine(nr,0,0,steps);
+  //pomdp.refine(nr,0,0,steps);
   pomdp.solver.bounds.print_alpha_vectors();
 
   //for(int i : range(0, 5))
@@ -133,6 +133,8 @@ int test_ipomdp(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
+  srand(time(NULL));
+
   pbvi_t pbvi;
   sarsop_t sarsop;
 
