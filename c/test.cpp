@@ -91,9 +91,29 @@ int test_ipomdp(int argc, char** argv)
   typedef ipomdp_t<singleint_t<1,1,1>, sarsop_t> sarsop_singleint_t;
   typedef ipomdp_t<singleint_t<1,1,1>, pbvi_t> pbvi_singleint_t;
   
-  sarsop_lightdark_t pomdp(7, 4, 4);
-  pomdp.solve(20);
-  //pomdp.refine(2,0,0,20);
+  int c;
+  int ns=5, nr=2, steps=10;
+  while( (c = getopt(argc, argv, "n:r:s:")) != -1)
+  {
+    switch(c)
+    {
+      case 'n':
+        ns = atoi(optarg);
+        break;
+      case 'r':
+        nr = atoi(optarg);
+        break;
+      case 's':
+        steps = atoi(optarg);
+        break;
+      default:
+        abort();
+    }
+  }
+
+  sarsop_lightdark_t pomdp(ns, 4, 4);
+  pomdp.solve(steps);
+  pomdp.refine(nr,0,0,steps);
   pomdp.solver.print_alpha_vectors();
 
   //for(int i : range(0, 5))

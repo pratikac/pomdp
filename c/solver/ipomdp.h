@@ -127,11 +127,27 @@ class ipomdp_t{
       if(solver.feature_tree)
         kd_free(solver.feature_tree);
       solver.feature_tree = kd_create(model->ns);
+    
+      solver.belief_tree->root->b = model->b0;
+      project_beliefs_recurse(solver.belief_tree->root);
+
+      solver.calculate_initial_upper_bound();
       
       for(auto& bn : solver.belief_tree->nodes)
       {
-        project_belief(*bn);
         solver.insert_into_feature_tree(bn);
+        bn->value_upper_bound = solver.simplex_upper_bound.dot(bn->b.p);
+      }
+    }
+
+    void project_beliefs_recurse(belief_node_t* bn)
+    {
+      for(auto& ce : bn->children)
+      {
+        belief_t next_belief = model->next_belief(bn->b, ce->aid, ce->oid);
+        ce->end->b = next_belief;
+
+        project_beliefs_recurse(ce->end);
       }
     }
     

@@ -274,13 +274,13 @@ class solver_t{
       for(auto& e : bn->children)
       {
         int a = e->aid;
-        Qu[a] = min(Qu[a], calculate_Q_upper_bound(bn->b, a, dummy_oid_opt));
-        Ql[a] = max(Ql[a], calculate_Q_lower_bound(bn->b, a, dummy_oid_opt));
+        Qu[a] = calculate_Q_upper_bound(bn->b, a, dummy_oid_opt);
+        Ql[a] = calculate_Q_lower_bound(bn->b, a, dummy_oid_opt);
       }
       vector<int> toremove(na, 0);
       for(int a2 : range(0,na))
       {
-        if((toremove[a2] == 0) && (Qu[a2] > -FLT_MAX/2))
+        if((toremove[a2] == 0) && (Qu[a2] < FLT_MAX/2))
         {
           for(int a1 : range(0,na))
           {
@@ -322,13 +322,13 @@ class solver_t{
       assert(a1.grad.size() == a2.grad.size());
 
       vec gd = a1.grad - a2.grad;
-      float e=1e-3;
+      float e=1e-5;
       for(auto& bn : belief_tree->nodes)
       {
         float t1 = gd.dot(bn->b.p);
         if(t1>e)
           tmp++;
-        else
+        else if(t1 < -e)
           tmp--;
       }
       if(tmp == max)
@@ -426,17 +426,18 @@ class solver_t{
               alpha_a_o[a][o] = pav;
             }
           }
-          
+
           t0.col(o) = alpha_a_o[a][o]->grad;
-          // check this, this looks fishy
-          vec t2 = (model->po[a] * (t0.transpose())). diagonal();
-          vec t3 = model->get_step_reward(a) + model->discount*model->pt[a]*t2;
-          float t4 = t3.dot(bn->b.p);
-          if(t4 > max_val2)
-          {
-            max_val2 = t4;
-            *new_alpha = alpha_t(a,t2);
-          }
+        }
+        
+        // check this, this looks fishy
+        vec t2 = (model->po[a] * (t0.transpose())). diagonal();
+        vec t3 = model->get_step_reward(a) + model->discount*model->pt[a]*t2;
+        float t4 = t3.dot(bn->b.p);
+        if(t4 > max_val2)
+        {
+          max_val2 = t4;
+          *new_alpha = alpha_t(a,t2);
         }
       }
 
@@ -625,7 +626,7 @@ class solver_t{
         backup(bn);
 
       //int nalpha = alpha_vectors.size();
-      prune_alpha();
+      //prune_alpha();
       //cout<<"num_alpha_pruned: "<< nalpha - alpha_vectors.size() << endl;
     }
 
@@ -656,10 +657,11 @@ class solver_t{
     {
       backup_belief_nodes();
       bellman_update_nodes();
-      
+#if 1
       prune_beliefs();
       backup_belief_nodes();
       bellman_update_nodes();
+#endif
     }
     
     void iterate()
