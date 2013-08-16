@@ -3,16 +3,16 @@
 
 
 #include "model.h"
-
+#include "bounds.h"
 
 class simulator_t{
   public:
     vector<alpha_t*> alpha_vectors;
     model_t* m;
 
-    simulator_t(model_t* model_in, vector<alpha_t*>& alpha_vectors_in)
+    simulator_t(model_t* model_in, bounds_t& bounds)
     {
-      for(auto& av : alpha_vectors_in)
+      for(auto& av : bounds.alpha_vectors)
         alpha_vectors.push_back(av);
       m = model_in;
     }

@@ -131,12 +131,12 @@ class ipomdp_t{
       solver.belief_tree->root->b = model->b0;
       project_beliefs_recurse(solver.belief_tree->root);
 
-      solver.calculate_initial_upper_bound();
+      solver.bounds.initialize_upper_bound();
       
       for(auto& bn : solver.belief_tree->nodes)
       {
         solver.insert_into_feature_tree(bn);
-        bn->value_upper_bound = solver.simplex_upper_bound.dot(bn->b.p);
+        solver.bounds.calculate(bn);
       }
     }
 
@@ -166,10 +166,10 @@ class ipomdp_t{
         pa->grad = t1;
       }
 #else
-      for(auto& pa : solver.alpha_vectors)
+      for(auto& pa : solver.bounds.alpha_vectors)
         delete pa;
-      solver.alpha_vectors.clear();
-      solver.initialise_blind_policy();
+      solver.bounds.alpha_vectors.clear();
+      solver.bounds.initialize_blind_policy();
 #endif
     }
     
@@ -182,7 +182,7 @@ class ipomdp_t{
         if(hw >= 1){
           if(i%1 == 0){
             cout<<"("<< solver.belief_tree->root->value_upper_bound<<","<<
-              solver.belief_tree->root->value_lower_bound<<") av: "<< solver.alpha_vectors.size() << " bn: "<< 
+              solver.belief_tree->root->value_lower_bound<<") av: "<< solver.bounds.alpha_vectors.size() << " bn: "<< 
               solver.belief_tree->nodes.size()<<endl;
             //solver.print_alpha_vectors();
             //solver.print_belief_tree();
@@ -193,7 +193,7 @@ class ipomdp_t{
           break;
       }
       cout<<"("<< solver.belief_tree->root->value_upper_bound<<","<<
-      solver.belief_tree->root->value_lower_bound<<") av: "<< solver.alpha_vectors.size() << " bn: "<< 
+      solver.belief_tree->root->value_lower_bound<<") av: "<< solver.bounds.alpha_vectors.size() << " bn: "<< 
       solver.belief_tree->nodes.size()<<endl;
     }
 
@@ -202,10 +202,10 @@ class ipomdp_t{
       create_model.refine(hws, hwu, hwo);
       project_alpha_vectors();
       
-      solver.calculate_initial_upper_bound();
+      solver.bounds.initialize_upper_bound();
       project_beliefs();
-      solver.prune_alpha();
-      solver.update_bounds();
+      solver.bounds.prune_alpha();
+      solver.bounds.calculate_all();
 
       solver_iteration(hw);
     }

@@ -15,7 +15,7 @@ class sarsop_t : public solver_t{
       int dummy_oid_opt;
       for(int a=0; a< model->na; a++)
       {
-        float t4 = calculate_Q_upper_bound(b, a, dummy_oid_opt);
+        float t4 = bounds.calculate_Q_upper_bound(b, a, dummy_oid_opt);
         if(t4 > max_val)
         {
           max_val = t4;
@@ -34,7 +34,7 @@ class sarsop_t : public solver_t{
       {
         float t1 = model->get_p_o_given_b(b, aid, o);
         belief_t t2 = model->next_belief(b,aid,o);
-        float t3 = calculate_upper_bound(t2) - calculate_lower_bound(t2);
+        float t3 = bounds.calculate_upper_bound(t2) - bounds.calculate_lower_bound(t2);
         float t4 = t1*(t3 - convergence_threshold*pow(model->discount, bn->depth+1));
         if(t4 > max_val)
         {

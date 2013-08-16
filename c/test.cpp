@@ -52,9 +52,9 @@ int test_solver(int argc, char** argv, solver_t& solver)
     solver.iterate();
 
     cout<<"i: "<< i <<" ("<< solver.belief_tree->root->value_upper_bound<<","<<
-      solver.belief_tree->root->value_lower_bound<<") av: "<< solver.alpha_vectors.size() << " bn: "<< 
+      solver.belief_tree->root->value_lower_bound<<") av: "<< solver.bounds.alpha_vectors.size() << " bn: "<< 
       solver.belief_tree->nodes.size()<<endl;
-    //solver.print_alpha_vectors();
+    //solver.bounds.print_alpha_vectors();
     //getchar();
   }
   cout<<timer.toc()<<"[ms]"<<endl;
@@ -114,7 +114,7 @@ int test_ipomdp(int argc, char** argv)
   sarsop_lightdark_t pomdp(ns, 4, 4);
   pomdp.solve(steps);
   pomdp.refine(nr,0,0,steps);
-  pomdp.solver.print_alpha_vectors();
+  pomdp.solver.bounds.print_alpha_vectors();
 
   //for(int i : range(0, 5))
     //pomdp.refine(2, 0, 0, 50);
