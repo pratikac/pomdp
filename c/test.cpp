@@ -92,9 +92,9 @@ int test_ipomdp(int argc, char** argv)
   typedef ipomdp_t<singleint_t<1,1,1>, pbvi_t> pbvi_singleint_t;
   
   int c;
-  int ns=5, nr=2, steps=10;
+  int ns=5, nr=2, steps=10, seed = 3;
   char* fname = NULL;
-  while( (c = getopt(argc, argv, "n:r:s:f:")) != -1)
+  while( (c = getopt(argc, argv, "n:r:s:f:e:")) != -1)
   {
     switch(c)
     {
@@ -110,10 +110,18 @@ int test_ipomdp(int argc, char** argv)
       case 'f':
         fname = optarg;
         break;
+      case 'e':
+        seed = atoi(optarg);
+        break;
       default:
         abort();
     }
   }
+
+  if(seed < 0)
+    seed = time(NULL);
+  
+  srand(seed);
 
   sarsop_lightdark_t pomdp(ns, 4, 4);
   if(fname)
@@ -133,8 +141,6 @@ int test_ipomdp(int argc, char** argv)
 
 int main(int argc, char** argv)
 {
-  srand(time(NULL));
-
   pbvi_t pbvi;
   sarsop_t sarsop;
 

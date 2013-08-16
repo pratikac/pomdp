@@ -107,17 +107,18 @@ class bounds_t{
 
       mat Qasc = Qas;
       bool is_converged = false;
-      while(!is_converged){
+      while(!is_converged)
+      {
         for(int a=0; a<na; a++)
         {
           Qas.col(a) = model->get_step_reward(a);
           for(int o1=0; o1<no; o1++)
           {
             vec t3 = model->get_p_a_o(a,o1)*Qasc.rowwise().maxCoeff();
-            Qas.col(a) += model->discount*t3;
+            Qas.col(a).noalias() += model->discount*t3;
           }
+          is_converged = !((Qasc.col(a)-Qas.col(a)).array().abs().maxCoeff() > 0.1);
         }
-        is_converged = (Qasc-Qas).norm() < 0.1;
         Qasc = Qas;
       }
       //cout<<"fib converged"<<endl;
@@ -151,10 +152,11 @@ class bounds_t{
       assert(a1.grad.size() == a2.grad.size());
 
       vec gd = a1.grad - a2.grad;
-      float e=1e-3;
+      float e=1e-2;
       for(auto& bn : belief_tree->nodes)
       {
         float t1 = gd.dot(bn->b.p);
+        //cout<<"159 t1: "<< t1 << endl;
         if(t1>e)
           tmp++;
         else if(t1 < -e)
@@ -170,11 +172,12 @@ class bounds_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
-      float epsilon = 1e-3;
+      float epsilon = 1e-1;
       bool toinsert = true;
       for(auto& pa : alpha_vectors)
       {
         float t1 = (a->grad - pa->grad).array().abs().maxCoeff();
+        //cout<<"180 t1: "<< t1 << endl;
         if(t1< epsilon)
         {
           toinsert = false;
@@ -455,7 +458,7 @@ class bounds_t{
         backup(bn);
 
       //int nalpha = alpha_vectors.size();
-      //prune_alpha();
+      prune_alpha();
       //cout<<"num_alpha_pruned: "<< nalpha - alpha_vectors.size() << endl;
     }
 

@@ -20,7 +20,7 @@ typedef vector<mat> pr_t;
 class belief_t{
   public:
     vec p;
-  
+
     belief_t(){}
     belief_t(const belief_t& b_in) : p(b_in.p){}
 
@@ -62,10 +62,10 @@ class alpha_t{
      * @param[in] gradin gradin(s) = alpha(s) for all states s in S_n
      */
     alpha_t(int aid_in, vec& grad_in) : mark(0)
-    {
-      aid = aid_in;
-      grad = grad_in;
-    }
+  {
+    aid = aid_in;
+    grad = grad_in;
+  }
 
     const alpha_t operator-(const alpha_t& a2) const
     {
@@ -114,26 +114,26 @@ class model_t
      */
     pr_t pr;
     belief_t b0;
-    
+
     model_t(){
       ns = 0;
       na = 0;
       no = 0;
-      
+
       pt.clear();
       po.clear();
       pr.clear();
       discount = -1;
-      
+
       b0 = belief_t();
     }
-    
+
     model_t(int ns_in,int na_in, int no_in, pt_t& pt_in, po_t& po_in, float d_in,
         pr_t& pr_in, belief_t& b0_in)
       : ns(ns_in), na(na_in), no(no_in), pt(pt_in), po(po_in), discount(d_in),
       pr(pr_in), b0(b0_in){
-    }
-    
+      }
+
     int normalize_mat()
     {
       for(size_t i=0; i<pt.size(); i++)
@@ -159,55 +159,44 @@ class model_t
 
     void print(string fname="")
     {
+      streambuf* buf;
+      ofstream fout;
+
       if(fname == "")
       {
-        cout<<"states: "<<ns<<endl;
-        cout<<"actions: "<<na<<endl;
-        cout<<"observations: "<< no << endl;
-        cout<<"transition_probabilities: "<<endl;
-        for(int i=0; i<na; i++)
-        {
-          cout<<"aid: "<<i<<": ("<<pt[i].rows()<<","<<pt[i].cols()<<")"<<endl;
-        }
-        cout<<"observation_probabilities: "<<endl;
-        for(int i=0; i<na; i++)
-        {
-          cout<<"aid: "<<i<<": ("<<po[i].rows()<<","<<po[i].cols()<<")"<<endl;
-        }
-
-        cout<<"initial_belief: "<<b0.p.transpose()<<endl;
-        cout<<"discount: "<<discount<<endl;
-        cout<<"reward_function: "<<endl;
-        for(int i=0; i<na; i++)
-          cout<<"aid: "<<i<<": ("<<pr[i].rows()<<","<<pr[i].cols()<<")"<<endl;
+        buf = cout.rdbuf();
       }
       else
       {
-        ofstream fout(fname);
-        fout<<"states: "<<ns<<endl;
-        fout<<"actions: "<<na<<endl;
-        fout<<"observations: "<< no << endl;
-        fout<<"transition_probabilities: "<<endl;
-        for(int i=0; i<na; i++)
-        {
-          fout<<"aid: "<<i<< endl << pt[i] <<endl;
-        }
-        fout<<"observation_probabilities: "<<endl;
-        for(int i=0; i<na; i++)
-        {
-          fout<<"aid: "<<i<< endl << po[i] <<endl;
-        }
-
-        fout<<"initial_belief: "<<b0.p.transpose()<<endl;
-        fout<<"discount: "<<discount<<endl;
-        fout<<"reward_function: "<<endl;
-        for(int i=0; i<na; i++)
-          fout<<"aid: "<<i<< endl << pr[i] <<endl;
-        
-        fout.close();
+        fout.open(fname);
+        buf = fout.rdbuf();
       }
+      ostream out(buf);
+
+      out<<"states: "<<ns<<endl;
+      out<<"actions: "<<na<<endl;
+      out<<"observations: "<< no << endl;
+      out<<"transition_probabilities: "<<endl;
+      for(int i=0; i<na; i++)
+      {
+        out<<"aid: "<<i<<": ("<<pt[i].rows()<<","<<pt[i].cols()<<")"<<endl;
+      }
+      out<<"observation_probabilities: "<<endl;
+      for(int i=0; i<na; i++)
+      {
+        out<<"aid: "<<i<<": ("<<po[i].rows()<<","<<po[i].cols()<<")"<<endl;
+      }
+
+      out<<"initial_belief: "<<b0.p.transpose()<<endl;
+      out<<"discount: "<<discount<<endl;
+      out<<"reward_function: "<<endl;
+      for(int i=0; i<na; i++)
+        out<<"aid: "<<i<<": ("<<pr[i].rows()<<","<<pr[i].cols()<<")"<<endl;
+
+      if(fname != "")
+        fout.close();
     }
-    
+
     int multinomial_sampling(const vec& arr)
     {
       float r = RANDF;
@@ -224,7 +213,7 @@ class model_t
       }
       return len-1;
     }
-    
+
     int next_state(const int& sid, const int& aid)
     {
       vec t1 = pt[aid].row(sid).transpose();
@@ -238,7 +227,7 @@ class model_t
       newb.p(sid) = 1;
       return newb;
     }
-    
+
     mat get_p_a_o(int aid=-1, int oid=-1)
     {
       mat t1 = po[aid].col(oid).replicate(1,ns);
@@ -272,13 +261,13 @@ class model_t
       vec t1 = ((pr[aid].array())*(pt[aid].array())).rowwise().sum(); 
       return t1.dot(b.p);
     }
-    
+
     float get_step_reward(const int& sid, const int& aid)
     {
       mat t1 = (pr[aid].array())*(pt[aid].array());
       return (t1.rowwise()).sum()(sid);
     }
-    
+
     vec get_step_reward(const int& aid)
     {
       mat t1 = pr[aid].array()*pt[aid].array();
@@ -290,7 +279,7 @@ class model_t
     {
       return po[aid].col(oid).dot(b.p);
     }
-    
+
     int sample_state(const belief_t& b)
     {
       return multinomial_sampling(b.p);
@@ -302,7 +291,7 @@ class model_t
       vec t1 = po[aid].row(sid).transpose();
       return multinomial_sampling(t1);
     }
-    
+
     int sample_observation(const int& sid, const int& aid)
     {
       vec t1 = po[aid].row(sid).transpose();

@@ -26,6 +26,7 @@ class create_model_t{
     kdtree* tree;
 
     create_model_t(){
+
       ds = system.ds;
       du = system.du;
       ddo = system.ddo;
@@ -205,11 +206,19 @@ class create_model_t{
       model.ns = ns;
       model.na = nu;
       model.no = no;
-      model.discount = 0.99; //exp(-0.05*ht);
+      model.discount = pow(0.95, ht);
       cout<<"ns: " << ns << " ht: "<< ht << " discount: " << model.discount << endl;
       model.b0.p = get_b0();
       model.normalize_mat();
-
+     
+      /*
+      for(int a : range(0, nu))
+      {
+        spmat t1 = model.pt[a].sparseView(1e-6);
+        cout<<"sparse: "<< t1.nonZeros() << endl;
+      }
+      getchar();
+      */
       return 0;
     }
 
