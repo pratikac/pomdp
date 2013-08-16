@@ -68,6 +68,6 @@ class range {
     iterator end_;
 };
 
-float normal_val(vec& m, mat& v, vec& s);
+double normal_val(vec& m, mat& v, vec& s);
 
 #endif

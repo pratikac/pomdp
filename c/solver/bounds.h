@@ -130,6 +130,7 @@ class bounds_t{
       //calculate_mdp_policy();
       calculate_fib_policy();
     }
+    
     void initialize()
     {
       initialize_blind_policy();
@@ -150,7 +151,7 @@ class bounds_t{
       assert(a1.grad.size() == a2.grad.size());
 
       vec gd = a1.grad - a2.grad;
-      float e=1e-6;
+      float e=1e-3;
       for(auto& bn : belief_tree->nodes)
       {
         float t1 = gd.dot(bn->b.p);
@@ -169,7 +170,7 @@ class bounds_t{
 
     virtual int insert_alpha(alpha_t* a)
     {
-      float epsilon = 1e-6;
+      float epsilon = 1e-3;
       bool toinsert = true;
       for(auto& pa : alpha_vectors)
       {
@@ -189,7 +190,7 @@ class bounds_t{
 
     bool pointwise_dominant(alpha_t* a1, alpha_t* a2)
     {
-      float epsilon = 1e-6;
+      float epsilon = 1e-3;
       vec t1 = a1->grad - a2->grad;
       float t1p = t1.maxCoeff(), t1m = t1.minCoeff();
       if((t1p*t1m > epsilon) && (t1m >epsilon))

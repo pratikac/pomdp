@@ -247,6 +247,46 @@ class create_model_t{
       fout.close();
       return 0;
     }
+
+    int write_pomdp_file(string fname)
+    {
+      ofstream fout;
+      fout.open(fname);
+      
+      fout<<"#written by create_model, do not modify"<<endl;
+      fout<<"discount: "<< model.discount << endl;
+      fout<<"values: reward"<<endl;
+      fout<<"states: "<< ns << endl; 
+      fout<<"actions: "<< nu << endl; 
+      fout<<"observations: "<< no << endl;
+
+      fout<<"start: "<< model.b0.p.transpose() << endl;
+      for(int u : range(0, nu))
+      {
+        fout<<"T: "<< u<< endl;
+        fout<<model.pt[u]<<endl;
+      }
+      fout<<endl;
+      
+      for(int u : range(0, nu))
+      {
+        fout<<"O: "<< u<< endl;
+        fout<<model.po[u]<<endl;
+      }
+      fout<<endl;
+      
+      for(int u : range(0, nu))
+      {
+        for(int s : range(0, ns))
+        {
+          fout<<"R: "<< u <<" : "<< s << endl;
+          fout<< (model.pr[u].row(s).transpose()).replicate(1,no)<<endl;
+          fout<<endl;
+        }
+      }
+      fout.close();
+      return 0;
+    }
 };
 
 #endif

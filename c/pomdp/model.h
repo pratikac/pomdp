@@ -145,7 +145,13 @@ class model_t
       {
         for(int j=0; j<ns; j++)
         {
-          po[i].row(j) = po[i].row(j)/po[i].row(j).sum();
+          double t1 = po[i].row(j).sum();
+          if(t1 < 1e-15)
+          {
+            cout<<"t1: "<< t1 << endl;
+            assert(t1 > 1e-15);
+          }
+          po[i].row(j).noalias() = po[i].row(j)/t1;
         }
       }
       return 0;

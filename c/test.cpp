@@ -93,7 +93,8 @@ int test_ipomdp(int argc, char** argv)
   
   int c;
   int ns=5, nr=2, steps=10;
-  while( (c = getopt(argc, argv, "n:r:s:")) != -1)
+  char* fname = NULL;
+  while( (c = getopt(argc, argv, "n:r:s:f:")) != -1)
   {
     switch(c)
     {
@@ -106,12 +107,20 @@ int test_ipomdp(int argc, char** argv)
       case 's':
         steps = atoi(optarg);
         break;
+      case 'f':
+        fname = optarg;
+        break;
       default:
         abort();
     }
   }
 
   sarsop_lightdark_t pomdp(ns, 4, 4);
+  if(fname)
+  {
+    pomdp.create_model.write_pomdp_file(fname);
+    return 0;
+  }
   pomdp.solve(steps);
   pomdp.refine(nr,0,0,steps);
   pomdp.solver.bounds.print_alpha_vectors();

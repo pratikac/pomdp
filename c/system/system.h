@@ -67,7 +67,7 @@ class system_t{
     virtual mat get_GG(const vec& s) = 0;
     virtual float get_ht(const vec& s, const vec& u, const float r) = 0;
 
-    virtual float get_observation_prob(vec& s, vec& o)
+    virtual double get_observation_prob(vec& s, vec& o)
     {
       // calculate P(o | s, a)
       mat GG = get_GG(s);

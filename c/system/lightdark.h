@@ -112,7 +112,7 @@ class lightdark_t : public system_t<ds, du, ddo>
         }
       }
       if(is_light)
-        return mat::Identity(ddo,ddo)*0.001;
+        return mat::Identity(ddo,ddo)*0.1;
       else
         return mat::Identity(ddo,ddo)*100;
     }
