@@ -64,10 +64,13 @@ class sarsop_t : public solver_t{
         edge_t* e = sample_child_belief(bn, excess_uncertainty);
         if(e)
         {
-          nodes_to_insert.push_back(make_pair(bn, e));
+          //nodes_to_insert.push_back(make_pair(bn, e));
           //cout<<"excess_uncertainty: "<< excess_uncertainty << endl;
           if(excess_uncertainty < epsilon)
+          {
+            nodes_to_insert.push_back(make_pair(bn, e));
             tostop = true;
+          }
           else
             bn = e->end;
         }
