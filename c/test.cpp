@@ -87,19 +87,26 @@ int test_bpomdp(int argc, char** argv)
 int test_ipomdp(int argc, char** argv)
 {
   typedef ipomdp_t<lightdark_t<1,1,1>, sarsop_t> sarsop_lightdark_t;
+  typedef ipomdp_t<racecar_t, sarsop_t> sarsop_racecar_t;
   typedef ipomdp_t<lightdark_t<1,1,1>, pbvi_t> pbvi_lightdark_t;
   typedef ipomdp_t<singleint_t<1,1,1>, sarsop_t> sarsop_singleint_t;
   typedef ipomdp_t<singleint_t<1,1,1>, pbvi_t> pbvi_singleint_t;
   
   int c;
-  int ns=5, nr=2, steps=10, seed = 3;
+  int ns=5, nu = 5, no=5, nr=2, steps=10, seed = 3;
   char* fname = NULL;
-  while( (c = getopt(argc, argv, "n:r:s:f:e:")) != -1)
+  while( (c = getopt(argc, argv, "n:u:o:r:s:f:e:")) != -1)
   {
     switch(c)
     {
       case 'n':
         ns = atoi(optarg);
+        break;
+      case 'u':
+        nu = atoi(optarg);
+        break;
+      case 'o':
+        no = atoi(optarg);
         break;
       case 'r':
         nr = atoi(optarg);
@@ -123,7 +130,7 @@ int test_ipomdp(int argc, char** argv)
   
   srand(seed);
 
-  sarsop_lightdark_t pomdp(ns, 4, 4);
+  sarsop_lightdark_t pomdp(ns, nu, no);
   if(fname)
   {
     pomdp.create_model.write_pomdp_file(fname);

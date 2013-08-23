@@ -41,7 +41,7 @@ class system_t{
       }
       return false;
     }
-    bool is_in_obstacle(vec& s1, vec& s2)
+    virtual bool is_in_obstacle(vec& s1, vec& s2)
     {
       vec r;
       float t = 0;

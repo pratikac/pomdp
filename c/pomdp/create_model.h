@@ -5,6 +5,7 @@
 #include "solver.h"
 #include "lightdark.h"
 #include "singleint.h"
+#include "racecar.h"
 
 template<class system_t>
 class create_model_t{
