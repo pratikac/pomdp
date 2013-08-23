@@ -136,9 +136,12 @@ int test_ipomdp(int argc, char** argv)
     pomdp.create_model.write_pomdp_file(fname);
     return 0;
   }
-  pomdp.solve(steps);
+  pomdp.solver.initialise(pomdp.model->b0, pomdp.model, 1e-6, 0.1);
+  cout<<pomdp.solver.bounds.simplex_upper_bound << endl;
+
+  //pomdp.solve(steps);
   //pomdp.refine(nr,0,0,steps);
-  pomdp.solver.bounds.print_alpha_vectors();
+  //pomdp.solver.bounds.print_alpha_vectors();
 
   //for(int i : range(0, 5))
     //pomdp.refine(2, 0, 0, 50);

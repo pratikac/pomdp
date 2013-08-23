@@ -21,37 +21,42 @@ class racecar_t : public system_t<6, 1, 3>
     const static size_t ddo = 3;
     vector<region_t<ds> > obstacles;
     
-    constexpr static float cfn = 1.5;
-    constexpr static float cfr = 1.5;
-    constexpr static float w=4;
-    constexpr static float l =4;
-    constexpr static float lf=l/2;
-    constexpr static float lr=l/2;
-    constexpr static float J = 1;
-    constexpr static float v = 1;
-    constexpr static float m = 1;
+    float cfn, cfr, w, l, lf, lr, J, v, m;
 
-    // states : (x,y,beta,psi,r,cf)
+    // states       : (x,y,beta,psi,r,cf)
+    // controls     : (df)
+    // observations : (x,y,psi)
     racecar_t()
     {
-      vec opc, ops;
+      cfn=1.5;
+      cfr = 1.5;
+      w=4;
+      l=4;
+      lf=l/2;
+      lr = l/2;
+      J = 1;
+      m = 1;
+      v = 1;
+
+      vec opc(ds), ops(ds);
       opc << -3*w/2, -3*w/2, 0, 3*M_PI/4, 0, cfn;
-      ops << 3*w, 3*w, M_PI/2, 3*M_PI/2, 5, 2;
+      ops << 3*w, 3*w, M_PI/2, 3*M_PI/2, 5, 0.5;
       operating_region = region_t<ds> (opc, ops);
 
-      vec ouc, ous;
+      vec ouc(du), ous(du);
       ouc << 0;
       ous << 1;
       control_region = region_t<du> (ouc, ous);
 
-      vec ooc, oos;
+      vec ooc(ddo), oos(ddo);
       ooc << -3*w/2, -3*w/2, 3*M_PI/4;
       oos << 3*w, 3*w, 3*M_PI/2;
       observation_region = region_t<ddo> (ooc, oos);
      
+      init_state = vec(ds);
       init_state << -w/4, -2.5*w, 0, M_PI/2, 0, cfr;
       
-      float e1 = 1e-3, e2 = 0.5;
+      float e1 = 0.01, e2 = 0.2;
       init_var = e1*mat::Identity(6,6);
       init_var(5,5) = e2;
 
@@ -64,7 +69,7 @@ class racecar_t : public system_t<6, 1, 3>
 
     vec sample_state()
     {
-      vec s = vec::Zero(ds);
+      vec s(ds);
       region_t<ds>* r = &operating_region;
       float p = RANDF;
       if(p < 0.1)
@@ -75,11 +80,19 @@ class racecar_t : public system_t<6, 1, 3>
         s(i) = r->c(i) + r->s(i)*(RANDF-0.5);
       return s;
     }
+    bool is_in_obstacle(vec& s)
+    {
+      return false;
+    }
+    bool is_in_obstacle(vec& s1, vec& s2)
+    {
+      return false;
+    }
     vec sample_control()
     {
-      vec u = vec::Zero(du);
+      vec u(du);
       region_t<du> r = control_region;
-      for(size_t i=0; i< ds; i++)
+      for(size_t i=0; i< du; i++)
         u(i) = r.c(i) + r.s(i)*(RANDF-0.5);
       return u;
     }
@@ -88,9 +101,16 @@ class racecar_t : public system_t<6, 1, 3>
       vec o = sample_state();
       return get_observation(o);
     }
+    vec sample_observation(vec& s)
+    {
+      return get_observation(s);
+    }
+
     vec get_observation(const vec& s)
     {
-      return s;
+      vec o(ddo);
+      o << s(0), s(1), s(3);
+      return o;
     }
     vec get_key(const vec& s)
     {
@@ -102,7 +122,7 @@ class racecar_t : public system_t<6, 1, 3>
     }
     vec get_fdt(const vec& s, const vec& u, float dt=1.0)
     {
-      vec f;
+      vec f(ds);
       f <<  v*cos(s(3)+s(2)), 
             v*sin(s(2)+s(3)), 
             (-2*s(5)*s(2) - m*v*s(4))/m/v + s(5)/m/v*u(0),
@@ -117,7 +137,7 @@ class racecar_t : public system_t<6, 1, 3>
     }
     mat get_GG(const vec& s)
     {
-      return mat::Identity(ddo,ddo)*1e-3;
+      return mat::Identity(ddo,ddo);
     }
     float get_ht(const vec& s, const vec& u, const float r)
     {
@@ -132,7 +152,7 @@ class racecar_t : public system_t<6, 1, 3>
       if(gs1)
       {
         if(gs2)
-          return -u.norm()*dt;
+          return 0*-u.norm()*dt;
         else
           return -1000;
       }
@@ -141,7 +161,7 @@ class racecar_t : public system_t<6, 1, 3>
         if(gs2)
           return 1000;
         else
-          return -u.norm()*dt;
+          return 0*-u.norm()*dt;
       }
       return 0;
     }

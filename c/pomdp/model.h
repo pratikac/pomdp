@@ -97,19 +97,25 @@ class model_t
       for(size_t i=0; i<pt.size(); i++)
       {
         for(int j=0; j<ns; j++)
-          pt[i].row(j) = pt[i].row(j)/pt[i].row(j).sum();
+        {
+          //double t1 = pt[i].row(j).sum();
+          //assert(t1 > 1e-15);
+          //pt[i].row(j).noalias() = pt[i].row(j)/t1;
+          vec t1 = pt[i].row(j).transpose();
+          log_normalize_vec(t1);
+          pt[i].row(j) = t1.transpose();
+        }
       }
       for(size_t i=0; i<po.size(); i++)
       {
         for(int j=0; j<ns; j++)
         {
-          double t1 = po[i].row(j).sum();
-          if(t1 < 1e-15)
-          {
-            cout<<"t1: "<< t1 << endl;
-            assert(t1 > 1e-15);
-          }
-          po[i].row(j).noalias() = po[i].row(j)/t1;
+          //double t1 = po[i].row(j).sum();
+          //assert(t1 > 1e-15);
+          //po[i].row(j).noalias() = po[i].row(j)/t1;
+          vec t1 = po[i].row(j).transpose();
+          log_normalize_vec(t1);
+          po[i].row(j) = t1.transpose();
         }
       }
       return 0;

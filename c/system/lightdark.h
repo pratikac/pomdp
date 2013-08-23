@@ -71,7 +71,7 @@ class lightdark_t : public system_t<ds, du, ddo>
     {
       vec u = vec::Zero(du);
       region_t<du> r = control_region;
-      for(size_t i=0; i< ds; i++)
+      for(size_t i=0; i< du; i++)
         u(i) = r.c(i) + r.s(i)*(RANDF-0.5);
       return u;
     }
@@ -79,6 +79,10 @@ class lightdark_t : public system_t<ds, du, ddo>
     {
       vec o = sample_state();
       return get_observation(o);
+    }
+    vec sample_observation(vec& s)
+    {
+      return get_observation(s);
     }
     vec get_observation(const vec& s)
     {

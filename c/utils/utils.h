@@ -69,5 +69,7 @@ class range {
 };
 
 double normal_val(vec& m, mat& v, vec& s);
+double log_normal_val(vec& m, mat& v, vec& s);
+void log_normalize_vec(vec& v);
 
 #endif

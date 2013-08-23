@@ -76,6 +76,10 @@ class singleint_t : public system_t<ds, du, ddo>
       vec o = sample_state();
       return get_observation(o);
     }
+    vec sample_observation(vec& s)
+    {
+      return get_observation(s);
+    }
     vec get_observation(const vec& s)
     {
       return s;

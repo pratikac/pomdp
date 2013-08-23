@@ -81,8 +81,15 @@ class create_model_t{
     }
     int sample_observations(int hw)
     {
+      int c = 0;
       for(int i=no; i<no+hw; i++)
-        O.push_back(system.sample_observation());
+      {
+        if(c < ns)
+          O.push_back(system.sample_observation(S[c]));
+        else
+          O.push_back(system.sample_observation());
+        c++;
+      }
       no += hw;
       return 0;
     }
@@ -103,8 +110,10 @@ class create_model_t{
     {
       vec t = vec::Zero(ns);
       for(int i=0; i<ns; i++)
-        t(i) = normal_val(system.init_state, system.init_var, S[i]);
-      return t/t.sum();
+        t(i) = log_normal_val(system.init_state, system.init_var, S[i]);
+      
+      log_normalize_vec(t);
+      return t;
     }
 
     int sample_all(int hws, int hwu, int hwo)
@@ -148,7 +157,7 @@ class create_model_t{
               int* skindex = (int*)kd_res_item(res, pos);
               vec& sk = S[*skindex];
               if(!system.is_in_obstacle(s,sk))
-                probs(*skindex) = normal_val(sfdt, FFdt, sk);
+                probs(*skindex) = log_normal_val(sfdt, FFdt, sk);
 
               kd_res_next(res);
             }
@@ -261,7 +270,7 @@ class create_model_t{
     int write_pomdp_file(string fname)
     {
       ofstream fout;
-      fout.open(fname);
+      fout.open(fname+".pomdp");
       
       fout<<"#written by create_model, do not modify"<<endl;
       fout<<"discount: "<< model.discount << endl;
@@ -295,6 +304,22 @@ class create_model_t{
         }
       }
       fout.close();
+      
+      fout.open(fname+"_states.dat");
+      for(auto& s : S)
+        fout<< s.transpose()<<endl;
+      fout.close();
+      
+      fout.open(fname+"_controls.dat");
+      for(auto& u : U)
+        fout<< u.transpose()<<endl;
+      fout.close();
+
+      fout.open(fname+"_observations.dat");
+      for(auto& o : O)
+        fout<< o.transpose()<<endl;
+      fout.close();
+      
       return 0;
     }
 };

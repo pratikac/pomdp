@@ -59,6 +59,7 @@ class system_t{
     virtual vec sample_control() = 0;
     virtual vec zero_control() { return vec::Zero(du); }
     virtual vec sample_observation() = 0;
+    virtual vec sample_observation(vec& s) = 0;
     virtual vec get_observation(const vec& s) = 0;
     virtual vec get_key(const vec& s) = 0;
 
@@ -72,7 +73,7 @@ class system_t{
       // calculate P(o | s, a)
       mat GG = get_GG(s);
       vec os = get_observation(s);
-      return normal_val(os, GG, o);
+      return log_normal_val(os, GG, o);
     }
 
     // R(s2 | s1, a)*dt
