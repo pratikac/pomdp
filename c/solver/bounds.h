@@ -47,6 +47,26 @@ class alpha_t{
     }
 };
 
+class policy_graph_t{
+  public:
+    class node_t{
+      public:
+        int aid;
+        map<int, node_t*> children;
+        
+        double value_upper_bound;
+        double value_lower_bound;
+    };
+    
+    set<node_t> nodes;
+    node_t* root_node;
+
+    void backup(belief_node_t* bn)
+    {
+       
+    }
+};
+
 class bounds_t{
   public:
     model_t* model;
