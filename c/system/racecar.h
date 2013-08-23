@@ -30,8 +30,8 @@ class racecar_t : public system_t<6, 1, 3>
     {
       cfn=1.5;
       cfr = 1.5;
-      w=4;
-      l=4;
+      w=1;
+      l=1;
       lf=l/2;
       lr = l/2;
       J = 1;
@@ -56,7 +56,7 @@ class racecar_t : public system_t<6, 1, 3>
       init_state = vec(ds);
       init_state << -w/4, -2.5*w, 0, M_PI/2, 0, cfr;
       
-      float e1 = 0.01, e2 = 0.2;
+      float e1 = 1, e2 = 2;
       init_var = e1*mat::Identity(6,6);
       init_var(5,5) = e2;
 

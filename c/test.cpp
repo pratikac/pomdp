@@ -130,7 +130,7 @@ int test_ipomdp(int argc, char** argv)
   
   srand(seed);
 
-  sarsop_lightdark_t pomdp(ns, nu, no);
+  sarsop_racecar_t pomdp(ns, nu, no);
   if(fname)
   {
     pomdp.create_model.write_pomdp_file(fname);
